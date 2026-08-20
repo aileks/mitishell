@@ -48,6 +48,19 @@ QtObject {
     onActivePlayerChanged: displayPosition = activePlayer !== null
         && activePlayer.positionSupported ? activePlayer.position : 0
 
+    property Connections playerConnections: Connections {
+        target: root.activePlayer
+
+        function onPositionChanged() {
+            root.displayPosition = root.activePlayer.position;
+        }
+
+        function onTrackChanged() {
+            root.displayPosition = root.activePlayer.positionSupported
+                ? root.activePlayer.position : 0;
+        }
+    }
+
     property Timer positionTimer: Timer {
         interval: 1000
         repeat: true
