@@ -123,14 +123,14 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spaceMd
 
-            MediaIconButton {
+            IconButton {
                 iconSource: "../assets/icons/skip-back.svg"
                 accessibleName: "Previous track"
                 enabled: root.player !== null && root.player.canGoPrevious
                 onClicked: Media.previous()
             }
 
-            MediaIconButton {
+            IconButton {
                 iconSource: root.player !== null && root.player.isPlaying
                     ? "../assets/icons/pause.svg"
                     : "../assets/icons/play.svg"
@@ -141,7 +141,7 @@ Item {
                 onClicked: Media.togglePlaying()
             }
 
-            MediaIconButton {
+            IconButton {
                 iconSource: "../assets/icons/skip-forward.svg"
                 accessibleName: "Next track"
                 enabled: root.player !== null && root.player.canGoNext
