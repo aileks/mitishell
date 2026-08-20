@@ -26,6 +26,13 @@ Mitishell is developed as vertical features. Each completed feature updates this
 - [ ] v0.9: desktop stabilization, diagnostics, and weather refresh on resume or meaningful network recovery
 - [ ] v1.0: accepted and dogfooded desktop shell
 
+## Known issues
+
+- [ ] Correct the default proportional fonts and type scale across the bar and popovers
+- [ ] Prevent workspace pill text from shifting during odd-to-even workspace transitions
+- [ ] Remove the duplicated sound-source indicator from the center media island
+- [ ] Correct spacing and text sizing in the audio popover
+
 ## Planned after v1
 
 - Validated laptop battery, charging, backlight, lid, dock, suspend, and resume support
