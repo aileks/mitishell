@@ -1,0 +1,30 @@
+function idsForMonitor(workspaces, monitorName) {
+    return workspaces
+        .filter(function(workspace) {
+            return workspace.id > 0
+                && workspace.monitor !== null
+                && workspace.monitor.name === monitorName;
+        })
+        .map(function(workspace) {
+            return workspace.id;
+        })
+        .sort(function(left, right) {
+            return left - right;
+        });
+}
+
+function label(id) {
+    return id === 10 ? "0" : String(id);
+}
+
+function windowTitle(workspace) {
+    if (workspace === null || workspace.lastIpcObject === undefined) {
+        return "Desktop";
+    }
+    const title = String(workspace.lastIpcObject.lastwindowtitle || "").trim();
+    return title === "" ? "Desktop" : title;
+}
+
+if (typeof module !== "undefined") {
+    module.exports = { idsForMonitor, label, windowTitle };
+}

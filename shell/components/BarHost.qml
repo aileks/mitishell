@@ -26,18 +26,44 @@ PanelWindow {
 
     Rectangle {
         anchors.left: parent.left
-        width: 180
+        width: Math.min(leftContent.implicitWidth + Theme.spaceLg * 2, 560)
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.container
 
-        Text {
+        Behavior on width {
+            NumberAnimation {
+                duration: Motion.duration(Motion.normal)
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        Row {
+            id: leftContent
+
             anchors.centerIn: parent
-            text: "Mitishell"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: 13
-            font.weight: Font.DemiBold
+            width: Math.min(implicitWidth, parent.width - Theme.spaceLg * 2)
+            spacing: Theme.spaceMd
+
+            WorkspaceStrip {
+                id: workspaceStrip
+                screen: root.modelData
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 16
+                color: Theme.overlay
+                visible: Config.bar.showWindowTitle
+            }
+
+            WindowTitle {
+                anchors.verticalCenter: parent.verticalCenter
+                screen: root.modelData
+                width: Math.min(implicitWidth, 280)
+                visible: Config.bar.showWindowTitle
+            }
         }
     }
 

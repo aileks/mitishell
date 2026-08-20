@@ -1,2 +1,4 @@
 BarHost 1.0 BarHost.qml
 BarPopoverTrigger 1.0 BarPopoverTrigger.qml
+WorkspaceStrip 1.0 WorkspaceStrip.qml
+WindowTitle 1.0 WindowTitle.qml
