@@ -6,4 +6,5 @@ singleton Motion 1.0 Motion.qml
 singleton SurfaceCoordinator 1.0 SurfaceCoordinator.qml
 singleton SystemMetrics 1.0 SystemMetrics.qml
 singleton Theme 1.0 Theme.qml
+singleton Tray 1.0 Tray.qml
 singleton Weather 1.0 Weather.qml
