@@ -26,18 +26,15 @@ PanelWindow {
 
     Rectangle {
         anchors.left: parent.left
-        width: 180
+        width: workspaceStrip.implicitWidth + Theme.spaceLg * 2
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.container
 
-        Text {
+        WorkspaceStrip {
+            id: workspaceStrip
             anchors.centerIn: parent
-            text: "Mitishell"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: 13
-            font.weight: Font.DemiBold
+            screen: root.modelData
         }
     }
 
