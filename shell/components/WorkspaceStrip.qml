@@ -37,8 +37,9 @@ Row {
             height: 24
             radius: Theme.radiusPill
             color: urgent ? Theme.red : (active ? Theme.orange : "transparent")
-            border.width: !active && occupied ? 1 : 0
-            border.color: Theme.overlay
+            border.width: activeFocus ? 2 : (!active && occupied ? 1 : 0)
+            border.color: activeFocus ? Theme.blue : Theme.overlay
+            activeFocusOnTab: true
 
             Behavior on width {
                 NumberAnimation {
@@ -64,6 +65,19 @@ Row {
                         workspaceItem.workspace.activate();
                     }
                 }
+            }
+
+            Keys.onReturnPressed: function(event) {
+                if (workspaceItem.workspace !== null) {
+                    workspaceItem.workspace.activate();
+                }
+                event.accepted = true;
+            }
+            Keys.onSpacePressed: function(event) {
+                if (workspaceItem.workspace !== null) {
+                    workspaceItem.workspace.activate();
+                }
+                event.accepted = true;
             }
         }
     }
