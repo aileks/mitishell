@@ -18,7 +18,7 @@ func NewClient(executable string, shellPath string) Client {
 }
 
 func (client Client) Ping() error {
-	response, err := client.call("ping")
+	response, err := client.call("shell", "ping")
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (client Client) Ping() error {
 }
 
 func (client Client) Reload() error {
-	response, err := client.call("reload")
+	response, err := client.call("shell", "reload")
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,29 @@ func (client Client) Reload() error {
 	return nil
 }
 
-func (client Client) call(method string) (string, error) {
+func (client Client) ToggleNotifications() error {
+	response, err := client.call("notifications", "toggle")
+	if err != nil {
+		return err
+	}
+	if response != "notifications toggled" {
+		return fmt.Errorf("unexpected response %q", response)
+	}
+	return nil
+}
+
+func (client Client) OpenPowerMenu() error {
+	response, err := client.call("power", "open")
+	if err != nil {
+		return err
+	}
+	if response != "power menu opened" {
+		return fmt.Errorf("unexpected response %q", response)
+	}
+	return nil
+}
+
+func (client Client) call(target string, method string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -50,7 +72,7 @@ func (client Client) call(method string) (string, error) {
 		"-p",
 		client.shellPath,
 		"call",
-		"shell",
+		target,
 		method,
 	)
 	output, err := command.CombinedOutput()

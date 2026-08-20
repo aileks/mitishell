@@ -15,8 +15,14 @@ import (
 )
 
 type shellStub struct {
-	pingErr   error
-	reloadErr error
+	pingErr          error
+	reloadErr        error
+	notificationsErr error
+	powerErr         error
+}
+
+type capabilityStub struct {
+	capabilities cli.Capabilities
 }
 
 type doctorStub struct {
@@ -52,6 +58,38 @@ func (stub shellStub) Ping() error {
 
 func (stub shellStub) Reload() error {
 	return stub.reloadErr
+}
+
+func (stub shellStub) ToggleNotifications() error {
+	return stub.notificationsErr
+}
+
+func (stub shellStub) OpenPowerMenu() error {
+	return stub.powerErr
+}
+
+func (stub capabilityStub) Detect() cli.Capabilities {
+	return stub.capabilities
+}
+
+func TestInternalCapabilitiesReportsAvailableCompatibilityActions(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	dependencies := cli.Dependencies{
+		Capabilities: capabilityStub{capabilities: cli.Capabilities{
+			Notifications: true,
+			Power:         false,
+		}},
+	}
+
+	exitCode := cli.Run([]string{"_capabilities"}, &stdout, &stderr, dependencies)
+
+	if exitCode != 0 {
+		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if got := stdout.String(); got != "{\"notifications\":true,\"power\":false}\n" {
+		t.Fatalf("stdout = %q", got)
+	}
 }
 
 func TestPingPrintsPongOnlyWhenShellAnswers(t *testing.T) {
@@ -108,6 +146,41 @@ func TestReloadReportsSuccessfulRequest(t *testing.T) {
 	}
 	if got := stdout.String(); got != "reload requested\n" {
 		t.Fatalf("stdout = %q", got)
+	}
+}
+
+func TestNotificationsToggleUsesShellAction(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	dependencies := cli.Dependencies{Shell: shellStub{}}
+
+	exitCode := cli.Run([]string{"notifications", "toggle"}, &stdout, &stderr, dependencies)
+
+	if exitCode != 0 {
+		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if got := stdout.String(); got != "notifications toggled\n" {
+		t.Fatalf("stdout = %q", got)
+	}
+}
+
+func TestPowerMenuReportsUnavailableAction(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	dependencies := cli.Dependencies{
+		Shell: shellStub{powerErr: errors.New("wlogout not found")},
+	}
+
+	exitCode := cli.Run([]string{"power", "menu"}, &stdout, &stderr, dependencies)
+
+	if exitCode == 0 {
+		t.Fatal("Run() returned success for an unavailable power menu")
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if got := stderr.String(); got != "mitishell: power menu unavailable: wlogout not found\n" {
+		t.Fatalf("stderr = %q", got)
 	}
 }
 

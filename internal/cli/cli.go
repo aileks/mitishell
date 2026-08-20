@@ -13,6 +13,17 @@ import (
 type Shell interface {
 	Ping() error
 	Reload() error
+	ToggleNotifications() error
+	OpenPowerMenu() error
+}
+
+type Capabilities struct {
+	Notifications bool `json:"notifications"`
+	Power         bool `json:"power"`
+}
+
+type CapabilityDetector interface {
+	Detect() Capabilities
 }
 
 type Status string
@@ -38,13 +49,25 @@ type Weather interface {
 }
 
 type Dependencies struct {
-	ConfigPath string
-	Shell      Shell
-	Doctor     Doctor
-	Weather    Weather
+	ConfigPath   string
+	Shell        Shell
+	Doctor       Doctor
+	Weather      Weather
+	Capabilities CapabilityDetector
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 1 && args[0] == "_capabilities" {
+		if dependencies.Capabilities == nil {
+			fmt.Fprintln(stderr, "mitishell: capability detection unavailable")
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(dependencies.Capabilities.Detect()); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode capabilities: %v\n", err)
+			return 1
+		}
+		return 0
+	}
 	if len(args) == 1 && args[0] == "_config-resolve" {
 		resolved, loadErr := config.Load(dependencies.ConfigPath)
 		if loadErr != nil {
@@ -83,6 +106,22 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	}
 	if len(args) > 0 && args[0] == "config" {
 		return runConfig(args[1:], stdout, stderr, dependencies)
+	}
+	if len(args) == 2 && args[0] == "notifications" && args[1] == "toggle" {
+		if err := dependencies.Shell.ToggleNotifications(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: notifications unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "notifications toggled")
+		return 0
+	}
+	if len(args) == 2 && args[0] == "power" && args[1] == "menu" {
+		if err := dependencies.Shell.OpenPowerMenu(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: power menu unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "power menu opened")
+		return 0
 	}
 	if len(args) != 1 {
 		fmt.Fprintln(stderr, "mitishell: usage: mitishell <command>")
