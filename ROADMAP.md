@@ -7,7 +7,7 @@ Mitishell is developed as vertical features. Each completed feature updates this
 - [x] Shell foundation, configuration, IPC, CLI, and source installation
 - [x] Workspaces and active window
 - [x] Media island and popover
-- [ ] System metrics and popover
+- [x] System metrics and popover
 - [ ] Audio controls and popover
 - [ ] Clock and calendar
 - [ ] Local weather and forecast popover
