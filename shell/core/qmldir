@@ -1,3 +1,4 @@
+singleton Audio 1.0 Audio.qml
 singleton Config 1.0 Config.qml
 singleton Media 1.0 Media.qml
 singleton Motion 1.0 Motion.qml
