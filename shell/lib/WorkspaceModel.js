@@ -17,6 +17,14 @@ function label(id) {
     return id === 10 ? "0" : String(id);
 }
 
+function windowTitle(workspace) {
+    if (workspace === null || workspace.lastIpcObject === undefined) {
+        return "Desktop";
+    }
+    const title = String(workspace.lastIpcObject.lastwindowtitle || "").trim();
+    return title === "" ? "Desktop" : title;
+}
+
 if (typeof module !== "undefined") {
-    module.exports = { idsForMonitor, label };
+    module.exports = { idsForMonitor, label, windowTitle };
 }
