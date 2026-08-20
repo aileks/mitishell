@@ -8,18 +8,20 @@ XDG_DATA_HOME ?= $(HOME)/.local/share
 BIN_INSTALL_DIR ?= $(HOME)/.local/bin
 SHELL_INSTALL_DIR ?= $(XDG_DATA_HOME)/mitishell/shell
 
-.PHONY: build check install run uninstall
+.PHONY: build check install run test uninstall
 
 build:
 	mkdir -p bin
 	$(GO) build -o bin/mitishell ./cmd/mitishell
 
-check:
-	test -z "$$(find . -name '*.go' -not -path './vendor/*' -print0 | xargs -0 $(GOFMT) -l)"
-	$(GO) vet ./...
+test:
 	$(GO) test ./...
 	$(GO) test -race ./...
 	$(NODE) --test tests/*.test.js
+
+check: test
+	test -z "$$(find . -name '*.go' -not -path './vendor/*' -print0 | xargs -0 $(GOFMT) -l)"
+	$(GO) vet ./...
 	$(QMLLINT) -I $(QML_IMPORT_PATH) -I shell $$(find shell -name '*.qml' -print)
 	git diff --check
 
