@@ -46,10 +46,11 @@ func main() {
 		time.Now,
 	)
 	dependencies := cli.Dependencies{
-		ConfigPath: configPath,
-		Shell:      shell,
-		Doctor:     systemDoctor{configPath: configPath, shell: shell},
-		Weather:    weatherService,
+		ConfigPath:   configPath,
+		Shell:        shell,
+		Doctor:       systemDoctor{configPath: configPath, shell: shell},
+		Weather:      weatherService,
+		Capabilities: systemCapabilities{},
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
 }

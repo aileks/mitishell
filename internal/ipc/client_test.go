@@ -29,6 +29,20 @@ func TestReloadAcceptsAcknowledgement(t *testing.T) {
 	}
 }
 
+func TestToggleNotificationsAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "notifications toggled"), "/tmp/mitishell-shell")
+	if err := client.ToggleNotifications(); err != nil {
+		t.Fatalf("ToggleNotifications() error = %v", err)
+	}
+}
+
+func TestOpenPowerMenuRejectsUnexpectedResponse(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "unavailable"), "/tmp/mitishell-shell")
+	if err := client.OpenPowerMenu(); err == nil {
+		t.Fatal("OpenPowerMenu() accepted an unexpected response")
+	}
+}
+
 func fakeQS(t *testing.T, response string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "qs")
