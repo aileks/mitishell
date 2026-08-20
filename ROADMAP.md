@@ -4,7 +4,7 @@ Mitishell is developed as vertical features. Each completed feature updates this
 
 ## v0.1 Waybar replacement
 
-- [ ] Shell foundation, configuration, IPC, CLI, and source installation
+- [x] Shell foundation, configuration, IPC, CLI, and source installation
 - [ ] Workspaces and active window
 - [ ] Media island and popover
 - [ ] System metrics and popover
