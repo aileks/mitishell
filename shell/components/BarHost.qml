@@ -68,18 +68,43 @@ PanelWindow {
     }
 
     Rectangle {
+        id: centerIsland
+
         anchors.horizontalCenter: parent.horizontalCenter
-        width: 112
+        width: Config.bar.showMedia
+            ? Math.min(mediaTrigger.implicitWidth + Theme.spaceLg * 2, 360)
+            : 0
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.container
+        visible: Config.bar.showMedia
 
-        Rectangle {
+        Behavior on width {
+            NumberAnimation {
+                duration: Motion.duration(Motion.normal)
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        BarPopoverTrigger {
+            id: mediaTrigger
+
             anchors.centerIn: parent
-            width: 8
-            height: 8
-            radius: 4
-            color: Config.error === "" ? Theme.green : Theme.red
+            popoverKey: "media"
+            screen: root.modelData
+
+            MediaIsland {}
+        }
+
+        AnchoredPopover {
+            anchorItem: mediaTrigger
+            open: mediaTrigger.active && Config.bar.showMedia
+            contentWidth: 360
+            contentHeight: 300
+
+            MediaPopover {
+                anchors.fill: parent
+            }
         }
     }
 

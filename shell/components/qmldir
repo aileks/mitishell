@@ -1,5 +1,8 @@
 AnchoredPopover 1.0 AnchoredPopover.qml
 BarHost 1.0 BarHost.qml
 BarPopoverTrigger 1.0 BarPopoverTrigger.qml
+MediaIconButton 1.0 MediaIconButton.qml
+MediaIsland 1.0 MediaIsland.qml
+MediaPopover 1.0 MediaPopover.qml
 WorkspaceStrip 1.0 WorkspaceStrip.qml
 WindowTitle 1.0 WindowTitle.qml
