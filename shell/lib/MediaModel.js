@@ -31,6 +31,11 @@ function artist(player) {
     return clean(player.trackArtist);
 }
 
+function hasMetadata(player) {
+    return player !== null && player !== undefined
+        && (clean(player.trackTitle) !== "" || clean(player.trackArtist) !== "");
+}
+
 function duration(seconds) {
     if (!Number.isFinite(seconds) || seconds < 0) {
         return "--:--";
@@ -55,5 +60,5 @@ function pad(value) {
 }
 
 if (typeof module !== "undefined") {
-    module.exports = { choosePlayer, title, artist, duration };
+    module.exports = { choosePlayer, title, artist, hasMetadata, duration };
 }

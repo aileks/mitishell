@@ -2,7 +2,7 @@
 
 Mitishell is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
 
-> [!WARN]  
+> ![WARN]  
 > The project is under active development.
 
 ## Requirements
@@ -30,7 +30,9 @@ make run
 
 The current shell foundation renders output-specific Hyprland workspaces and
 window titles plus an MPRIS media island with artwork, playback controls,
-progress, and session-only player selection.
+progress, and session-only player selection. The right island supports separate,
+combined, or hidden CPU and memory metrics. Its popover includes load average,
+uptime, optional thermal data, and a Mission Center action.
 
 ## Configuration
 

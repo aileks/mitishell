@@ -44,6 +44,13 @@ test("display text falls back from metadata to player identity", () => {
     assert.equal(MediaModel.artist(null), "");
 });
 
+test("media is meaningful only when track metadata is present", () => {
+    assert.equal(MediaModel.hasMetadata({ trackTitle: "Song", trackArtist: "" }), true);
+    assert.equal(MediaModel.hasMetadata({ trackTitle: "", trackArtist: "Artist" }), true);
+    assert.equal(MediaModel.hasMetadata({ trackTitle: "", trackArtist: "" }), false);
+    assert.equal(MediaModel.hasMetadata(null), false);
+});
+
 test("duration formatting handles unknown, minute, and hour values", () => {
     assert.equal(MediaModel.duration(-1), "--:--");
     assert.equal(MediaModel.duration(65), "1:05");

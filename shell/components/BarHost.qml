@@ -71,13 +71,13 @@ PanelWindow {
         id: centerIsland
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Config.bar.showMedia
+        width: Config.bar.showMedia && Media.meaningful
             ? Math.min(mediaTrigger.implicitWidth + Theme.spaceLg * 2, 360)
             : 0
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.container
-        visible: Config.bar.showMedia
+        visible: Config.bar.showMedia && Media.meaningful
 
         Behavior on width {
             NumberAnimation {
@@ -98,7 +98,7 @@ PanelWindow {
 
         AnchoredPopover {
             anchorItem: mediaTrigger
-            open: mediaTrigger.active && Config.bar.showMedia
+            open: mediaTrigger.active && Config.bar.showMedia && Media.meaningful
             contentWidth: 360
             contentHeight: 300
 
@@ -109,18 +109,53 @@ PanelWindow {
     }
 
     Rectangle {
+        id: rightIsland
+
         anchors.right: parent.right
-        width: 180
+        width: rightContent.implicitWidth > 0
+            ? rightContent.implicitWidth + Theme.spaceLg * 2 : 0
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.container
+        visible: width > 0
 
-        Text {
+        Row {
+            id: rightContent
+
             anchors.centerIn: parent
-            text: Config.error === "" ? "ready" : "config error"
-            color: Config.error === "" ? Theme.text : Theme.red
-            font.family: Theme.fontMono
-            font.pixelSize: 12
+            spacing: Theme.spaceMd
+
+            BarPopoverTrigger {
+                id: systemTrigger
+
+                visible: Config.bar.systemMetrics !== "hidden"
+                popoverKey: "system"
+                screen: root.modelData
+
+                SystemMetricsIsland {
+                    mode: Config.bar.systemMetrics
+                }
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 8
+                height: 8
+                radius: 4
+                visible: Config.error !== ""
+                color: Theme.red
+            }
+        }
+
+        AnchoredPopover {
+            anchorItem: systemTrigger
+            open: systemTrigger.active && Config.bar.systemMetrics !== "hidden"
+            contentWidth: 336
+            contentHeight: SystemMetrics.temperatureC !== null ? 330 : 260
+
+            SystemPopover {
+                anchors.fill: parent
+            }
         }
     }
 }
