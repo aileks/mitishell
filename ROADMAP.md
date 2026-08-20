@@ -11,7 +11,7 @@ Mitishell is developed as vertical features. Each completed feature updates this
 - [x] Audio controls and popover
 - [x] Clock and calendar
 - [x] Local weather and forecast popover
-- [ ] System tray and menus
+- [x] System tray and menus
 - [ ] Notification and power compatibility actions
 
 ## Planned releases
