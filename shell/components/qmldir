@@ -1,5 +1,7 @@
 AnchoredPopover 1.0 AnchoredPopover.qml
 AudioDeviceRow 1.0 AudioDeviceRow.qml
+AudioIsland 1.0 AudioIsland.qml
+AudioPopover 1.0 AudioPopover.qml
 AudioSlider 1.0 AudioSlider.qml
 BarHost 1.0 BarHost.qml
 BarPopoverTrigger 1.0 BarPopoverTrigger.qml

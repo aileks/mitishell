@@ -139,6 +139,23 @@ PanelWindow {
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 16
+                visible: Config.bar.systemMetrics !== "hidden"
+                color: Theme.overlay
+            }
+
+            BarPopoverTrigger {
+                id: audioTrigger
+
+                popoverKey: "audio"
+                screen: root.modelData
+
+                AudioIsland {}
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
                 width: 8
                 height: 8
                 radius: 4
@@ -154,6 +171,17 @@ PanelWindow {
             contentHeight: SystemMetrics.temperatureC !== null ? 330 : 260
 
             SystemPopover {
+                anchors.fill: parent
+            }
+        }
+
+        AnchoredPopover {
+            anchorItem: audioTrigger
+            open: audioTrigger.active
+            contentWidth: 376
+            contentHeight: 404
+
+            AudioPopover {
                 anchors.fill: parent
             }
         }
