@@ -174,6 +174,24 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1
                 height: 16
+                visible: Tray.available
+                color: Theme.overlay
+            }
+
+            BarPopoverTrigger {
+                id: trayTrigger
+
+                visible: Tray.available
+                popoverKey: "tray"
+                screen: root.modelData
+
+                TrayIsland {}
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 16
                 visible: Weather.visible
                 color: Theme.overlay
             }
@@ -228,6 +246,18 @@ PanelWindow {
 
             CalendarPopover {
                 anchors.fill: parent
+            }
+        }
+
+        AnchoredPopover {
+            anchorItem: trayTrigger
+            open: trayTrigger.active && Tray.available
+            contentWidth: 340
+            contentHeight: 340
+
+            TrayPopover {
+                anchors.fill: parent
+                opened: trayTrigger.active && Tray.available
             }
         }
 

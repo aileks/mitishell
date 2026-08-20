@@ -35,7 +35,8 @@ combined, or hidden CPU and memory metrics. Its popover includes load average,
 uptime, optional thermal data, and a Mission Center action. Native PipeWire
 controls provide output and input volume, mute, and default-device selection.
 The locale-aware clock opens a keyboard-navigable month calendar with today and
-month navigation.
+month navigation. Active status notifier items appear in the bar and open a
+keyboard-accessible tray surface with activation, scrolling, and nested menus.
 
 Local weather is disabled by default. Enabling `weather.enabled` opts into a
 one-shot city-level GeoClue request and an Open-Meteo forecast request. Mitishell
