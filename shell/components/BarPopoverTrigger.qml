@@ -24,6 +24,8 @@ FocusScope {
     Item {
         id: contentItem
         anchors.fill: parent
+        implicitWidth: childrenRect.width
+        implicitHeight: childrenRect.height
     }
 
     TapHandler {

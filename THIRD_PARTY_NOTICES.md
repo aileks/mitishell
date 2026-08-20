@@ -1,5 +1,7 @@
 # Third-party notices
 
-No third-party source or assets are vendored in the scaffold.
+## Lucide
 
-This file will be updated when the reviewed Lucide SVG subset is added.
+The SVG icons under `shell/assets/icons` are adapted from Lucide. Lucide is licensed
+under the ISC license. See `licenses/lucide.txt` for the complete upstream
+license notice.

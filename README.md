@@ -23,7 +23,14 @@ make check
 make run
 ```
 
+`make test` runs the Go suite and the pure JavaScript models shared with QML.
+`make check` adds Go formatting and vet checks plus QML linting.
+
 `make run` starts the shell from the repository. It does not modify Hyprland configuration or session startup.
+
+The current shell foundation renders output-specific Hyprland workspaces and
+window titles plus an MPRIS media island with artwork, playback controls,
+progress, and session-only player selection.
 
 ## Configuration
 
