@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Mitishell
+Comment=Personal Hyprland desktop shell
+Exec=mitishell
+Type=Application
+NoDisplay=true
+X-Geoclue-Reason=Show local weather after the user enables it
