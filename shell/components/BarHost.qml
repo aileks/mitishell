@@ -71,13 +71,13 @@ PanelWindow {
         id: centerIsland
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Config.bar.showMedia
+        width: Config.bar.showMedia && Media.meaningful
             ? Math.min(mediaTrigger.implicitWidth + Theme.spaceLg * 2, 360)
             : 0
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.container
-        visible: Config.bar.showMedia
+        visible: Config.bar.showMedia && Media.meaningful
 
         Behavior on width {
             NumberAnimation {
@@ -98,7 +98,7 @@ PanelWindow {
 
         AnchoredPopover {
             anchorItem: mediaTrigger
-            open: mediaTrigger.active && Config.bar.showMedia
+            open: mediaTrigger.active && Config.bar.showMedia && Media.meaningful
             contentWidth: 360
             contentHeight: 300
 

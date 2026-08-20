@@ -15,6 +15,7 @@ QtObject {
     readonly property string title: MediaModel.title(activePlayer)
     readonly property string artist: MediaModel.artist(activePlayer)
     readonly property bool available: activePlayer !== null
+    readonly property bool meaningful: MediaModel.hasMetadata(activePlayer)
 
     function selectPlayer(dbusName) {
         preferredDbusName = dbusName;
