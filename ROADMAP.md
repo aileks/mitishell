@@ -8,7 +8,7 @@ Mitishell is developed as vertical features. Each completed feature updates this
 - [x] Workspaces and active window
 - [x] Media island and popover
 - [x] System metrics and popover
-- [ ] Audio controls and popover
+- [x] Audio controls and popover
 - [ ] Clock and calendar
 - [ ] Local weather and forecast popover
 - [ ] System tray and menus
@@ -16,8 +16,8 @@ Mitishell is developed as vertical features. Each completed feature updates this
 
 ## Planned releases
 
-- [ ] v0.2: display brightness and OSD
-- [ ] v0.3: control center
+- [ ] v0.2: display brightness, audio and brightness CLI actions, and OSD
+- [ ] v0.3: control center, shared audio pages, and reliable per-application stream controls
 - [ ] v0.4: notification daemon and center
 - [ ] v0.5: Personal Wi-Fi management and phone-hotspot joining
 - [ ] v0.6: Bluetooth management and pairing agent
