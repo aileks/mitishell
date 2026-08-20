@@ -34,6 +34,8 @@ progress, and session-only player selection. The right island supports separate,
 combined, or hidden CPU and memory metrics. Its popover includes load average,
 uptime, optional thermal data, and a Mission Center action. Native PipeWire
 controls provide output and input volume, mute, and default-device selection.
+The locale-aware clock opens a keyboard-navigable month calendar with today and
+month navigation.
 
 ## Configuration
 

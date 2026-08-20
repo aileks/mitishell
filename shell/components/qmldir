@@ -5,6 +5,8 @@ AudioPopover 1.0 AudioPopover.qml
 AudioSlider 1.0 AudioSlider.qml
 BarHost 1.0 BarHost.qml
 BarPopoverTrigger 1.0 BarPopoverTrigger.qml
+CalendarPopover 1.0 CalendarPopover.qml
+ClockIsland 1.0 ClockIsland.qml
 IconButton 1.0 IconButton.qml
 MediaIsland 1.0 MediaIsland.qml
 MediaPopover 1.0 MediaPopover.qml

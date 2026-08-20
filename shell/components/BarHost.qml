@@ -156,6 +156,22 @@ PanelWindow {
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 16
+                color: Theme.overlay
+            }
+
+            BarPopoverTrigger {
+                id: clockTrigger
+
+                popoverKey: "calendar"
+                screen: root.modelData
+
+                ClockIsland {}
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
                 width: 8
                 height: 8
                 radius: 4
@@ -182,6 +198,17 @@ PanelWindow {
             contentHeight: 404
 
             AudioPopover {
+                anchors.fill: parent
+            }
+        }
+
+        AnchoredPopover {
+            anchorItem: clockTrigger
+            open: clockTrigger.active
+            contentWidth: 320
+            contentHeight: 348
+
+            CalendarPopover {
                 anchors.fill: parent
             }
         }
