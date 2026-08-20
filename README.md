@@ -2,8 +2,8 @@
 
 Mitishell is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
 
-> ![WARN]  
-> The project is under active development.
+> [!WARNING]  
+> This project is under active development.
 
 ## Requirements
 
