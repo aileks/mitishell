@@ -250,6 +250,18 @@ PanelWindow {
         }
 
         AnchoredPopover {
+            anchorItem: trayTrigger
+            open: trayTrigger.active && Tray.available
+            contentWidth: 340
+            contentHeight: 340
+
+            TrayPopover {
+                anchors.fill: parent
+                opened: trayTrigger.active && Tray.available
+            }
+        }
+
+        AnchoredPopover {
             anchorItem: weatherTrigger
             open: weatherTrigger.active && Weather.visible
             contentWidth: 380
