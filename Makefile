@@ -7,6 +7,7 @@ QML_IMPORT_PATH ?= /usr/lib/qt6/qml
 XDG_DATA_HOME ?= $(HOME)/.local/share
 BIN_INSTALL_DIR ?= $(HOME)/.local/bin
 SHELL_INSTALL_DIR ?= $(XDG_DATA_HOME)/mitishell/shell
+DESKTOP_INSTALL_DIR ?= $(XDG_DATA_HOME)/applications
 
 .PHONY: build check install run test uninstall
 
@@ -31,6 +32,7 @@ run: build
 
 install: build
 	install -Dm755 bin/mitishell $(BIN_INSTALL_DIR)/mitishell
+	install -Dm644 data/mitishell.desktop $(DESKTOP_INSTALL_DIR)/mitishell.desktop
 	find shell -type f -print0 | while IFS= read -r -d '' file; do \
 		relative="$${file#shell/}"; \
 		install -Dm644 "$$file" "$(SHELL_INSTALL_DIR)/$$relative"; \
@@ -38,6 +40,7 @@ install: build
 
 uninstall:
 	rm -f $(BIN_INSTALL_DIR)/mitishell
+	rm -f $(DESKTOP_INSTALL_DIR)/mitishell.desktop
 	find shell -type f -print0 | while IFS= read -r -d '' file; do \
 		relative="$${file#shell/}"; \
 		rm -f "$(SHELL_INSTALL_DIR)/$$relative"; \

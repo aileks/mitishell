@@ -37,6 +37,13 @@ controls provide output and input volume, mute, and default-device selection.
 The locale-aware clock opens a keyboard-navigable month calendar with today and
 month navigation.
 
+Local weather is disabled by default. Enabling `weather.enabled` opts into a
+one-shot city-level GeoClue request and an Open-Meteo forecast request. Mitishell
+rounds coordinates before sending them, never caches coordinates, and has no
+manual or secondary IP-location fallback. Cached normalized forecasts expire
+after six hours. The popover attributes [Open-Meteo](https://open-meteo.com/en/docs);
+its service is subject to the provider's [usage terms](https://open-meteo.com/en/terms).
+
 ## Configuration
 
 Mitishell reads `$XDG_CONFIG_HOME/mitishell/config.json`. When the file is absent, built-in defaults are used without creating it.
@@ -47,6 +54,9 @@ bin/mitishell config validate
 bin/mitishell config get bar.outputs
 bin/mitishell config set weather.enabled true
 ```
+
+Run `make install` before enabling local weather so GeoClue can resolve the
+installed `mitishell.desktop` identity and display its authorization reason.
 
 Set `MITISHELL_QS_PATH` to the repository's `shell` directory when using CLI IPC commands against a development instance.
 

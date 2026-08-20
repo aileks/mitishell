@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/aileks/mitishell/internal/config"
+	"github.com/aileks/mitishell/internal/weather"
 )
 
 type Shell interface {
@@ -31,10 +33,15 @@ type Doctor interface {
 	Checks() []Check
 }
 
+type Weather interface {
+	Snapshot(context.Context, bool, weather.Units) weather.Result
+}
+
 type Dependencies struct {
 	ConfigPath string
 	Shell      Shell
 	Doctor     Doctor
+	Weather    Weather
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
@@ -49,6 +56,27 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		if loadErr != nil {
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_weather-snapshot" {
+		units := weather.Units(args[1])
+		if units != weather.Celsius && units != weather.Fahrenheit {
+			fmt.Fprintln(stderr, "mitishell: weather units must be celsius or fahrenheit")
+			return 2
+		}
+		resolved, err := config.Load(dependencies.ConfigPath)
+		if err != nil {
+			resolved = config.Defaults()
+		}
+		result := dependencies.Weather.Snapshot(
+			context.Background(),
+			resolved.Weather.Enabled,
+			units,
+		)
+		if err := json.NewEncoder(stdout).Encode(result); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode weather: %v\n", err)
 			return 1
 		}
 		return 0

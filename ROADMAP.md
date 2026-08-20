@@ -10,7 +10,7 @@ Mitishell is developed as vertical features. Each completed feature updates this
 - [x] System metrics and popover
 - [x] Audio controls and popover
 - [x] Clock and calendar
-- [ ] Local weather and forecast popover
+- [x] Local weather and forecast popover
 - [ ] System tray and menus
 - [ ] Notification and power compatibility actions
 
@@ -23,7 +23,7 @@ Mitishell is developed as vertical features. Each completed feature updates this
 - [ ] v0.6: Bluetooth management and pairing agent
 - [ ] v0.7: power and session menu
 - [ ] v0.8: settings window
-- [ ] v0.9: desktop stabilization and diagnostics
+- [ ] v0.9: desktop stabilization, diagnostics, and weather refresh on resume or meaningful network recovery
 - [ ] v1.0: accepted and dogfooded desktop shell
 
 ## Planned after v1

@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/ipc"
+	"github.com/aileks/mitishell/internal/weather"
 )
 
 func main() {
@@ -27,10 +30,26 @@ func main() {
 		qsExecutable = "qs"
 	}
 	shell := ipc.NewClient(qsExecutable, shellPath)
+	cacheDirectory, err := os.UserCacheDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "mitishell: resolve user cache directory: %v\n", err)
+		os.Exit(1)
+	}
+	weatherService := weather.NewService(
+		weather.NewGeoClue("mitishell", 12*time.Second),
+		weather.NewOpenMeteoClient(
+			&http.Client{Timeout: 15 * time.Second},
+			"https://api.open-meteo.com/v1/forecast",
+			time.Now,
+		),
+		weather.NewFileCache(filepath.Join(cacheDirectory, "mitishell", "weather.json")),
+		time.Now,
+	)
 	dependencies := cli.Dependencies{
 		ConfigPath: configPath,
 		Shell:      shell,
 		Doctor:     systemDoctor{configPath: configPath, shell: shell},
+		Weather:    weatherService,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
 }

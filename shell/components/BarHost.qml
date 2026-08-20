@@ -172,6 +172,24 @@ PanelWindow {
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 16
+                visible: Weather.visible
+                color: Theme.overlay
+            }
+
+            BarPopoverTrigger {
+                id: weatherTrigger
+
+                visible: Weather.visible
+                popoverKey: "weather"
+                screen: root.modelData
+
+                WeatherIsland {}
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
                 width: 8
                 height: 8
                 radius: 4
@@ -209,6 +227,17 @@ PanelWindow {
             contentHeight: 348
 
             CalendarPopover {
+                anchors.fill: parent
+            }
+        }
+
+        AnchoredPopover {
+            anchorItem: weatherTrigger
+            open: weatherTrigger.active && Weather.visible
+            contentWidth: 380
+            contentHeight: 454
+
+            WeatherPopover {
                 anchors.fill: parent
             }
         }

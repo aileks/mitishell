@@ -2,6 +2,8 @@ package cli_test
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -9,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/aileks/mitishell/internal/cli"
+	"github.com/aileks/mitishell/internal/weather"
 )
 
 type shellStub struct {
@@ -18,6 +21,25 @@ type shellStub struct {
 
 type doctorStub struct {
 	checks []cli.Check
+}
+
+type weatherStub struct {
+	calls   int
+	enabled bool
+}
+
+func (stub *weatherStub) Snapshot(
+	_ context.Context,
+	enabled bool,
+	_ weather.Units,
+) weather.Result {
+	stub.calls++
+	stub.enabled = enabled
+	state := weather.Ready
+	if !enabled {
+		state = weather.Disabled
+	}
+	return weather.Result{State: state}
 }
 
 func (stub doctorStub) Checks() []cli.Check {
@@ -197,6 +219,35 @@ func TestInternalConfigResolveReturnsDefaultsForInvalidColdStart(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "using defaults") {
 		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestInternalWeatherSnapshotKeepsDefaultOptOutDisabled(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	provider := &weatherStub{}
+	dependencies := cli.Dependencies{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Shell:      shellStub{},
+		Weather:    provider,
+	}
+
+	exitCode := cli.Run(
+		[]string{"_weather-snapshot", "celsius"},
+		&stdout,
+		&stderr,
+		dependencies,
+	)
+
+	if exitCode != 0 || provider.calls != 1 || provider.enabled {
+		t.Fatalf("exit=%d calls=%d enabled=%v stderr=%q", exitCode, provider.calls, provider.enabled, stderr.String())
+	}
+	var result weather.Result
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatalf("decode output: %v", err)
+	}
+	if result.State != weather.Disabled {
+		t.Fatalf("result = %#v", result)
 	}
 }
 

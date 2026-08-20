@@ -13,5 +13,8 @@ MediaPopover 1.0 MediaPopover.qml
 MetricCard 1.0 MetricCard.qml
 SystemMetricsIsland 1.0 SystemMetricsIsland.qml
 SystemPopover 1.0 SystemPopover.qml
+WeatherIcon 1.0 WeatherIcon.qml
+WeatherIsland 1.0 WeatherIsland.qml
+WeatherPopover 1.0 WeatherPopover.qml
 WorkspaceStrip 1.0 WorkspaceStrip.qml
 WindowTitle 1.0 WindowTitle.qml
