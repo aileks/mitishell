@@ -16,6 +16,7 @@ QtObject {
     property int uptimeSeconds: 0
     property var temperatureC: null
     property bool loaded: false
+    property string launchError: ""
 
     function refresh() {
         cpuFile.reload();
@@ -29,6 +30,23 @@ QtObject {
         cpuPercent = SystemModel.cpuUsage(previousCpu, current);
         previousCpu = current;
         loaded = current !== null;
+    }
+
+    function openMissionCenter() {
+        if (!missionCenter.running) {
+            launchError = "";
+            missionCenter.running = true;
+        }
+    }
+
+    property Process missionCenterProcess: Process {
+        id: missionCenter
+        command: ["missioncenter"]
+        onExited: function(exitCode) {
+            if (exitCode !== 0) {
+                root.launchError = "Mission Center could not be opened";
+            }
+        }
     }
 
     property FileView cpuFile: FileView {
