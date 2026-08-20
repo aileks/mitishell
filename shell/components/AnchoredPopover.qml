@@ -19,6 +19,20 @@ PopupWindow {
     implicitWidth: contentWidth
     implicitHeight: contentHeight
 
+    onOpenChanged: {
+        if (open) {
+            Qt.callLater(function() {
+                contentItem.forceActiveFocus(Qt.TabFocusReason);
+            });
+        }
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: root.open
+        onActivated: SurfaceCoordinator.close()
+    }
+
     HyprlandFocusGrab {
         active: root.open
         windows: root.anchorWindow === null ? [root] : [root, root.anchorWindow]
