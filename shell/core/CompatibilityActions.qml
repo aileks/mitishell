@@ -84,7 +84,16 @@ QtObject {
     property Process powerActionProcess: Process {
         id: powerProcess
 
-        command: ["wlogout"]
+        command: [
+            "wlogout",
+            "-b", "3",
+            "-c", "20",
+            "-r", "20",
+            "-L", "900",
+            "-R", "900",
+            "-T", "550",
+            "-B", "550"
+        ]
         stderr: StdioCollector {
             id: powerErrors
             waitForEnd: true
