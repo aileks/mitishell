@@ -208,10 +208,38 @@ PanelWindow {
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 16
+                visible: CompatibilityActions.notificationsAvailable
+                    || CompatibilityActions.powerAvailable
+                color: Theme.overlay
+            }
+
+            IconButton {
+                visible: CompatibilityActions.notificationsAvailable
+                width: 22
+                height: 22
+                iconSource: Qt.resolvedUrl("../assets/icons/bell.svg")
+                accessibleName: "Toggle notifications"
+                onClicked: CompatibilityActions.toggleNotifications()
+            }
+
+            IconButton {
+                visible: CompatibilityActions.powerAvailable
+                width: 22
+                height: 22
+                iconSource: Qt.resolvedUrl("../assets/icons/power.svg")
+                accessibleName: "Open power menu"
+                onClicked: CompatibilityActions.openPowerMenu()
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
                 width: 8
                 height: 8
                 radius: 4
                 visible: Config.error !== ""
+                    || CompatibilityActions.error !== ""
                 color: Theme.red
             }
         }
