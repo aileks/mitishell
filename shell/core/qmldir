@@ -1,4 +1,5 @@
 singleton Config 1.0 Config.qml
+singleton Media 1.0 Media.qml
 singleton Motion 1.0 Motion.qml
 singleton SurfaceCoordinator 1.0 SurfaceCoordinator.qml
 singleton Theme 1.0 Theme.qml
