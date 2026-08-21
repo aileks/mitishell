@@ -47,7 +47,9 @@ PanelWindow {
         Row {
             id: leftContent
 
-            anchors.centerIn: parent
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spaceLg
+            anchors.verticalCenter: parent.verticalCenter
             width: Math.min(implicitWidth, parent.width - Theme.spaceLg * 2)
             spacing: Theme.spaceMd
 
