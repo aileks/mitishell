@@ -7,11 +7,16 @@ QtObject {
 
     property date now: new Date()
     readonly property var locale: Qt.locale()
+    readonly property string timeFormat: withoutSeconds(locale.timeFormat(Locale.ShortFormat))
     readonly property var today: ({
         "year": now.getFullYear(),
         "month": now.getMonth(),
         "day": now.getDate()
     })
+
+    function withoutSeconds(format) {
+        return format.replace(/([:.])?s{1,2}/g, "").replace(/\s+/g, " ").trim();
+    }
 
     property Timer tickTimer: Timer {
         interval: 1000

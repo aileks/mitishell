@@ -9,9 +9,9 @@ Item {
         id: clockLabel
 
         anchors.centerIn: parent
-        text: Qt.formatTime(Clock.now, Locale.ShortFormat)
+        text: Qt.formatTime(Clock.now, Clock.timeFormat)
         color: Theme.text
         font.family: Theme.fontMono
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 }
