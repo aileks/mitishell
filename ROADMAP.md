@@ -28,10 +28,11 @@ Mitishell is developed as vertical features. Each completed feature updates this
 
 ## Known issues
 
-- [ ] v0.9: correct the default proportional fonts and type scale across the bar and popovers
+- [x] corrected the default proportional fonts and type scale across the bar and popovers
 - [ ] v0.9: prevent workspace pill text from shifting during odd-to-even workspace transitions
 - [ ] v0.9: remove the duplicated sound-source indicator from the center media island
 - [ ] v0.9: correct spacing and text sizing in the audio popover
+- [ ] v0.9: prevent stale Firefox MPRIS playback state after changing browser streams
 
 ## Planned after v1
 
