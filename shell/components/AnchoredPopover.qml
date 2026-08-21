@@ -81,7 +81,7 @@ PopupWindow {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Motion.duration(Motion.fast)
+                duration: Motion.duration(Motion.quick)
                 easing.type: Easing.OutCubic
             }
         }
