@@ -1,6 +1,6 @@
 # Mitishell
 
-Mitishell is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
+Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
 
 > [!WARNING]  
 > This project is under active development.
@@ -36,7 +36,8 @@ uptime, optional thermal data, and a Mission Center action. Native PipeWire
 controls provide output and input volume, mute, and default-device selection.
 The locale-aware clock opens a keyboard-navigable month calendar with today and
 month navigation. Active status notifier items appear as directly interactive
-bar icons with primary, secondary, scrolling, keyboard, and native-menu actions.
+bar icons with primary, secondary, scrolling, keyboard, and anchored Cinder
+Grove menu actions.
 Capability-aware notification and power entries temporarily open SwayNC and
 wlogout. Each entry stays hidden when its external program is unavailable.
 

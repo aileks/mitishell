@@ -1,29 +1,48 @@
 import QtQuick
-import Quickshell
 import Quickshell.Services.SystemTray
 import "../core"
 
 Row {
     id: root
 
-    property var activeMenuAnchor: null
+    required property var screen
+    property var activeItem: null
+    property Item activeAnchor: root
+    readonly property bool menuOpen: SurfaceCoordinator.activeKey === "tray"
+        && SurfaceCoordinator.originScreen === screen
 
     spacing: Theme.spaceXs
     height: 24
 
-    function showMenu(anchor) {
-        SurfaceCoordinator.close();
-        if (activeMenuAnchor !== null && activeMenuAnchor !== anchor
-                && activeMenuAnchor.visible) {
-            activeMenuAnchor.close();
-        }
-        if (anchor.visible) {
-            anchor.close();
-            activeMenuAnchor = null;
+    function showMenu(item, anchor) {
+        if (!item.hasMenu) {
             return;
         }
-        activeMenuAnchor = anchor;
-        anchor.open();
+
+        if (menuOpen && activeItem === item) {
+            SurfaceCoordinator.close();
+            return;
+        }
+
+        activeItem = item;
+        activeAnchor = anchor;
+        SurfaceCoordinator.open("tray", screen);
+    }
+
+    function closeMenu() {
+        if (menuOpen) {
+            SurfaceCoordinator.close();
+        }
+    }
+
+    function forgetItem(item) {
+        if (activeItem !== item) {
+            return;
+        }
+
+        closeMenu();
+        activeItem = null;
+        activeAnchor = root;
     }
 
     Repeater {
@@ -41,6 +60,7 @@ Row {
             Accessible.description: Tray.description(modelData)
             Accessible.role: Accessible.Button
             Accessible.onPressAction: primaryAction()
+            Component.onDestruction: root.forgetItem(modelData)
 
             function primaryAction() {
                 if (modelData.onlyMenu && modelData.hasMenu) {
@@ -63,17 +83,7 @@ Row {
             }
 
             function openMenu() {
-                if (!modelData.hasMenu || trayItem.QsWindow.window === null) {
-                    return;
-                }
-                const point = trayItem.QsWindow.window.contentItem.mapFromItem(
-                    trayItem,
-                    trayItem.width / 2,
-                    trayItem.height,
-                );
-                menuAnchor.anchor.rect.x = Math.round(point.x);
-                menuAnchor.anchor.rect.y = Math.round(point.y);
-                root.showMenu(menuAnchor);
+                root.showMenu(modelData, trayItem);
             }
 
             Rectangle {
@@ -121,23 +131,6 @@ Row {
                 }
             }
 
-            QsMenuAnchor {
-                id: menuAnchor
-
-                menu: trayItem.modelData.menu
-                anchor.window: trayItem.QsWindow.window
-                anchor.edges: Edges.Top | Edges.Left
-                anchor.gravity: Edges.Bottom | Edges.Right
-                anchor.rect.width: 1
-                anchor.rect.height: 1
-
-                onClosed: {
-                    if (root.activeMenuAnchor === menuAnchor) {
-                        root.activeMenuAnchor = null;
-                    }
-                }
-            }
-
             TapHandler {
                 acceptedButtons: Qt.LeftButton
                 onTapped: trayItem.primaryAction()
@@ -172,6 +165,35 @@ Row {
                 trayItem.contextAction();
                 event.accepted = true;
             }
+        }
+    }
+
+    Connections {
+        target: root.activeItem
+        ignoreUnknownSignals: true
+
+        function onHasMenuChanged() {
+            if (root.activeItem !== null && !root.activeItem.hasMenu) {
+                root.forgetItem(root.activeItem);
+            }
+        }
+    }
+
+    AnchoredPopover {
+        id: trayPopover
+
+        anchorItem: root.activeAnchor
+        open: root.menuOpen && root.activeItem !== null && root.activeItem.hasMenu
+        contentWidth: 320
+        contentHeight: trayMenu.implicitHeight + Theme.spaceLg * 2
+
+        TrayMenu {
+            id: trayMenu
+
+            anchors.fill: parent
+            menu: root.activeItem === null ? null : root.activeItem.menu
+            opened: trayPopover.open
+            onDismissRequested: root.closeMenu()
         }
     }
 }

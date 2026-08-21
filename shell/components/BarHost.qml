@@ -194,6 +194,7 @@ PanelWindow {
 
             TrayIsland {
                 visible: Tray.available
+                screen: root.modelData
             }
 
             Rectangle {
