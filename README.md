@@ -30,13 +30,13 @@ make run
 
 The current shell foundation renders output-specific Hyprland workspaces and
 window titles plus an MPRIS media island with artwork, playback controls,
-progress, and session-only player selection. The right island supports separate,
+progress, logical player grouping, and session-only player selection. The right island supports separate,
 combined, or hidden CPU and memory metrics. Its popover includes load average,
 uptime, optional thermal data, and a Mission Center action. Native PipeWire
 controls provide output and input volume, mute, and default-device selection.
 The locale-aware clock opens a keyboard-navigable month calendar with today and
-month navigation. Active status notifier items appear in the bar and open a
-keyboard-accessible tray surface with activation, scrolling, and nested menus.
+month navigation. Active status notifier items appear as directly interactive
+bar icons with primary, secondary, scrolling, keyboard, and native-menu actions.
 Capability-aware notification and power entries temporarily open SwayNC and
 wlogout. Each entry stays hidden when its external program is unavailable.
 
