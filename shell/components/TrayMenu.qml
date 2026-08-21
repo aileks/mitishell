@@ -24,10 +24,12 @@ FocusScope {
     readonly property int separatorHeight: 7
     readonly property int listSpacing: 2
     readonly property int rowsHeight: calculateRowsHeight()
+    readonly property int naturalWidth: calculateWidth()
     readonly property int naturalHeight: headerHeight
         + (headerHeight === 0 ? 0 : Theme.spaceXs)
         + Math.max(34, rowsHeight)
 
+    implicitWidth: Math.max(188, Math.min(288, naturalWidth))
     implicitHeight: Math.min(368, naturalHeight)
 
     onMenuChanged: {
@@ -62,6 +64,12 @@ FocusScope {
         menu: root.menu
     }
 
+    FontMetrics {
+        id: menuFontMetrics
+        font.family: Theme.fontSans
+        font.pixelSize: Theme.fontSizeBody
+    }
+
     function calculateRowsHeight() {
         let height = 0;
         for (let index = 0; index < currentEntries.length; index++) {
@@ -74,15 +82,27 @@ FocusScope {
         return height;
     }
 
+    function calculateWidth() {
+        let labelWidth = submenuStack.length === 0
+            ? 0 : menuFontMetrics.advanceWidth(currentTitle) + 8;
+        let hasSubmenu = false;
+        for (let index = 0; index < currentEntries.length; index++) {
+            const entry = currentEntries[index];
+            if (entry.isSeparator) {
+                continue;
+            }
+            labelWidth = Math.max(labelWidth, menuFontMetrics.advanceWidth(entry.text));
+            hasSubmenu = hasSubmenu || entry.hasChildren;
+        }
+
+        return Math.ceil(34 + labelWidth + Theme.spaceSm + (hasSubmenu ? 18 : 0));
+    }
+
     function accentFor(index) {
         const accents = [
             Theme.orange,
-            Theme.green,
             Theme.blue,
-            Theme.purple,
-            Theme.cyan,
-            Theme.pink,
-            Theme.yellow,
+            Theme.green,
         ];
         return accents[index % accents.length];
     }

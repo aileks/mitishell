@@ -184,7 +184,7 @@ Row {
 
         anchorItem: root.activeAnchor
         open: root.menuOpen && root.activeItem !== null && root.activeItem.hasMenu
-        contentWidth: 320
+        contentWidth: trayMenu.implicitWidth + Theme.spaceLg * 2
         contentHeight: trayMenu.implicitHeight + Theme.spaceLg * 2
 
         TrayMenu {
