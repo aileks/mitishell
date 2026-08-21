@@ -6,6 +6,10 @@ PanelWindow {
     id: root
 
     required property var modelData
+    readonly property real availableCenterWidth: Math.max(0, 2 * Math.min(
+        width / 2 - leftIsland.width - Theme.spaceLg,
+        width / 2 - rightIsland.width - Theme.spaceLg,
+    ))
 
     screen: modelData
     visible: Config.outputEnabled(modelData.name)
@@ -25,6 +29,8 @@ PanelWindow {
     }
 
     Rectangle {
+        id: leftIsland
+
         anchors.left: parent.left
         width: Math.min(leftContent.implicitWidth + Theme.spaceLg * 2, 560)
         height: parent.height
@@ -71,13 +77,15 @@ PanelWindow {
         id: centerIsland
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Config.bar.showMedia && Media.meaningful
-            ? Math.min(mediaTrigger.implicitWidth + Theme.spaceLg * 2, 360)
+        width: visible
+            ? Math.min(312, root.availableCenterWidth)
             : 0
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.container
         visible: Config.bar.showMedia && Media.meaningful
+            && root.availableCenterWidth >= 72
+        clip: true
 
         Behavior on width {
             NumberAnimation {
@@ -90,10 +98,14 @@ PanelWindow {
             id: mediaTrigger
 
             anchors.centerIn: parent
+            width: Math.max(0, parent.width - Theme.spaceLg * 2)
+            clip: true
             popoverKey: "media"
             screen: root.modelData
 
-            MediaIsland {}
+            MediaIsland {
+                width: mediaTrigger.width
+            }
         }
 
         AnchoredPopover {
