@@ -29,9 +29,10 @@ make run
 `make run` starts the shell from the repository. It does not modify Hyprland configuration or session startup.
 
 The current shell foundation renders output-specific Hyprland workspaces and
-window titles plus an MPRIS media island with artwork, playback controls,
-progress, logical player grouping, and session-only player selection. The right island supports separate,
-combined, or hidden CPU and memory metrics. Its popover includes load average,
+window titles plus a compact scrolling MPRIS media island with artwork, playback
+controls, progress, logical player grouping, and session-only player selection.
+The right island supports separate, combined, or hidden CPU and memory metrics.
+Its popover includes load average,
 uptime, optional thermal data, and a Mission Center action. Native PipeWire
 controls provide output and input volume, mute, and default-device selection.
 The locale-aware clock opens a keyboard-navigable month calendar with today and

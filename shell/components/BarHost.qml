@@ -80,7 +80,7 @@ PanelWindow {
 
         anchors.horizontalCenter: parent.horizontalCenter
         width: visible
-            ? Math.min(312, root.availableCenterWidth)
+            ? Math.min(272, root.availableCenterWidth)
             : 0
         height: parent.height
         radius: Theme.radiusPill
