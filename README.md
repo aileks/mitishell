@@ -25,8 +25,9 @@ make run
 
 ## Configuration
 
-Mitishell reads `$XDG_CONFIG_HOME/mitishell/config.json`. When the file is absent, built-in defaults are used without creating it.  
-Set `MITISHELL_QS_PATH` to the repository's `shell` directory when using CLI IPC commands against a development instance.
+Mitishell reads `$XDG_CONFIG_HOME/mitishell/config.json`. When the file is absent, Mitishell falls back to built-in defaults without creating it.
+
+Set `MITISHELL_QS_PATH` to the repository's `shell` directory when you use CLI commands that talk to a development instance.
 
 ```bash
 bin/mitishell config path
@@ -40,7 +41,7 @@ bin/mitishell power menu
 ## Source installation
 
 > [!NOTE]  
-> `make uninstall` removes only installed program files. It does not remove user configuration or cache data.
+> `make uninstall` removes only installed program files. It doesn't remove user configuration or cache data.
 
 ```bash
 make install
@@ -51,4 +52,4 @@ make uninstall
 
 ## License
 
-Mitishell is licensed under GPL-3.0-or-later. See [LICENSE](LICENSE).
+Mitishell is licensed under the GPLv3 or later. See [LICENSE](LICENSE).

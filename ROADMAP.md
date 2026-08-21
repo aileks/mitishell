@@ -1,6 +1,6 @@
 # Roadmap
 
-Mitishell is developed as vertical features. Each completed feature updates this document in the same branch.
+Mitishell grows through vertical features. Each completed feature updates this document in the same branch.
 
 ## v0.1 Waybar replacement
 
