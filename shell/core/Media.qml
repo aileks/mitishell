@@ -7,18 +7,31 @@ import "../lib/MediaModel.js" as MediaModel
 QtObject {
     id: root
 
-    property string preferredDbusName: ""
+    property string preferredPlayerKey: ""
     property real displayPosition: 0
+    property int activitySequence: 0
+    property var activityByDbusName: ({})
 
-    readonly property var players: Mpris.players ? Mpris.players.values : []
-    readonly property var activePlayer: MediaModel.choosePlayer(players, preferredDbusName)
+    readonly property var rawPlayers: Mpris.players ? Mpris.players.values : []
+    readonly property var players: MediaModel.logicalPlayers(rawPlayers, activityByDbusName)
+    readonly property var activePlayer: MediaModel.choosePlayer(players, preferredPlayerKey)
     readonly property string title: MediaModel.title(activePlayer)
     readonly property string artist: MediaModel.artist(activePlayer)
     readonly property bool available: activePlayer !== null
     readonly property bool meaningful: MediaModel.hasMetadata(activePlayer)
 
-    function selectPlayer(dbusName) {
-        preferredDbusName = dbusName;
+    function selectPlayer(player) {
+        preferredPlayerKey = MediaModel.playerKey(player);
+    }
+
+    function noteActivity(player) {
+        if (player === null || player === undefined || player.dbusName === "") {
+            return;
+        }
+        activitySequence += 1;
+        const updated = Object.assign({}, activityByDbusName);
+        updated[player.dbusName] = activitySequence;
+        activityByDbusName = updated;
     }
 
     function previous() {
@@ -59,6 +72,32 @@ QtObject {
         function onTrackChanged() {
             root.displayPosition = root.activePlayer.positionSupported
                 ? root.activePlayer.position : 0;
+        }
+    }
+
+    property Instantiator activityWatchers: Instantiator {
+        model: Mpris.players
+
+        delegate: QtObject {
+            required property var modelData
+
+            Component.onCompleted: root.noteActivity(modelData)
+
+            property Connections activityConnections: Connections {
+                target: modelData
+
+                function onMetadataChanged() {
+                    root.noteActivity(modelData);
+                }
+
+                function onPlaybackStateChanged() {
+                    root.noteActivity(modelData);
+                }
+
+                function onPostTrackChanged() {
+                    root.noteActivity(modelData);
+                }
+            }
         }
     }
 

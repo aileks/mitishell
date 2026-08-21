@@ -150,7 +150,8 @@ Item {
         }
 
         Text {
-            text: Media.players.length > 1 ? "Players" : "Player"
+            visible: Media.players.length > 1
+            text: "Players"
             color: Theme.textMuted
             font.family: Theme.fontSans
             font.pixelSize: Theme.fontSizeBody
@@ -158,6 +159,7 @@ Item {
         }
 
         Flickable {
+            visible: Media.players.length > 1
             width: parent.width
             height: 36
             contentWidth: playerRow.implicitWidth
@@ -197,15 +199,15 @@ Item {
                         }
 
                         TapHandler {
-                            onTapped: Media.selectPlayer(playerChoice.modelData.dbusName)
+                            onTapped: Media.selectPlayer(playerChoice.modelData)
                         }
 
                         Keys.onReturnPressed: function(event) {
-                            Media.selectPlayer(playerChoice.modelData.dbusName);
+                            Media.selectPlayer(playerChoice.modelData);
                             event.accepted = true;
                         }
                         Keys.onSpacePressed: function(event) {
-                            Media.selectPlayer(playerChoice.modelData.dbusName);
+                            Media.selectPlayer(playerChoice.modelData);
                             event.accepted = true;
                         }
                     }

@@ -112,7 +112,7 @@ PanelWindow {
             anchorItem: mediaTrigger
             open: mediaTrigger.active && Config.bar.showMedia && Media.meaningful
             contentWidth: 360
-            contentHeight: 300
+            contentHeight: Media.players.length > 1 ? 300 : 236
 
             MediaPopover {
                 anchors.fill: parent

@@ -36,6 +36,68 @@ test("selection degrades predictably when no player is playing", () => {
     assert.equal(MediaModel.choosePlayer([], ""), null);
 });
 
+test("duplicate instances are one logical player represented by recent activity", () => {
+    const stale = player("org.mpris.MediaPlayer2.firefox.old", {
+        desktopEntry: "zen-twilight",
+        identity: "Mozilla zen-twilight",
+        isPlaying: true,
+        trackTitle: "Old stream",
+    });
+    const current = player("org.mpris.MediaPlayer2.firefox.current", {
+        desktopEntry: "zen-twilight",
+        identity: "Mozilla zen-twilight",
+        isPlaying: true,
+        trackTitle: "Current stream",
+    });
+
+    const choices = MediaModel.logicalPlayers(
+        [stale, current],
+        {
+            [stale.dbusName]: 4,
+            [current.dbusName]: 9,
+        },
+    );
+
+    assert.equal(choices.length, 1);
+    assert.equal(choices[0], current);
+});
+
+test("logical selection follows a replacement dbus instance", () => {
+    const original = player("org.mpris.MediaPlayer2.firefox.old", {
+        desktopEntry: "zen-twilight",
+        identity: "Mozilla zen-twilight",
+        isPlaying: true,
+    });
+    const replacement = player("org.mpris.MediaPlayer2.firefox.current", {
+        desktopEntry: "zen-twilight",
+        identity: "Mozilla zen-twilight",
+        isPlaying: true,
+    });
+    const preferredKey = MediaModel.playerKey(original);
+
+    assert.equal(
+        MediaModel.choosePlayer(MediaModel.logicalPlayers([original], {}), preferredKey),
+        original,
+    );
+    assert.equal(
+        MediaModel.choosePlayer(MediaModel.logicalPlayers([replacement], {}), preferredKey),
+        replacement,
+    );
+});
+
+test("different player identities remain separate choices", () => {
+    const firefox = player("org.mpris.MediaPlayer2.firefox", {
+        desktopEntry: "zen-twilight",
+        identity: "Mozilla zen-twilight",
+    });
+    const music = player("org.mpris.MediaPlayer2.music", {
+        desktopEntry: "org.gnome.Music",
+        identity: "Music",
+    });
+
+    assert.deepEqual(MediaModel.logicalPlayers([firefox, music], {}), [firefox, music]);
+});
+
 test("display text falls back from metadata to player identity", () => {
     assert.equal(MediaModel.title({ trackTitle: " Song ", identity: "Player" }), "Song");
     assert.equal(MediaModel.title({ trackTitle: "", identity: " Player " }), "Player");
