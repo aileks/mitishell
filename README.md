@@ -18,40 +18,15 @@ Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShe
 
 ```bash
 make build
-make test
-make check
+make test   # runs the Go suite and the pure JavaScript models shared with QML
+make check  # adds Go formatting and vet checks plus QML linting.
 make run
 ```
 
-`make test` runs the Go suite and the pure JavaScript models shared with QML.
-`make check` adds Go formatting and vet checks plus QML linting.
-
-`make run` starts the shell from the repository. It does not modify Hyprland configuration or session startup.
-
-The current shell foundation renders output-specific Hyprland workspaces and
-window titles plus a compact scrolling MPRIS media island with artwork, playback
-controls, progress, logical player grouping, and session-only player selection.
-The right island supports separate, combined, or hidden CPU and memory metrics.
-Its popover includes load average,
-uptime, optional thermal data, and a Mission Center action. Native PipeWire
-controls provide output and input volume, mute, and default-device selection.
-The locale-aware clock opens a keyboard-navigable month calendar with today and
-month navigation. Active status notifier items appear as directly interactive
-bar icons with primary, secondary, scrolling, keyboard, and anchored Cinder
-Grove menu actions.
-Capability-aware notification and power entries temporarily open SwayNC and
-wlogout. Each entry stays hidden when its external program is unavailable.
-
-Local weather is disabled by default. Enabling `weather.enabled` opts into a
-one-shot city-level GeoClue request and an Open-Meteo forecast request. Mitishell
-rounds coordinates before sending them, never caches coordinates, and has no
-manual or secondary IP-location fallback. Cached normalized forecasts expire
-after six hours. The popover attributes [Open-Meteo](https://open-meteo.com/en/docs);
-its service is subject to the provider's [usage terms](https://open-meteo.com/en/terms).
-
 ## Configuration
 
-Mitishell reads `$XDG_CONFIG_HOME/mitishell/config.json`. When the file is absent, built-in defaults are used without creating it.
+Mitishell reads `$XDG_CONFIG_HOME/mitishell/config.json`. When the file is absent, built-in defaults are used without creating it.  
+Set `MITISHELL_QS_PATH` to the repository's `shell` directory when using CLI IPC commands against a development instance.
 
 ```bash
 bin/mitishell config path
@@ -62,23 +37,17 @@ bin/mitishell notifications toggle
 bin/mitishell power menu
 ```
 
-Run `make install` before enabling local weather so GeoClue can resolve the
-installed `mitishell.desktop` identity and display its authorization reason.
-
-Set `MITISHELL_QS_PATH` to the repository's `shell` directory when using CLI IPC commands against a development instance.
-
 ## Source installation
+
+> [!NOTE]  
+> `make uninstall` removes only installed program files. It does not remove user configuration or cache data.
 
 ```bash
 make install
 quickshell -n -p ~/.local/share/mitishell/shell
+
+make uninstall
 ```
-
-The session manager remains user-owned. Mitishell does not add or change an autostart entry.
-
-`make uninstall` removes only installed program files. It does not remove user configuration or cache data.
-
-See [ROADMAP.md](ROADMAP.md) for release scope and deferred features.
 
 ## License
 
