@@ -4,9 +4,15 @@ import "../core"
 Item {
     id: root
 
+    implicitHeight: content.implicitHeight
+
     Column {
-        anchors.fill: parent
-        spacing: Theme.spaceSm
+        id: content
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        spacing: Theme.spaceMd
 
         Text {
             text: "Audio"
@@ -16,92 +22,34 @@ Item {
             font.weight: Font.DemiBold
         }
 
-        AudioSlider {
+        AudioSection {
+            width: parent.width
             label: "Output"
             iconSource: Audio.outputMuted
                 ? "../assets/icons/volume-x.svg"
                 : "../assets/icons/volume-2.svg"
             currentValue: Audio.outputVolume
+            devices: Audio.sinks
+            selectedDevice: Audio.output
+            emptyMessage: "No output devices"
             onVolumeChanged: function(value) { Audio.setOutputVolume(value); }
             onMuteRequested: Audio.toggleOutputMute()
+            onDeviceChosen: function(device) { Audio.selectSink(device); }
         }
 
-        Text {
-            text: "Output device"
-            color: Theme.textMuted
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeCaption
-            font.weight: Font.DemiBold
-        }
-
-        Flickable {
+        AudioSection {
             width: parent.width
-            height: Math.min(outputDevices.implicitHeight, 78)
-            contentWidth: width
-            contentHeight: outputDevices.implicitHeight
-            clip: true
-
-            Column {
-                id: outputDevices
-                width: parent.width
-                spacing: Theme.spaceXs
-
-                Repeater {
-                    model: Audio.sinks
-
-                    delegate: AudioDeviceRow {
-                        required property var modelData
-                        width: outputDevices.width
-                        node: modelData
-                        selected: Audio.output === modelData
-                        onChosen: Audio.selectSink(modelData)
-                    }
-                }
-            }
-        }
-
-        AudioSlider {
             label: "Input"
             iconSource: Audio.inputMuted
                 ? "../assets/icons/mic-off.svg"
                 : "../assets/icons/mic.svg"
             currentValue: Audio.inputVolume
+            devices: Audio.sources
+            selectedDevice: Audio.input
+            emptyMessage: "No input devices"
             onVolumeChanged: function(value) { Audio.setInputVolume(value); }
             onMuteRequested: Audio.toggleInputMute()
-        }
-
-        Text {
-            text: "Input device"
-            color: Theme.textMuted
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeCaption
-            font.weight: Font.DemiBold
-        }
-
-        Flickable {
-            width: parent.width
-            height: Math.min(inputDevices.implicitHeight, 78)
-            contentWidth: width
-            contentHeight: inputDevices.implicitHeight
-            clip: true
-
-            Column {
-                id: inputDevices
-                width: parent.width
-                spacing: Theme.spaceXs
-
-                Repeater {
-                    model: Audio.sources
-
-                    delegate: AudioDeviceRow {
-                        required property var modelData
-                        width: inputDevices.width
-                        node: modelData
-                        selected: Audio.input === modelData
-                        onChosen: Audio.selectSource(modelData)
-                    }
-                }
-            }
+            onDeviceChosen: function(device) { Audio.selectSource(device); }
         }
 
         Text {
@@ -109,6 +57,7 @@ Item {
             visible: !Audio.ready
             text: "PipeWire is unavailable"
             color: Theme.red
+            wrapMode: Text.Wrap
             font.family: Theme.fontSans
             font.pixelSize: Theme.fontSizeBody
         }

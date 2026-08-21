@@ -10,7 +10,7 @@ Rectangle {
     signal chosen
 
     implicitWidth: 344
-    implicitHeight: 34
+    implicitHeight: 40
     radius: Theme.radiusMedium
     color: selected ? Theme.orange : (activeFocus || hover.hovered ? Theme.overlay : "transparent")
     border.width: activeFocus ? 2 : 0

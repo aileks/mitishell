@@ -264,10 +264,12 @@ PanelWindow {
         AnchoredPopover {
             anchorItem: audioTrigger
             open: audioTrigger.active
-            contentWidth: 376
-            contentHeight: 404
+            contentWidth: 420
+            contentHeight: audioPopover.implicitHeight + Theme.spaceLg * 2
 
             AudioPopover {
+                id: audioPopover
+
                 anchors.fill: parent
             }
         }
