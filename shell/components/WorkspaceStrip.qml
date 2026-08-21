@@ -23,7 +23,7 @@ Row {
     Repeater {
         model: WorkspaceModel.idsForMonitor(Hyprland.workspaces.values, root.screen.name)
 
-        delegate: Rectangle {
+        delegate: FocusScope {
             id: workspaceItem
 
             required property int modelData
@@ -33,30 +33,42 @@ Row {
             readonly property bool active: workspace !== null && workspace.active
             readonly property bool urgent: workspace !== null && workspace.urgent
 
-            width: active ? 30 : 24
+            width: 30
             height: 24
-            radius: Theme.radiusPill
-            color: urgent ? Theme.red : (active ? Theme.orange : "transparent")
-            border.width: activeFocus ? 2 : (!active && occupied ? 1 : 0)
-            border.color: activeFocus ? Theme.blue : Theme.overlay
             activeFocusOnTab: true
 
-            Behavior on width {
-                NumberAnimation {
-                    duration: Motion.duration(Motion.normal)
-                    easing.type: Easing.OutCubic
-                }
-            }
+            Rectangle {
+                id: pill
 
-            Text {
                 anchors.centerIn: parent
-                text: WorkspaceModel.label(workspaceItem.modelData)
-                color: workspaceItem.active || workspaceItem.urgent
-                    ? Theme.background
-                    : (workspaceItem.occupied ? Theme.textBright : Theme.textMuted)
-                font.family: Theme.fontMono
-                font.pixelSize: Theme.fontSizeBody
-                font.weight: workspaceItem.active ? Font.DemiBold : Font.Normal
+                width: workspaceItem.active ? 30 : 24
+                height: parent.height
+                radius: Theme.radiusPill
+                color: workspaceItem.urgent
+                    ? Theme.red
+                    : (workspaceItem.active ? Theme.orange : "transparent")
+                border.width: workspaceItem.activeFocus
+                    ? 2
+                    : (!workspaceItem.active && workspaceItem.occupied ? 1 : 0)
+                border.color: workspaceItem.activeFocus ? Theme.blue : Theme.overlay
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: Motion.duration(Motion.normal)
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: WorkspaceModel.label(workspaceItem.modelData)
+                    color: workspaceItem.active || workspaceItem.urgent
+                        ? Theme.background
+                        : (workspaceItem.occupied ? Theme.textBright : Theme.textMuted)
+                    font.family: Theme.fontMono
+                    font.pixelSize: Theme.fontSizeBody
+                    font.weight: workspaceItem.active ? Font.DemiBold : Font.Normal
+                }
             }
 
             TapHandler {
