@@ -40,7 +40,7 @@ Item {
                         + "  " + WeatherModel.condition(root.current.weatherCode).label
                     color: Theme.textBright
                     font.family: Theme.fontSans
-                    font.pixelSize: 18
+                    font.pixelSize: Theme.fontSizeDisplay
                     font.weight: Font.DemiBold
                 }
 
@@ -49,14 +49,14 @@ Item {
                         + "  •  " + root.current.humidity + "% humidity"
                     color: Theme.text
                     font.family: Theme.fontSans
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 Text {
                     text: "Wind " + Math.round(root.current.windSpeed) + " " + root.speedUnit
                     color: Theme.textMuted
                     font.family: Theme.fontSans
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeBody
                 }
             }
         }
@@ -65,7 +65,7 @@ Item {
             text: "Next 12 hours"
             color: Theme.textMuted
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.weight: Font.DemiBold
         }
 
@@ -99,7 +99,7 @@ Item {
                                 text: WeatherModel.hour(modelData.time)
                                 color: Theme.textMuted
                                 font.family: Theme.fontMono
-                                font.pixelSize: 8
+                                font.pixelSize: Theme.fontSizeCaption
                             }
                             WeatherIcon {
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -112,7 +112,7 @@ Item {
                                 text: WeatherModel.temperature(modelData.temperature)
                                 color: Theme.text
                                 font.family: Theme.fontMono
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fontSizeCaption
                             }
                         }
                     }
@@ -124,7 +124,7 @@ Item {
             text: "Five days"
             color: Theme.textMuted
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.weight: Font.DemiBold
         }
 
@@ -147,7 +147,7 @@ Item {
                         text: Qt.formatDate(new Date(modelData.date + "T12:00"), "ddd")
                         color: Theme.text
                         font.family: Theme.fontSans
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeBody
                     }
                     WeatherIcon {
                         anchors.verticalCenter: parent.verticalCenter
@@ -163,7 +163,7 @@ Item {
                             + "  " + WeatherModel.temperature(modelData.minimum)
                         color: Theme.text
                         font.family: Theme.fontMono
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                     }
                 }
             }
@@ -175,14 +175,14 @@ Item {
             text: "Last updated " + Weather.ageMinutes + " minutes ago"
             color: Theme.yellow
             font.family: Theme.fontSans
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
             text: "Weather data by Open-Meteo"
             color: Theme.textMuted
             font.family: Theme.fontSans
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

@@ -21,7 +21,7 @@ Rectangle {
             text: root.label
             color: Theme.textMuted
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.weight: Font.DemiBold
         }
 
@@ -31,7 +31,7 @@ Rectangle {
             elide: Text.ElideRight
             color: Theme.textBright
             font.family: Theme.fontMono
-            font.pixelSize: 14
+            font.pixelSize: Theme.fontSizeBody
         }
     }
 }

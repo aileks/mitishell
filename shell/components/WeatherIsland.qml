@@ -25,7 +25,7 @@ Item {
             )
             color: Weather.state === "stale" ? Theme.yellow : Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

@@ -41,7 +41,7 @@ Item {
                     text: "music"
                     color: Theme.textMuted
                     font.family: Theme.fontSans
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
             }
 
@@ -56,7 +56,7 @@ Item {
                     elide: Text.ElideRight
                     color: Theme.textBright
                     font.family: Theme.fontSans
-                    font.pixelSize: 16
+                    font.pixelSize: Theme.fontSizeHeading
                     font.weight: Font.DemiBold
                 }
 
@@ -66,7 +66,7 @@ Item {
                     elide: Text.ElideRight
                     color: Theme.text
                     font.family: Theme.fontSans
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 Text {
@@ -75,7 +75,7 @@ Item {
                     elide: Text.ElideRight
                     color: Theme.textMuted
                     font.family: Theme.fontSans
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeBody
                 }
             }
         }
@@ -106,7 +106,7 @@ Item {
                 text: MediaModel.duration(Media.displayPosition)
                 color: Theme.textMuted
                 font.family: Theme.fontMono
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -115,7 +115,7 @@ Item {
                 text: MediaModel.duration(root.trackLength)
                 color: Theme.textMuted
                 font.family: Theme.fontMono
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -153,7 +153,7 @@ Item {
             text: Media.players.length > 1 ? "Players" : "Player"
             color: Theme.textMuted
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeBody
             font.weight: Font.DemiBold
         }
 
@@ -193,7 +193,7 @@ Item {
                                 || "Unknown player"
                             color: playerChoice.selected ? Theme.background : Theme.text
                             font.family: Theme.fontSans
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fontSizeBody
                         }
 
                         TapHandler {

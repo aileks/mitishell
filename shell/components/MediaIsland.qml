@@ -34,7 +34,7 @@ Item {
                 elide: Text.ElideRight
                 color: Media.available ? Theme.textBright : Theme.textMuted
                 font.family: Theme.fontSans
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Font.DemiBold
             }
 
@@ -45,7 +45,7 @@ Item {
                 elide: Text.ElideRight
                 color: Theme.textMuted
                 font.family: Theme.fontSans
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

@@ -21,7 +21,7 @@ Item {
                 : "CPU " + SystemMetrics.cpuPercent + "%"
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Rectangle {
@@ -37,7 +37,7 @@ Item {
             text: "RAM " + SystemMetrics.memoryPercent + "%"
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

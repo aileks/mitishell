@@ -133,7 +133,7 @@ FocusScope {
                 )
                 color: Theme.textBright
                 font.family: Theme.fontSans
-                font.pixelSize: 15
+                font.pixelSize: Theme.fontSizeHeading
                 font.weight: Font.DemiBold
             }
 
@@ -181,7 +181,7 @@ FocusScope {
                     horizontalAlignment: Text.AlignHCenter
                     color: Theme.textMuted
                     font.family: Theme.fontSans
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeCaption
                     font.weight: Font.DemiBold
                 }
             }
@@ -249,7 +249,7 @@ FocusScope {
                         color: dayCell.cursor ? Theme.background
                             : (dayCell.modelData.inMonth ? Theme.text : Theme.textMuted)
                         font.family: Theme.fontMono
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeBody
                         font.weight: dayCell.today ? Font.DemiBold : Font.Normal
                     }
 
@@ -313,7 +313,7 @@ FocusScope {
                 text: "Today"
                 color: Theme.textBright
                 font.family: Theme.fontSans
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Font.DemiBold
             }
             HoverHandler { id: todayHover }

@@ -32,7 +32,7 @@ Row {
                 text: "•"
                 color: Theme.text
                 font.family: Theme.fontSans
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
             }
         }
     }
@@ -43,6 +43,6 @@ Row {
         text: "+" + (Tray.items.length - 3)
         color: Theme.textMuted
         font.family: Theme.fontMono
-        font.pixelSize: 9
+        font.pixelSize: Theme.fontSizeCaption
     }
 }

@@ -163,7 +163,7 @@ FocusScope {
                 color: Theme.textBright
                 elide: Text.ElideRight
                 font.family: Theme.fontSans
-                font.pixelSize: 15
+                font.pixelSize: Theme.fontSizeHeading
                 font.weight: Font.DemiBold
             }
         }
@@ -260,7 +260,7 @@ FocusScope {
                     color: Theme.textBright
                     elide: Text.ElideRight
                     font.family: Theme.fontSans
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 Text {
@@ -270,7 +270,7 @@ FocusScope {
                     color: Theme.textMuted
                     elide: Text.ElideRight
                     font.family: Theme.fontSans
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
             }
 
@@ -297,7 +297,7 @@ FocusScope {
                     text: "menu"
                     color: Theme.textMuted
                     font.family: Theme.fontSans
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 HoverHandler {
@@ -428,7 +428,7 @@ FocusScope {
                 color: Theme.text
                 elide: Text.ElideRight
                 font.family: Theme.fontSans
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeBody
             }
 
             Text {

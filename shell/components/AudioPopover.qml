@@ -12,7 +12,7 @@ Item {
             text: "Audio"
             color: Theme.textBright
             font.family: Theme.fontSans
-            font.pixelSize: 16
+            font.pixelSize: Theme.fontSizeHeading
             font.weight: Font.DemiBold
         }
 
@@ -30,7 +30,7 @@ Item {
             text: "Output device"
             color: Theme.textMuted
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.weight: Font.DemiBold
         }
 
@@ -74,7 +74,7 @@ Item {
             text: "Input device"
             color: Theme.textMuted
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.weight: Font.DemiBold
         }
 
@@ -110,7 +110,7 @@ Item {
             text: "PipeWire is unavailable"
             color: Theme.red
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeBody
         }
     }
 }

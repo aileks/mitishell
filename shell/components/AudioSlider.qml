@@ -23,7 +23,7 @@ Item {
         text: root.label
         color: Theme.textMuted
         font.family: Theme.fontSans
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
         font.weight: Font.DemiBold
     }
 
@@ -33,7 +33,7 @@ Item {
         text: AudioModel.percent(root.currentValue) + "%"
         color: Theme.text
         font.family: Theme.fontMono
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Row {

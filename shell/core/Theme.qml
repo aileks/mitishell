@@ -34,4 +34,8 @@ QtObject {
 
     readonly property string fontSans: "Adwaita Sans"
     readonly property string fontMono: "Adwaita Mono"
+    readonly property int fontSizeCaption: 12
+    readonly property int fontSizeBody: 14
+    readonly property int fontSizeHeading: 18
+    readonly property int fontSizeDisplay: 22
 }

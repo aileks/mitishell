@@ -13,7 +13,7 @@ Text {
     text: WorkspaceModel.windowTitle(activeWorkspace)
     color: Theme.text
     font.family: Theme.fontSans
-    font.pixelSize: 12
+    font.pixelSize: Theme.fontSizeBody
     elide: Text.ElideRight
     maximumLineCount: 1
     verticalAlignment: Text.AlignVCenter

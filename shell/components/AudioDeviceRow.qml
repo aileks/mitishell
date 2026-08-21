@@ -31,7 +31,7 @@ Rectangle {
         elide: Text.ElideRight
         color: root.selected ? Theme.background : Theme.text
         font.family: Theme.fontSans
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeBody
     }
 
     Text {
@@ -43,7 +43,7 @@ Rectangle {
         text: root.selected ? "active" : ""
         color: root.selected ? Theme.background : Theme.textMuted
         font.family: Theme.fontMono
-        font.pixelSize: 9
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     HoverHandler {
