@@ -98,19 +98,6 @@ FocusScope {
         return Math.ceil(34 + labelWidth + Theme.spaceSm + (hasSubmenu ? 18 : 0));
     }
 
-    function accentFor(index) {
-        const accents = [
-            Theme.orange,
-            Theme.blue,
-            Theme.green,
-        ];
-        return accents[index % accents.length];
-    }
-
-    function translucent(color, opacity) {
-        return Qt.rgba(color.r, color.g, color.b, opacity);
-    }
-
     function isSelectable(index) {
         if (index < 0 || index >= currentEntries.length) {
             return false;
@@ -333,7 +320,7 @@ FocusScope {
                     readonly property bool isEntry: !modelData.isSeparator
                     readonly property bool checked: modelData.checkState === Qt.Checked
                     readonly property bool partiallyChecked: modelData.checkState === Qt.PartiallyChecked
-                    readonly property color accent: root.accentFor(index)
+                    readonly property color accent: Theme.blue
 
                     width: entryList.width
                     height: modelData.isSeparator
@@ -435,8 +422,9 @@ FocusScope {
                         fillMode: Image.PreserveAspectFit
                         layer.enabled: visible
                         layer.effect: MultiEffect {
+                            brightness: 1
                             colorization: 1
-                            colorizationColor: menuRow.accent
+                            colorizationColor: Theme.blue
                         }
                     }
 
