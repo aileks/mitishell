@@ -13,40 +13,55 @@ Item {
             text: "System"
             color: Theme.textBright
             font.family: Theme.fontSans
-            font.pixelSize: 16
+            font.pixelSize: Theme.fontSizeHeading
             font.weight: Font.DemiBold
         }
 
-        Grid {
+        Column {
+            id: metrics
             width: parent.width
-            columns: 2
-            columnSpacing: Theme.spaceSm
-            rowSpacing: Theme.spaceSm
+            spacing: Theme.spaceSm
+            readonly property real cardWidth: (width - Theme.spaceSm) / 2
 
-            MetricCard {
-                label: "CPU"
-                value: SystemMetrics.cpuPercent + "%"
+            Row {
+                width: parent.width
+                spacing: Theme.spaceSm
+
+                MetricCard {
+                    width: metrics.cardWidth
+                    label: "CPU"
+                    value: SystemMetrics.cpuPercent + "%"
+                }
+
+                MetricCard {
+                    width: metrics.cardWidth
+                    label: "Memory"
+                    value: SystemModel.bytes(SystemMetrics.memoryUsedBytes)
+                        + " / " + SystemModel.bytes(SystemMetrics.memoryTotalBytes)
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: Theme.spaceSm
+
+                MetricCard {
+                    width: metrics.cardWidth
+                    label: "Load average"
+                    value: SystemMetrics.loadAverage.map(function(value) {
+                        return value.toFixed(2);
+                    }).join("  ")
+                }
+
+                MetricCard {
+                    width: metrics.cardWidth
+                    label: "Uptime"
+                    value: SystemModel.uptimeLabel(SystemMetrics.uptimeSeconds)
+                }
             }
 
             MetricCard {
-                label: "Memory"
-                value: SystemModel.bytes(SystemMetrics.memoryUsedBytes)
-                    + " / " + SystemModel.bytes(SystemMetrics.memoryTotalBytes)
-            }
-
-            MetricCard {
-                label: "Load average"
-                value: SystemMetrics.loadAverage.map(function(value) {
-                    return value.toFixed(2);
-                }).join("  ")
-            }
-
-            MetricCard {
-                label: "Uptime"
-                value: SystemModel.uptimeLabel(SystemMetrics.uptimeSeconds)
-            }
-
-            MetricCard {
+                width: parent.width
                 visible: SystemMetrics.temperatureC !== null
                 label: "Temperature"
                 value: SystemMetrics.temperatureC !== null
@@ -73,7 +88,7 @@ Item {
                 text: "Open Mission Center"
                 color: Theme.textBright
                 font.family: Theme.fontSans
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Font.DemiBold
             }
 
@@ -102,7 +117,7 @@ Item {
             color: Theme.red
             wrapMode: Text.Wrap
             font.family: Theme.fontSans
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeBody
         }
     }
 }

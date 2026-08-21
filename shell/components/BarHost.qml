@@ -259,7 +259,7 @@ PanelWindow {
         AnchoredPopover {
             anchorItem: systemTrigger
             open: systemTrigger.active && Config.bar.systemMetrics !== "hidden"
-            contentWidth: 336
+            contentWidth: 420
             contentHeight: SystemMetrics.temperatureC !== null ? 330 : 260
 
             SystemPopover {
