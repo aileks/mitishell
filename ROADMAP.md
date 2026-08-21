@@ -31,6 +31,7 @@ Mitishell is developed as vertical features. Each completed feature updates this
 - [x] corrected the default proportional fonts and type scale across the bar and popovers
 - [x] stabilized workspace labels while the active pill animates
 - [x] grouped duplicate MPRIS instances and followed replacement player state
+- [x] tightened media island padding and scrolled long metadata on one line
 - [x] aligned audio popover spacing and typography with the system surface
 - [x] replaced the generic tray list with directly interactive tray icons
 
