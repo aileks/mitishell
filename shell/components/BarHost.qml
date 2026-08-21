@@ -190,14 +190,8 @@ PanelWindow {
                 color: Theme.overlay
             }
 
-            BarPopoverTrigger {
-                id: trayTrigger
-
+            TrayIsland {
                 visible: Tray.available
-                popoverKey: "tray"
-                screen: root.modelData
-
-                TrayIsland {}
             }
 
             Rectangle {
@@ -286,18 +280,6 @@ PanelWindow {
 
             CalendarPopover {
                 anchors.fill: parent
-            }
-        }
-
-        AnchoredPopover {
-            anchorItem: trayTrigger
-            open: trayTrigger.active && Tray.available
-            contentWidth: 340
-            contentHeight: 340
-
-            TrayPopover {
-                anchors.fill: parent
-                opened: trayTrigger.active && Tray.available
             }
         }
 
