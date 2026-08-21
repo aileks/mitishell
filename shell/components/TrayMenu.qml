@@ -322,7 +322,7 @@ FocusScope {
                     color: !isEntry || !modelData.enabled
                         ? "transparent"
                         : (activeFocus || entryHover.hovered
-                            ? root.translucent(accent, 0.22) : "transparent")
+                            ? Theme.overlay : "transparent")
                     opacity: modelData.enabled ? 1 : 0.45
                     activeFocusOnTab: isEntry && modelData.enabled
                     Accessible.name: isEntry ? modelData.text : ""
@@ -491,7 +491,7 @@ FocusScope {
                     height: Math.max(20, entryList.visibleArea.heightRatio * parent.height)
                     y: entryList.visibleArea.yPosition * parent.height
                     radius: 2
-                    color: Theme.orange
+                    color: Theme.overlay
                 }
             }
         }
