@@ -52,3 +52,58 @@ func fakeQS(t *testing.T, response string) string {
 	}
 	return path
 }
+
+func TestVolumeActionPassesArgumentPositionally(t *testing.T) {
+	client := ipc.NewClient(fakeQSCheckingArg(t, "up", "volume updated"), "/tmp/mitishell-shell")
+	if err := client.Volume("up"); err != nil {
+		t.Fatalf("Volume() error = %v", err)
+	}
+}
+
+func TestVolumeActionRejectsUnexpectedResponse(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "volume unavailable"), "/tmp/mitishell-shell")
+	if err := client.Volume("up"); err == nil {
+		t.Fatal("Volume() accepted an unexpected response")
+	}
+}
+
+func TestVolumeSetPassesValuePositionally(t *testing.T) {
+	client := ipc.NewClient(fakeQSCheckingArg(t, "80", "volume updated"), "/tmp/mitishell-shell")
+	if err := client.VolumeSet(80); err != nil {
+		t.Fatalf("VolumeSet() error = %v", err)
+	}
+}
+
+func TestMicActionAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "microphone updated"), "/tmp/mitishell-shell")
+	if err := client.Mic("mute"); err != nil {
+		t.Fatalf("Mic() error = %v", err)
+	}
+}
+
+func TestBrightnessActionAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "brightness updated"), "/tmp/mitishell-shell")
+	if err := client.Brightness("down"); err != nil {
+		t.Fatalf("Brightness() error = %v", err)
+	}
+}
+
+func TestBrightnessSetRejectsUnexpectedResponse(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "brightness unavailable"), "/tmp/mitishell-shell")
+	if err := client.BrightnessSet(50); err == nil {
+		t.Fatal("BrightnessSet() accepted an unexpected response")
+	}
+}
+
+// fakeQSCheckingArg answers with the acknowledgement only when the final
+// positional argument of the call matches, so tests exercise argument
+// passing rather than a canned reply.
+func fakeQSCheckingArg(t *testing.T, argument string, response string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "qs")
+	contents := "#!/bin/sh\n[ \"$8\" = '" + argument + "' ] && printf '%s\\n' '" + response + "' || printf 'wrong argument %s\\n' \"$8\"\n"
+	if err := os.WriteFile(path, []byte(contents), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}

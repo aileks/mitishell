@@ -27,6 +27,7 @@ func (doctor systemDoctor) Checks() []cli.Check {
 		commandCheck("swaync-client", false),
 		commandCheck("wlogout", false),
 		commandCheck("missioncenter", false),
+		commandCheck("ddcutil", false),
 		fontCheck("Adwaita Sans"),
 		fontCheck("Adwaita Mono"),
 	}

@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/aileks/mitishell/internal/config"
+	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -15,6 +17,29 @@ type Shell interface {
 	Reload() error
 	ToggleNotifications() error
 	OpenPowerMenu() error
+}
+
+// AudioControl applies audio actions in the running shell, which shows the
+// matching OSD.
+type AudioControl interface {
+	Volume(action string) error
+	VolumeSet(value int) error
+	Mic(action string) error
+	MicSet(value int) error
+}
+
+// DisplayControl applies brightness actions in the running shell, which
+// shows the matching OSD.
+type DisplayControl interface {
+	Brightness(action string) error
+	BrightnessSet(value int) error
+}
+
+// DisplayService discovers and drives DDC displays directly, used by the
+// shell's display service through the hidden verbs.
+type DisplayService interface {
+	Discover(context.Context) display.Result
+	Set(ctx context.Context, connector string, value int) display.Result
 }
 
 type Capabilities struct {
@@ -49,11 +74,14 @@ type Weather interface {
 }
 
 type Dependencies struct {
-	ConfigPath   string
-	Shell        Shell
-	Doctor       Doctor
-	Weather      Weather
-	Capabilities CapabilityDetector
+	ConfigPath     string
+	Shell          Shell
+	Doctor         Doctor
+	Weather        Weather
+	Capabilities   CapabilityDetector
+	AudioControl   AudioControl
+	DisplayControl DisplayControl
+	DisplayService DisplayService
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
@@ -104,8 +132,42 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		}
 		return 0
 	}
+	if len(args) == 1 && args[0] == "_display-discover" {
+		if dependencies.DisplayService == nil {
+			fmt.Fprintln(stderr, "mitishell: display discovery unavailable")
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(dependencies.DisplayService.Discover(context.Background())); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode displays: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 3 && args[0] == "_display-set" {
+		if dependencies.DisplayService == nil {
+			fmt.Fprintln(stderr, "mitishell: display control unavailable")
+			return 1
+		}
+		value, err := strconv.Atoi(args[2])
+		if err != nil || value < 0 || value > 100 {
+			fmt.Fprintln(stderr, "mitishell: brightness value must be 0-100")
+			return 2
+		}
+		result := dependencies.DisplayService.Set(context.Background(), args[1], value)
+		if err := json.NewEncoder(stdout).Encode(result); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode displays: %v\n", err)
+			return 1
+		}
+		return 0
+	}
 	if len(args) > 0 && args[0] == "config" {
 		return runConfig(args[1:], stdout, stderr, dependencies)
+	}
+	if len(args) > 0 && (args[0] == "volume" || args[0] == "mic") {
+		return runAudioAction(args, stdout, stderr, dependencies)
+	}
+	if len(args) > 0 && args[0] == "brightness" {
+		return runBrightnessAction(args, stdout, stderr, dependencies)
 	}
 	if len(args) == 2 && args[0] == "notifications" && args[1] == "toggle" {
 		if err := dependencies.Shell.ToggleNotifications(); err != nil {
@@ -207,4 +269,74 @@ func runConfig(args []string, stdout io.Writer, stderr io.Writer, dependencies D
 
 	fmt.Fprintln(stderr, "mitishell: usage: mitishell config <path|validate|get|set>")
 	return 2
+}
+
+func runAudioAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	name := args[0]
+	if dependencies.AudioControl == nil {
+		fmt.Fprintf(stderr, "mitishell: %s actions unavailable\n", name)
+		return 1
+	}
+
+	apply := dependencies.AudioControl.Volume
+	applySet := dependencies.AudioControl.VolumeSet
+	acknowledgement := "volume updated"
+	unavailable := "volume"
+	if name == "mic" {
+		apply = dependencies.AudioControl.Mic
+		applySet = dependencies.AudioControl.MicSet
+		acknowledgement = "microphone updated"
+		unavailable = "microphone"
+	}
+
+	var actionErr error
+	switch {
+	case len(args) == 2 && (args[1] == "up" || args[1] == "down" || args[1] == "mute"):
+		actionErr = apply(args[1])
+	case len(args) == 3 && args[1] == "set":
+		value, err := strconv.Atoi(args[2])
+		if err != nil || value < 0 || value > 150 {
+			fmt.Fprintf(stderr, "mitishell: usage: mitishell %s <up|down|mute|set <0-150>>\n", name)
+			return 2
+		}
+		actionErr = applySet(value)
+	default:
+		fmt.Fprintf(stderr, "mitishell: usage: mitishell %s <up|down|mute|set <0-150>>\n", name)
+		return 2
+	}
+	if actionErr != nil {
+		fmt.Fprintf(stderr, "mitishell: %s unavailable: %v\n", unavailable, actionErr)
+		return 1
+	}
+	fmt.Fprintln(stdout, acknowledgement)
+	return 0
+}
+
+func runBrightnessAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if dependencies.DisplayControl == nil {
+		fmt.Fprintln(stderr, "mitishell: brightness actions unavailable")
+		return 1
+	}
+
+	var actionErr error
+	switch {
+	case len(args) == 2 && (args[1] == "up" || args[1] == "down"):
+		actionErr = dependencies.DisplayControl.Brightness(args[1])
+	case len(args) == 3 && args[1] == "set":
+		value, err := strconv.Atoi(args[2])
+		if err != nil || value < 0 || value > 100 {
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell brightness <up|down|set <0-100>>")
+			return 2
+		}
+		actionErr = dependencies.DisplayControl.BrightnessSet(value)
+	default:
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell brightness <up|down|set <0-100>>")
+		return 2
+	}
+	if actionErr != nil {
+		fmt.Fprintf(stderr, "mitishell: brightness unavailable: %v\n", actionErr)
+		return 1
+	}
+	fmt.Fprintln(stdout, "brightness updated")
+	return 0
 }
