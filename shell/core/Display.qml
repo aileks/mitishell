@@ -35,6 +35,21 @@ QtObject {
         setBrightness(DisplayModel.stepBrightness(brightness, delta));
     }
 
+    // A single-connector write moves only that display and keeps the shared
+    // level untouched; it rides its own debounced single-flight pipeline so a
+    // slider drag cannot stack ddcutil processes.
+    function setConnectorBrightness(connector, value) {
+        value = DisplayModel.clampBrightness(value);
+        displays = displays.map(function(display) {
+            return display.connector === connector
+                ? Object.assign({}, display, { brightness: value })
+                : display;
+        });
+        pendingConnector = connector;
+        pendingConnectorValue = value;
+        connectorWriteTimer.restart();
+    }
+
     function flushWrite() {
         if (writeProcess.running || pendingValue === appliedValue) {
             return;
@@ -44,10 +59,32 @@ QtObject {
         writeProcess.running = true;
     }
 
+    function flushConnectorWrite() {
+        if (connectorWriteProcess.running
+            || pendingConnectorValue < 0
+            || (pendingConnector === appliedConnector
+                && pendingConnectorValue === appliedConnectorValue)) {
+            return;
+        }
+        appliedConnector = pendingConnector;
+        appliedConnectorValue = pendingConnectorValue;
+        connectorWriteProcess.command = [
+            Config.binary,
+            "_display-set",
+            appliedConnector,
+            String(appliedConnectorValue),
+        ];
+        connectorWriteProcess.running = true;
+    }
+
     // pendingValue is the newest requested brightness; appliedValue is what
     // the last write sent. They only match when the hardware is up to date.
     property int pendingValue: -1
     property int appliedValue: -1
+    property string pendingConnector: ""
+    property int pendingConnectorValue: -1
+    property string appliedConnector: ""
+    property int appliedConnectorValue: -1
 
     property Process discoverProcess: Process {
         id: discoverProcess
@@ -125,6 +162,44 @@ QtObject {
     property Timer writeTimer: Timer {
         interval: 200
         onTriggered: root.flushWrite()
+    }
+
+    property Process connectorWriteProcess: Process {
+        id: connectorWriteProcess
+
+        stdout: StdioCollector {
+            id: connectorWriteOutput
+            waitForEnd: true
+        }
+        stderr: StdioCollector {
+            id: connectorWriteErrors
+            waitForEnd: true
+        }
+
+        onExited: function(exitCode) {
+            try {
+                const result = JSON.parse(connectorWriteOutput.text);
+                if (result.state === "ready") {
+                    root.displays = result.displays || root.displays;
+                    root.error = "";
+                } else {
+                    root.error = result.error || connectorWriteErrors.text.trim();
+                    root.pendingConnectorValue = -1;
+                }
+            } catch (parseError) {
+                root.error = connectorWriteErrors.text.trim() || "could not apply brightness";
+                root.pendingConnectorValue = -1;
+            }
+            if (root.pendingConnector !== root.appliedConnector
+                || root.pendingConnectorValue !== root.appliedConnectorValue) {
+                root.connectorWriteTimer.restart();
+            }
+        }
+    }
+
+    property Timer connectorWriteTimer: Timer {
+        interval: 200
+        onTriggered: root.flushConnectorWrite()
     }
 
     Component.onCompleted: refresh()
