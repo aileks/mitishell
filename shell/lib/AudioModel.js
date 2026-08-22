@@ -54,6 +54,29 @@ function playbackStreams(nodes) {
     });
 }
 
+// One logical stream per application: multi-window apps such as browsers
+// keep a playback node per window, and the applications section should
+// present the app, not its node count. Writes fan out to the whole group.
+function logicalStreams(nodes) {
+    const groups = [];
+    const byLabel = {};
+    playbackStreams(nodes).forEach(function(node) {
+        const properties = node.properties || {};
+        const label = clean(properties["application.name"])
+            || clean(node.description)
+            || clean(properties["media.name"])
+            || clean(node.name)
+            || "Unknown application";
+        const key = clean(properties["application.name"]) || clean(node.name) || label;
+        if (byLabel[key] === undefined) {
+            byLabel[key] = { label: label, nodes: [] };
+            groups.push(byLabel[key]);
+        }
+        byLabel[key].nodes.push(node);
+    });
+    return groups;
+}
+
 function streamLabel(node) {
     if (node === null || node === undefined) {
         return "Unknown application";
@@ -88,6 +111,7 @@ if (typeof module !== "undefined") {
         sources,
         isPlaybackStream,
         playbackStreams,
+        logicalStreams,
         streamLabel,
         deviceLabel,
     };

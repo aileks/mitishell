@@ -88,7 +88,7 @@ Flickable {
                         required property var modelData
 
                         width: parent.width
-                        node: modelData
+                        stream: modelData
                     }
                 }
             }

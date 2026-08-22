@@ -92,16 +92,20 @@ QtObject {
         }
     }
 
-    function setStreamVolume(node, volume) {
-        if (node !== null && node.audio !== null) {
-            node.audio.volume = AudioModel.clampVolume(volume);
-        }
+    function setStreamVolume(stream, volume) {
+        stream.nodes.forEach(function(node) {
+            if (node.audio !== null) {
+                node.audio.volume = AudioModel.clampVolume(volume);
+            }
+        });
     }
 
-    function setStreamMuted(node, muted) {
-        if (node !== null && node.audio !== null) {
-            node.audio.muted = muted;
-        }
+    function setStreamMuted(stream, muted) {
+        stream.nodes.forEach(function(node) {
+            if (node.audio !== null) {
+                node.audio.muted = muted;
+            }
+        });
     }
 
     function scheduleSnapshot() {
@@ -117,8 +121,9 @@ QtObject {
         });
         // Streams appear mid-session, and their audio object can bind after
         // the snapshot runs; rows guard a null audio instead of the snapshot
-        // dropping the stream before it is interactive.
-        streams = candidateStreams.slice();
+        // dropping the stream before it is interactive. Nodes are grouped
+        // per application so multi-window apps show one row.
+        streams = AudioModel.logicalStreams(nodes);
     }
 
     onCandidateSinksChanged: scheduleSnapshot()
