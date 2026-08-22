@@ -16,7 +16,7 @@ Mitishell grows through vertical features. Each completed feature updates this d
 
 ## Planned releases
 
-- [ ] v0.2: focused-output volume, microphone, and brightness OSDs; DDC discovery, connector mapping, caching, and coalesced writes; audio and brightness CLI actions
+- [x] v0.2: focused-output volume, microphone, and brightness OSDs; DDC discovery, connector mapping, caching, and coalesced writes; audio and brightness CLI actions
 - [ ] v0.3: focused-output control center with Home, Audio, Media, and Display pages; reliable per-application stream controls; shared state with bar popovers
 - [ ] v0.4: notification daemon, popup cards, actions, live notification center, session DND, and lock and fullscreen policies; replace SwayNC
 - [ ] v0.5: WPA2 and WPA3 Personal Wi-Fi, hidden and saved networks, phone-hotspot joining, connection details and failures, and Ethernet status
