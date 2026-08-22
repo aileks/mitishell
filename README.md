@@ -42,7 +42,7 @@ bin/mitishell power menu
 
 ## Volume, microphone, and brightness
 
-`volume`, `mic`, and `brightness` apply their change in the running shell and show an OSD on the focused output. Keybind them in Hyprland:
+`volume`, `mic`, and `brightness` apply their change in the running shell and show an OSD on the focused output. Bind them in Hyprland with:
 
 ```ini
 bindel = , XF86AudioRaiseVolume, exec, mitishell volume up
@@ -57,7 +57,7 @@ Both also accept absolute values (`mitishell volume set 40`, `mitishell brightne
 
 ## Source installation
 
-> [!NOTE]  
+> [!IMPORTANT]  
 > `make uninstall` removes only installed program files. It doesn't remove user configuration or cache data.
 
 ```bash
