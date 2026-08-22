@@ -86,14 +86,24 @@ func slicesContains(values []string, want string) bool {
 
 func writeConnector(t *testing.T, root string, name string, status string, bus int) {
 	t.Helper()
+	writeConnectorWithoutLink(t, root, name, status)
+	if bus >= 0 {
+		directory := filepath.Join(root, "card0-"+name)
+		if err := os.Symlink(fmt.Sprintf("i2c-%d", bus), filepath.Join(directory, "ddc")); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// writeConnectorWithoutLink models proprietary drivers such as nvidia, which
+// report connector status but expose no ddc symlink.
+func writeConnectorWithoutLink(t *testing.T, root string, name string, status string) {
+	t.Helper()
 	directory := filepath.Join(root, "card0-"+name)
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(directory, "status"), []byte(status), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(fmt.Sprintf("i2c-%d", bus), filepath.Join(directory, "ddc")); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -229,6 +239,41 @@ func TestDiscoverReportsUnavailableWithoutDdcutil(t *testing.T) {
 	}
 	if !strings.Contains(result.Error, "ddcutil unavailable") {
 		t.Fatalf("error = %q", result.Error)
+	}
+}
+
+func TestDiscoverFallsBackToDdcutilDetectWithoutDdcSymlinks(t *testing.T) {
+	root := t.TempDir()
+	writeConnectorWithoutLink(t, root, "DP-1", "connected")
+	writeConnectorWithoutLink(t, root, "HDMI-A-1", "connected")
+	detectOutput := "" +
+		"Display 1\n" +
+		"\tI2C bus: /dev/i2c-14\n" +
+		"\tDRM connector: card1-DP-1\n" +
+		"Display 2\n" +
+		"\tI2C bus: /dev/i2c-15\n" +
+		"\tDRM connector: card1-HDMI-A-1\n"
+	runner := &recordingRunner{respond: func(args []string) (string, error) {
+		if slicesContains(args, "detect") {
+			return detectOutput, nil
+		}
+		return luminance(55, 100)(args)
+	}}
+	service := display.NewService(runner.run, root, display.NewFileCache(cachePath(t)))
+
+	result := service.Discover(context.Background())
+
+	if result.State != display.Ready {
+		t.Fatalf("state = %q, error = %q", result.State, result.Error)
+	}
+	if len(result.Displays) != 2 {
+		t.Fatalf("displays = %#v", result.Displays)
+	}
+	if result.Displays[0].Connector != "DP-1" || result.Displays[0].Bus != 14 {
+		t.Fatalf("display = %#v", result.Displays[0])
+	}
+	if result.Displays[1].Connector != "HDMI-A-1" || result.Displays[1].Bus != 15 {
+		t.Fatalf("display = %#v", result.Displays[1])
 	}
 }
 

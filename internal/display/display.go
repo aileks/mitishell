@@ -16,10 +16,11 @@ import (
 )
 
 // DDC/CI brightness for connected monitors. Discovery maps DRM connectors to
-// i2c buses through sysfs, probes each bus with ddcutil, and caches the
-// result so later runs skip probing while the connector-to-bus mapping is
-// stable. Brightness values are normalized to 0-100 regardless of the range
-// a monitor reports for VCP feature 0x10.
+// i2c buses (the kernel's ddc symlink, with ddcutil detect as fallback for
+// drivers that do not expose it), probes each bus with ddcutil, and caches
+// the result so later runs skip probing while the mapping is stable.
+// Brightness values are normalized to 0-100 regardless of the range a
+// monitor reports for VCP feature 0x10.
 
 const commandTimeout = 10 * time.Second
 
@@ -188,7 +189,7 @@ func mergeDisplays(displays []Display, applied []Display) []Display {
 // resolve returns the known displays, probing and refreshing the cache only
 // when the sysfs mapping no longer matches what was cached.
 func (service Service) resolve(ctx context.Context) ([]Display, error) {
-	mapping, err := sysfsConnectors(service.sysfsRoot)
+	mapping, err := service.connectorBuses(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("read connectors: %w", err)
 	}
@@ -204,7 +205,7 @@ func (service Service) resolve(ctx context.Context) ([]Display, error) {
 
 // probeFresh probes every connected connector and replaces the cache.
 func (service Service) probeFresh(ctx context.Context) ([]Display, error) {
-	mapping, err := sysfsConnectors(service.sysfsRoot)
+	mapping, err := service.connectorBuses(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("read connectors: %w", err)
 	}
@@ -224,8 +225,77 @@ type connectorMapping struct {
 
 var connectorPattern = regexp.MustCompile(`^card\d+-(.+)$`)
 
-// sysfsConnectors lists connected DRM connectors that expose a ddc i2c
-// adapter, sorted by connector name.
+// connectorBuses maps connected DRM connectors to i2c buses. The kernel's
+// per-connector ddc symlink is authoritative, but proprietary drivers such
+// as nvidia do not expose it, so any connector without one falls back to
+// ddcutil's detect output.
+func (service Service) connectorBuses(ctx context.Context) ([]connectorMapping, error) {
+	mapping, err := sysfsConnectors(service.sysfsRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	missing := false
+	for _, mapped := range mapping {
+		if mapped.bus < 0 {
+			missing = true
+			break
+		}
+	}
+	if !missing {
+		return mapping, nil
+	}
+
+	detected, err := service.detectBuses(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolved := make([]connectorMapping, 0, len(mapping))
+	for _, mapped := range mapping {
+		if mapped.bus < 0 {
+			if bus, ok := detected[mapped.name]; ok {
+				mapped.bus = bus
+			} else {
+				continue
+			}
+		}
+		resolved = append(resolved, mapped)
+	}
+	return resolved, nil
+}
+
+// detectBuses parses ddcutil's brief detect output, where each display
+// stanza pairs an I2C bus line with the DRM connector it serves.
+func (service Service) detectBuses(ctx context.Context) (map[string]int, error) {
+	output, err := service.runner(ctx, "--skip-ddc-checks", "detect", "--brief")
+	if err != nil {
+		return nil, err
+	}
+	buses := map[string]int{}
+	bus := -1
+	for _, line := range strings.Split(output, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 3 {
+			continue
+		}
+		switch {
+		case fields[0] == "I2C" && fields[1] == "bus:":
+			if value, err := strconv.Atoi(strings.TrimPrefix(fields[2], "/dev/i2c-")); err == nil {
+				bus = value
+			}
+		case fields[0] == "DRM" && fields[1] == "connector:":
+			name := connectorPattern.FindStringSubmatch(fields[2])
+			if name != nil && bus >= 0 {
+				buses[name[1]] = bus
+			}
+			bus = -1
+		}
+	}
+	return buses, nil
+}
+
+// sysfsConnectors lists connected DRM connectors. A bus of -1 means the
+// connector has no ddc symlink and needs fallback discovery.
 func sysfsConnectors(root string) ([]connectorMapping, error) {
 	entries, err := os.ReadDir(root)
 	if err != nil {
@@ -242,13 +312,11 @@ func sysfsConnectors(root string) ([]connectorMapping, error) {
 		if err != nil || strings.TrimSpace(string(status)) != "connected" {
 			continue
 		}
-		link, err := os.Readlink(filepath.Join(root, entry.Name(), "ddc"))
-		if err != nil {
-			continue
-		}
-		bus, err := strconv.Atoi(strings.TrimPrefix(filepath.Base(link), "i2c-"))
-		if err != nil {
-			continue
+		bus := -1
+		if link, err := os.Readlink(filepath.Join(root, entry.Name(), "ddc")); err == nil {
+			if value, err := strconv.Atoi(strings.TrimPrefix(filepath.Base(link), "i2c-")); err == nil {
+				bus = value
+			}
 		}
 		mapping = append(mapping, connectorMapping{name: name[1], bus: bus})
 	}
