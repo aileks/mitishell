@@ -153,4 +153,8 @@ ShellRoot {
             return "brightness updated";
         }
     }
+
+    // Display has no island that would instantiate it at startup, but its
+    // discovery needs to run before the first brightness call arrives.
+    Component.onCompleted: Display.refresh()
 }

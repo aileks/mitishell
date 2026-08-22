@@ -41,7 +41,7 @@ func (client Client) Volume(action string) error {
 
 // VolumeSet applies an absolute output volume percentage.
 func (client Client) VolumeSet(value int) error {
-	return client.action("audio", "volume-set", "volume updated", strconv.Itoa(value))
+	return client.action("audio", "volumeSet", "volume updated", strconv.Itoa(value))
 }
 
 // Mic applies a microphone step action: up, down, or mute.
@@ -51,7 +51,7 @@ func (client Client) Mic(action string) error {
 
 // MicSet applies an absolute microphone volume percentage.
 func (client Client) MicSet(value int) error {
-	return client.action("audio", "mic-set", "microphone updated", strconv.Itoa(value))
+	return client.action("audio", "micSet", "microphone updated", strconv.Itoa(value))
 }
 
 // Brightness applies a brightness step action: up or down.
@@ -61,7 +61,7 @@ func (client Client) Brightness(action string) error {
 
 // BrightnessSet applies an absolute brightness percentage.
 func (client Client) BrightnessSet(value int) error {
-	return client.action("display", "brightness-set", "brightness updated", strconv.Itoa(value))
+	return client.action("display", "brightnessSet", "brightness updated", strconv.Itoa(value))
 }
 
 func (client Client) action(target string, method string, acknowledgement string, args ...string) error {
