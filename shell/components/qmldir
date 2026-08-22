@@ -4,6 +4,8 @@ AudioIsland 1.0 AudioIsland.qml
 AudioPopover 1.0 AudioPopover.qml
 AudioSection 1.0 AudioSection.qml
 AudioSlider 1.0 AudioSlider.qml
+AudioStreamRow 1.0 AudioStreamRow.qml
+VolumeSlider 1.0 VolumeSlider.qml
 BarHost 1.0 BarHost.qml
 BarPopoverTrigger 1.0 BarPopoverTrigger.qml
 CalendarPopover 1.0 CalendarPopover.qml
