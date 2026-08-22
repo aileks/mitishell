@@ -64,6 +64,12 @@ func (client Client) BrightnessSet(value int) error {
 	return client.action("display", "brightnessSet", "brightness updated", strconv.Itoa(value))
 }
 
+// ToggleControlCenter toggles the control center on the focused output,
+// starting on the given page.
+func (client Client) ToggleControlCenter(page string) error {
+	return client.action("control", "toggle", "control center toggled", page)
+}
+
 func (client Client) action(target string, method string, acknowledgement string, args ...string) error {
 	response, err := client.call(target, method, args...)
 	if err != nil {

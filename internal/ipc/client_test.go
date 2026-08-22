@@ -107,3 +107,17 @@ func fakeQSCheckingArg(t *testing.T, argument string, response string) string {
 	}
 	return path
 }
+
+func TestToggleControlCenterPassesPagePositionally(t *testing.T) {
+	client := ipc.NewClient(fakeQSCheckingArg(t, "audio", "control center toggled"), "/tmp/mitishell-shell")
+	if err := client.ToggleControlCenter("audio"); err != nil {
+		t.Fatalf("ToggleControlCenter() error = %v", err)
+	}
+}
+
+func TestToggleControlCenterRejectsUnexpectedResponse(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "control center unavailable"), "/tmp/mitishell-shell")
+	if err := client.ToggleControlCenter("home"); err == nil {
+		t.Fatal("ToggleControlCenter() accepted an unexpected response")
+	}
+}

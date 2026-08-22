@@ -42,3 +42,36 @@ test("bounded steps cap at 100 percent for keybinds", () => {
     assert.equal(AudioModel.stepVolumeWithin(0.02, -0.05, 1), 0);
     assert.equal(AudioModel.stepVolumeWithin(1.4, 0.05, 1), 1);
 });
+
+test("playback streams exclude capture streams, devices, and the shell", () => {
+    const nodes = [
+        { name: "spotify", isStream: true, isSink: true },
+        { name: "mpv", isStream: true, isSink: false, type: "AudioOutStream" },
+        { name: "firefox", isStream: true, type: "Stream/Output/Audio" },
+        { name: "firefox-mic", isStream: true, isSink: false, type: "Stream/Input/Audio" },
+        { name: "speakers", isStream: false, isSink: true },
+        { name: "microphone", isStream: false, isSink: false },
+        { name: "quickshell", isStream: true, isSink: true },
+        { name: "unknown-stream", isStream: true },
+        null,
+    ];
+
+    assert.deepEqual(
+        AudioModel.playbackStreams(nodes).map(node => node.name),
+        ["spotify", "mpv", "firefox"],
+    );
+});
+
+test("stream labels prefer the application name and degrade usefully", () => {
+    assert.equal(
+        AudioModel.streamLabel({ properties: { "application.name": "Firefox" }, description: "Raw", name: "node" }),
+        "Firefox",
+    );
+    assert.equal(AudioModel.streamLabel({ description: "ALSA playback", name: "node" }), "ALSA playback");
+    assert.equal(
+        AudioModel.streamLabel({ properties: { "media.name": "Event sink" }, name: "node" }),
+        "Event sink",
+    );
+    assert.equal(AudioModel.streamLabel({ name: "playback.pcm" }), "playback.pcm");
+    assert.equal(AudioModel.streamLabel(null), "Unknown application");
+});

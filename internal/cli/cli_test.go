@@ -29,6 +29,7 @@ type controlStub struct {
 	micSet        []int
 	brightness    []string
 	brightnessSet []int
+	controlPages  []string
 	err           error
 }
 
@@ -70,6 +71,11 @@ func (stub *controlStub) Brightness(action string) error {
 
 func (stub *controlStub) BrightnessSet(value int) error {
 	stub.brightnessSet = append(stub.brightnessSet, value)
+	return stub.err
+}
+
+func (stub *controlStub) ToggleControlCenter(page string) error {
+	stub.controlPages = append(stub.controlPages, page)
 	return stub.err
 }
 
@@ -699,5 +705,76 @@ func TestInternalDisplaySetRejectsInvalidValue(t *testing.T) {
 				t.Fatalf("set should not run, got %#v", service.setCalls)
 			}
 		})
+	}
+}
+
+func TestControlActionTogglesWithPage(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		page string
+	}{
+		{name: "defaults to home", args: []string{"control"}, page: "home"},
+		{name: "opens audio page", args: []string{"control", "audio"}, page: "audio"},
+		{name: "opens display page", args: []string{"control", "display"}, page: "display"},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			stub := &controlStub{}
+
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{ControlCenter: stub})
+
+			if exitCode != 0 {
+				t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
+			}
+			if got := stdout.String(); got != "control center toggled\n" {
+				t.Fatalf("stdout = %q", got)
+			}
+			if len(stub.controlPages) != 1 || stub.controlPages[0] != testCase.page {
+				t.Fatalf("pages = %v, want %q", stub.controlPages, testCase.page)
+			}
+		})
+	}
+}
+
+func TestControlActionRejectsInvalidUsage(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{"unknown page", []string{"control", "network"}},
+		{"extra argument", []string{"control", "audio", "now"}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			stub := &controlStub{}
+
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{ControlCenter: stub})
+
+			if exitCode != 2 {
+				t.Fatalf("exit code = %d, want usage failure", exitCode)
+			}
+			if len(stub.controlPages) != 0 {
+				t.Fatalf("toggle should not run, got %v", stub.controlPages)
+			}
+		})
+	}
+}
+
+func TestControlActionReportsUnavailableCenter(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	exitCode := cli.Run([]string{"control"}, &stdout, &stderr, cli.Dependencies{})
+
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want unavailable failure", exitCode)
+	}
+	if !strings.Contains(stderr.String(), "control center unavailable") {
+		t.Fatalf("stderr = %q", stderr.String())
 	}
 }

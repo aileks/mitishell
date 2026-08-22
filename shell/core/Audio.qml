@@ -10,6 +10,7 @@ QtObject {
     readonly property var nodes: Pipewire.nodes ? Pipewire.nodes.values : []
     readonly property var candidateSinks: AudioModel.sinks(nodes)
     readonly property var candidateSources: AudioModel.sources(nodes)
+    readonly property var candidateStreams: AudioModel.playbackStreams(nodes)
     readonly property var output: Pipewire.defaultAudioSink
     readonly property var input: Pipewire.defaultAudioSource
     readonly property real outputVolume: output !== null && output.audio !== null
@@ -24,6 +25,7 @@ QtObject {
 
     property var sinks: []
     property var sources: []
+    property var streams: []
 
     function setOutputVolume(volume) {
         if (output !== null && output.audio !== null) {
@@ -90,6 +92,18 @@ QtObject {
         }
     }
 
+    function setStreamVolume(node, volume) {
+        if (node !== null && node.audio !== null) {
+            node.audio.volume = AudioModel.clampVolume(volume);
+        }
+    }
+
+    function setStreamMuted(node, muted) {
+        if (node !== null && node.audio !== null) {
+            node.audio.muted = muted;
+        }
+    }
+
     function scheduleSnapshot() {
         snapshotTimer.restart();
     }
@@ -101,10 +115,15 @@ QtObject {
         sources = candidateSources.filter(function(node) {
             return node !== null && node.audio !== null && node.name !== "quickshell";
         });
+        // Streams appear mid-session, and their audio object can bind after
+        // the snapshot runs; rows guard a null audio instead of the snapshot
+        // dropping the stream before it is interactive.
+        streams = candidateStreams.slice();
     }
 
     onCandidateSinksChanged: scheduleSnapshot()
     onCandidateSourcesChanged: scheduleSnapshot()
+    onCandidateStreamsChanged: scheduleSnapshot()
 
     property PwObjectTracker sinkTracker: PwObjectTracker {
         objects: root.candidateSinks
@@ -112,6 +131,10 @@ QtObject {
 
     property PwObjectTracker sourceTracker: PwObjectTracker {
         objects: root.candidateSources
+    }
+
+    property PwObjectTracker streamTracker: PwObjectTracker {
+        objects: root.candidateStreams
     }
 
     property Timer snapshotTimer: Timer {

@@ -35,6 +35,11 @@ type DisplayControl interface {
 	BrightnessSet(value int) error
 }
 
+// ControlCenter toggles the shell's control center on the focused output.
+type ControlCenter interface {
+	ToggleControlCenter(page string) error
+}
+
 // DisplayService discovers and drives DDC displays directly, used by the
 // shell's display service through the hidden verbs.
 type DisplayService interface {
@@ -82,6 +87,7 @@ type Dependencies struct {
 	AudioControl   AudioControl
 	DisplayControl DisplayControl
 	DisplayService DisplayService
+	ControlCenter  ControlCenter
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
@@ -162,6 +168,9 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	}
 	if len(args) > 0 && args[0] == "config" {
 		return runConfig(args[1:], stdout, stderr, dependencies)
+	}
+	if len(args) > 0 && args[0] == "control" {
+		return runControlAction(args, stdout, stderr, dependencies)
 	}
 	if len(args) > 0 && (args[0] == "volume" || args[0] == "mic") {
 		return runAudioAction(args, stdout, stderr, dependencies)
@@ -269,6 +278,28 @@ func runConfig(args []string, stdout io.Writer, stderr io.Writer, dependencies D
 
 	fmt.Fprintln(stderr, "mitishell: usage: mitishell config <path|validate|get|set>")
 	return 2
+}
+
+func runControlAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	page := "home"
+	if len(args) == 2 {
+		page = args[1]
+	}
+	valid := page == "home" || page == "audio" || page == "media" || page == "display"
+	if len(args) > 2 || !valid {
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display>")
+		return 2
+	}
+	if dependencies.ControlCenter == nil {
+		fmt.Fprintln(stderr, "mitishell: control center unavailable")
+		return 1
+	}
+	if err := dependencies.ControlCenter.ToggleControlCenter(page); err != nil {
+		fmt.Fprintf(stderr, "mitishell: control center unavailable: %v\n", err)
+		return 1
+	}
+	fmt.Fprintln(stdout, "control center toggled")
+	return 0
 }
 
 func runAudioAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {

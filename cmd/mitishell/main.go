@@ -64,6 +64,7 @@ func main() {
 		AudioControl:   shell,
 		DisplayControl: shell,
 		DisplayService: displayService,
+		ControlCenter:  shell,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
 }

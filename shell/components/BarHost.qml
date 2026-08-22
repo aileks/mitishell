@@ -197,6 +197,10 @@ PanelWindow {
                 screen: root.modelData
             }
 
+            ControlIsland {
+                screen: root.modelData
+            }
+
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1

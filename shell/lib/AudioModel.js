@@ -33,6 +33,39 @@ function sources(nodes) {
     });
 }
 
+// Playback streams: apps and players rendering sound. Classification sticks
+// to the bound node flags and never reads node.properties, which can
+// destabilize QuickShell's Pipewire service when read too early.
+function isPlaybackStream(node) {
+    if (node === null || node === undefined || !node.isStream) {
+        return false;
+    }
+    if (node.isSink === true) {
+        return true;
+    }
+    // Some playback streams only expose their direction through type flags.
+    const type = String(node.type || "");
+    return type.indexOf("Output") !== -1 || type.indexOf("AudioOutStream") !== -1;
+}
+
+function playbackStreams(nodes) {
+    return nodes.filter(function(node) {
+        return isPlaybackStream(node) && node.name !== "quickshell";
+    });
+}
+
+function streamLabel(node) {
+    if (node === null || node === undefined) {
+        return "Unknown application";
+    }
+    const properties = node.properties || {};
+    return clean(properties["application.name"])
+        || clean(node.description)
+        || clean(properties["media.name"])
+        || clean(node.name)
+        || "Unknown application";
+}
+
 function deviceLabel(node) {
     if (node === null || node === undefined) {
         return "Unavailable";
@@ -53,6 +86,9 @@ if (typeof module !== "undefined") {
         percent,
         sinks,
         sources,
+        isPlaybackStream,
+        playbackStreams,
+        streamLabel,
         deviceLabel,
     };
 }
