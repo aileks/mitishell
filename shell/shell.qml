@@ -18,6 +18,12 @@ ShellRoot {
         delegate: OsdHost {}
     }
 
+    Variants {
+        model: Quickshell.screens
+
+        delegate: ControlHost {}
+    }
+
     IpcHandler {
         target: "shell"
 
@@ -151,6 +157,30 @@ ShellRoot {
             Display.setBrightness(percent);
             Osd.showBrightness();
             return "brightness updated";
+        }
+    }
+
+    IpcHandler {
+        target: "control"
+
+        function toggle(page: string): string {
+            const screens = Quickshell.screens !== undefined ? Quickshell.screens : [];
+            let target = null;
+            for (let index = 0; index < screens.length; index++) {
+                if (screens[index].name === Osd.screenName) {
+                    target = screens[index];
+                    break;
+                }
+            }
+            if (target === null && screens.length > 0) {
+                target = screens[0];
+            }
+            if (target === null) {
+                return "control center unavailable";
+            }
+            Control.selectPage(page);
+            SurfaceCoordinator.toggle("control", target);
+            return "control center toggled";
         }
     }
 

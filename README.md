@@ -38,6 +38,15 @@ bin/mitishell config get bar.outputs
 bin/mitishell config set weather.enabled true
 bin/mitishell notifications toggle
 bin/mitishell power menu
+bin/mitishell control
+```
+
+## Control center
+
+`mitishell control` toggles the control center on the focused output. It has Home, Audio, Media, and Display pages; pass a page to land somewhere specific, for example `mitishell control audio`. The bar's control island opens it too.
+
+```ini
+bindl = SUPER, D, exec, mitishell control
 ```
 
 ## Volume, microphone, and brightness

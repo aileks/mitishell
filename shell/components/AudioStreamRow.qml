@@ -50,7 +50,7 @@ Rectangle {
                 onClicked: Audio.setStreamMuted(root.node, !root.muted)
             }
 
-            VolumeSlider {
+            ShellSlider {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 36 - parent.spacing
                 value: root.volume

@@ -1,16 +1,12 @@
 import QtQuick
 import QtQuick.Controls.Basic as Controls
 import "../core"
-import "../lib/AudioModel.js" as AudioModel
 
-// The shared volume slider control: orange fill, blue focus handle, and the
-// shell's 0-150 percent policy. Callers own the value binding and onMoved.
+// The shell's slider control: orange fill, blue focus handle. Callers own
+// the range, value binding, and onMoved handling.
 Controls.Slider {
     id: root
 
-    from: 0
-    to: AudioModel.maximumVolume
-    stepSize: 0.01
     activeFocusOnTab: true
 
     background: Rectangle {

@@ -48,7 +48,7 @@ Item {
             onClicked: root.muteRequested()
         }
 
-        VolumeSlider {
+        ShellSlider {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 36 - parent.spacing
             value: root.currentValue
