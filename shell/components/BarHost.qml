@@ -168,10 +168,6 @@ PanelWindow {
                 AudioIsland {}
             }
 
-            ControlIsland {
-                screen: root.modelData
-            }
-
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1
@@ -198,6 +194,10 @@ PanelWindow {
 
             TrayIsland {
                 visible: Tray.available
+                screen: root.modelData
+            }
+
+            ControlIsland {
                 screen: root.modelData
             }
 

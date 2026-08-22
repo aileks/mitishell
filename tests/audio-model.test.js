@@ -46,17 +46,19 @@ test("bounded steps cap at 100 percent for keybinds", () => {
 test("playback streams exclude capture streams, devices, and the shell", () => {
     const nodes = [
         { name: "spotify", isStream: true, isSink: true },
-        { name: "firefox", isStream: true, isSink: true },
-        { name: "firefox-mic", isStream: true, isSink: false },
+        { name: "mpv", isStream: true, isSink: false, type: "AudioOutStream" },
+        { name: "firefox", isStream: true, type: "Stream/Output/Audio" },
+        { name: "firefox-mic", isStream: true, isSink: false, type: "Stream/Input/Audio" },
         { name: "speakers", isStream: false, isSink: true },
         { name: "microphone", isStream: false, isSink: false },
         { name: "quickshell", isStream: true, isSink: true },
+        { name: "unknown-stream", isStream: true },
         null,
     ];
 
     assert.deepEqual(
         AudioModel.playbackStreams(nodes).map(node => node.name),
-        ["spotify", "firefox"],
+        ["spotify", "mpv", "firefox"],
     );
 });
 

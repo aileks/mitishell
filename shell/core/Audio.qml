@@ -115,9 +115,10 @@ QtObject {
         sources = candidateSources.filter(function(node) {
             return node !== null && node.audio !== null && node.name !== "quickshell";
         });
-        streams = candidateStreams.filter(function(node) {
-            return node !== null && node.audio !== null;
-        });
+        // Streams appear mid-session, and their audio object can bind after
+        // the snapshot runs; rows guard a null audio instead of the snapshot
+        // dropping the stream before it is interactive.
+        streams = candidateStreams.slice();
     }
 
     onCandidateSinksChanged: scheduleSnapshot()

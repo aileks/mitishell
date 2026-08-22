@@ -37,7 +37,7 @@ FocusScope {
             anchors.centerIn: parent
             width: 16
             height: 16
-            source: "../assets/icons/home.svg"
+            source: "../assets/icons/sliders.svg"
             sourceSize.width: 16
             sourceSize.height: 16
         }
