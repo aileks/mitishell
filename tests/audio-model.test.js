@@ -75,3 +75,31 @@ test("stream labels prefer the application name and degrade usefully", () => {
     assert.equal(AudioModel.streamLabel({ name: "playback.pcm" }), "playback.pcm");
     assert.equal(AudioModel.streamLabel(null), "Unknown application");
 });
+
+test("logical streams group per application", () => {
+    const nodes = [
+        { name: "zen", isStream: true, isSink: true, properties: { "application.name": "Zen" } },
+        { name: "zen-2", isStream: true, type: "AudioOutStream", properties: { "application.name": "Zen" } },
+        { name: "spotify", isStream: true, isSink: true, properties: { "application.name": "Spotify" } },
+        { name: "speakers", isStream: false, isSink: true },
+    ];
+
+    const streams = AudioModel.logicalStreams(nodes);
+
+    assert.deepEqual(streams.map(stream => stream.label), ["Zen", "Spotify"]);
+    assert.equal(streams[0].nodes.length, 2);
+    assert.equal(streams[0].nodes[0].name, "zen");
+    assert.equal(streams[1].nodes.length, 1);
+});
+
+test("logical streams key nameless applications apart", () => {
+    const nodes = [
+        { name: "player-a", isStream: true, isSink: true, description: "Media playback" },
+        { name: "player-b", isStream: true, isSink: true, description: "Media playback" },
+    ];
+
+    const streams = AudioModel.logicalStreams(nodes);
+
+    assert.equal(streams.length, 2);
+    assert.deepEqual(streams.map(stream => stream.label), ["Media playback", "Media playback"]);
+});

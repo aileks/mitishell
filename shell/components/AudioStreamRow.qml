@@ -5,13 +5,21 @@ import "../lib/AudioModel.js" as AudioModel
 Rectangle {
     id: root
 
-    required property var node
+    required property var stream
 
-    readonly property string label: AudioModel.streamLabel(node)
-    readonly property real volume: node !== null && node.audio !== null
+    // The first node with a bound audio object carries the group's display
+    // state; writes go to every node through the Audio service.
+    readonly property var node: {
+        for (let index = 0; index < stream.nodes.length; index++) {
+            if (stream.nodes[index].audio !== null) {
+                return stream.nodes[index];
+            }
+        }
+        return null;
+    }
+    readonly property real volume: node !== null
         ? AudioModel.clampVolume(node.audio.volume) : 0
-    readonly property bool muted: node !== null && node.audio !== null
-        ? node.audio.muted : false
+    readonly property bool muted: node !== null ? node.audio.muted : false
 
     implicitWidth: 344
     implicitHeight: 64
@@ -20,7 +28,7 @@ Rectangle {
     border.width: activeFocus ? 2 : 0
     border.color: Theme.blue
     activeFocusOnTab: true
-    Accessible.name: label
+    Accessible.name: stream.label
 
     Column {
         anchors.left: parent.left
@@ -31,7 +39,7 @@ Rectangle {
 
         Text {
             width: parent.width - percent.width - Theme.spaceSm
-            text: root.label
+            text: root.stream.label
             elide: Text.ElideRight
             color: root.muted ? Theme.red : Theme.text
             font.family: Theme.fontSans
@@ -46,16 +54,19 @@ Rectangle {
                 iconSource: root.muted
                     ? "../assets/icons/volume-x.svg"
                     : "../assets/icons/volume-2.svg"
-                accessibleName: "Toggle " + root.label + " mute"
-                onClicked: Audio.setStreamMuted(root.node, !root.muted)
+                accessibleName: "Toggle " + root.stream.label + " mute"
+                onClicked: Audio.setStreamMuted(root.stream, !root.muted)
             }
 
             ShellSlider {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 36 - parent.spacing
+                from: 0
+                to: AudioModel.maximumVolume
+                stepSize: 0.01
                 value: root.volume
-                Accessible.name: root.label + " volume"
-                onMoved: Audio.setStreamVolume(root.node, value)
+                Accessible.name: root.stream.label + " volume"
+                onMoved: Audio.setStreamVolume(root.stream, value)
             }
         }
     }
