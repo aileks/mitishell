@@ -36,3 +36,9 @@ test("device labels prefer descriptions and remain useful", () => {
     assert.equal(AudioModel.deviceLabel({ name: "alsa_output.pci" }), "alsa_output.pci");
     assert.equal(AudioModel.deviceLabel(null), "Unavailable");
 });
+
+test("bounded steps cap at 100 percent for keybinds", () => {
+    assert.equal(AudioModel.stepVolumeWithin(0.98, 0.05, 1), 1);
+    assert.equal(AudioModel.stepVolumeWithin(0.02, -0.05, 1), 0);
+    assert.equal(AudioModel.stepVolumeWithin(1.4, 0.05, 1), 1);
+});

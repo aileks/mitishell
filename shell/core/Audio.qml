@@ -35,8 +35,14 @@ QtObject {
         setOutputVolume(AudioModel.stepVolume(outputVolume, delta));
     }
 
-    function toggleOutputMute() {
+    function setOutputMuted(muted) {
         if (output !== null && output.audio !== null) {
+            output.audio.muted = muted;
+        }
+    }
+
+    function toggleOutputMute() {
+        if (muteToggleAllowed() && output !== null && output.audio !== null) {
             output.audio.muted = !output.audio.muted;
         }
     }
@@ -47,10 +53,29 @@ QtObject {
         }
     }
 
-    function toggleInputMute() {
+    function setInputMuted(muted) {
         if (input !== null && input.audio !== null) {
+            input.audio.muted = muted;
+        }
+    }
+
+    function toggleInputMute() {
+        if (muteToggleAllowed() && input !== null && input.audio !== null) {
             input.audio.muted = !input.audio.muted;
         }
+    }
+
+    // Mute keys bounce on some hardware: toggles within 250 ms count as one
+    // so a single press cannot flip mute state back and forth.
+    property real lastMuteToggleMs: 0
+
+    function muteToggleAllowed() {
+        const now = Date.now();
+        if (now - lastMuteToggleMs < 250) {
+            return false;
+        }
+        lastMuteToggleMs = now;
+        return true;
     }
 
     function selectSink(node) {
