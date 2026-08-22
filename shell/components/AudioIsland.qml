@@ -37,6 +37,7 @@ Item {
     WheelHandler {
         onWheel: function(event) {
             Audio.stepOutputVolume(event.angleDelta.y > 0 ? 0.02 : -0.02);
+            Osd.showVolume();
             event.accepted = true;
         }
     }

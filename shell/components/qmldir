@@ -12,6 +12,7 @@ IconButton 1.0 IconButton.qml
 MediaIsland 1.0 MediaIsland.qml
 MediaPopover 1.0 MediaPopover.qml
 MetricCard 1.0 MetricCard.qml
+OsdHost 1.0 OsdHost.qml
 SystemMetricsIsland 1.0 SystemMetricsIsland.qml
 SystemPopover 1.0 SystemPopover.qml
 TrayIsland 1.0 TrayIsland.qml

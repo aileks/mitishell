@@ -3,12 +3,19 @@ import Quickshell
 import Quickshell.Io
 import "components"
 import "core"
+import "lib/AudioModel.js" as AudioModel
 
 ShellRoot {
     Variants {
         model: Quickshell.screens
 
         delegate: BarHost {}
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: OsdHost {}
     }
 
     IpcHandler {
@@ -43,4 +50,111 @@ ShellRoot {
                 ? "power menu opened" : "power menu unavailable";
         }
     }
+
+    IpcHandler {
+        target: "audio"
+
+        function volume(action: string): string {
+            if (!Audio.ready) {
+                return "volume unavailable";
+            }
+            if (action === "up" || action === "down") {
+                // Keybind steps cap at 100 percent and always unmute, so a
+                // step from silence is heard and the OSD scale holds.
+                const delta = action === "up" ? 0.05 : -0.05;
+                Audio.setOutputMuted(false);
+                Audio.setOutputVolume(
+                    AudioModel.stepVolumeWithin(Audio.outputVolume, delta, 1));
+            } else if (action === "mute") {
+                Audio.toggleOutputMute();
+            } else {
+                return "volume action invalid";
+            }
+            Osd.showVolume();
+            return "volume updated";
+        }
+
+        function volumeSet(value: string): string {
+            if (!Audio.ready) {
+                return "volume unavailable";
+            }
+            const percent = parseInt(value, 10);
+            if (isNaN(percent) || percent < 0 || percent > 150) {
+                return "volume value invalid";
+            }
+            Audio.setOutputMuted(false);
+            Audio.setOutputVolume(percent / 100);
+            Osd.showVolume();
+            return "volume updated";
+        }
+
+        function mic(action: string): string {
+            if (!Audio.ready) {
+                return "microphone unavailable";
+            }
+            if (action === "up" || action === "down") {
+                const delta = action === "up" ? 0.05 : -0.05;
+                Audio.setInputMuted(false);
+                Audio.setInputVolume(
+                    AudioModel.stepVolumeWithin(Audio.inputVolume, delta, 1));
+                Osd.showMicVolume();
+            } else if (action === "mute") {
+                Audio.toggleInputMute();
+                Osd.showMicMuted(Audio.inputMuted);
+            } else {
+                return "microphone action invalid";
+            }
+            return "microphone updated";
+        }
+
+        function micSet(value: string): string {
+            if (!Audio.ready) {
+                return "microphone unavailable";
+            }
+            const percent = parseInt(value, 10);
+            if (isNaN(percent) || percent < 0 || percent > 150) {
+                return "microphone value invalid";
+            }
+            Audio.setInputMuted(false);
+            Audio.setInputVolume(percent / 100);
+            Osd.showMicVolume();
+            return "microphone updated";
+        }
+    }
+
+    IpcHandler {
+        target: "display"
+
+        function brightness(action: string): string {
+            if (!Display.available) {
+                return "brightness unavailable";
+            }
+            if (action === "up") {
+                Display.stepBrightness(5);
+            } else if (action === "down") {
+                Display.stepBrightness(-5);
+            } else {
+                return "brightness action invalid";
+            }
+            Osd.showBrightness();
+            return "brightness updated";
+        }
+
+        function brightnessSet(value: string): string {
+            if (!Display.available) {
+                return "brightness unavailable";
+            }
+            const percent = parseInt(value, 10);
+            if (isNaN(percent) || percent < 0 || percent > 100) {
+                return "brightness value invalid";
+            }
+            Display.setBrightness(percent);
+            Osd.showBrightness();
+            return "brightness updated";
+        }
+    }
+
+    // Display has no island that would instantiate it at startup, but its
+    // discovery needs to run before the first brightness call arrives.
+    Component.onCompleted: Display.refresh()
 }

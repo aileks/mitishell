@@ -9,6 +9,7 @@ import (
 
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/config"
+	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/ipc"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -45,12 +46,24 @@ func main() {
 		weather.NewFileCache(filepath.Join(cacheDirectory, "mitishell", "weather.json")),
 		time.Now,
 	)
+	ddcutilRunner, err := display.NewSystemRunner()
+	if err != nil {
+		ddcutilRunner = display.UnavailableRunner(err)
+	}
+	displayService := display.NewService(
+		ddcutilRunner,
+		"/sys/class/drm",
+		display.NewFileCache(filepath.Join(cacheDirectory, "mitishell", "displays.json")),
+	)
 	dependencies := cli.Dependencies{
-		ConfigPath:   configPath,
-		Shell:        shell,
-		Doctor:       systemDoctor{configPath: configPath, shell: shell},
-		Weather:      weatherService,
-		Capabilities: systemCapabilities{},
+		ConfigPath:     configPath,
+		Shell:          shell,
+		Doctor:         systemDoctor{configPath: configPath, shell: shell},
+		Weather:        weatherService,
+		Capabilities:   systemCapabilities{},
+		AudioControl:   shell,
+		DisplayControl: shell,
+		DisplayService: displayService,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
 }

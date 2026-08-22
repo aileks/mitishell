@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/aileks/mitishell/internal/cli"
+	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -19,6 +20,66 @@ type shellStub struct {
 	reloadErr        error
 	notificationsErr error
 	powerErr         error
+}
+
+type controlStub struct {
+	volumeCalls   []string
+	volumeSet     []int
+	micCalls      []string
+	micSet        []int
+	brightness    []string
+	brightnessSet []int
+	err           error
+}
+
+type displaySetCall struct {
+	connector string
+	value     int
+}
+
+type displayServiceStub struct {
+	discover display.Result
+	setCalls []displaySetCall
+	set      display.Result
+}
+
+func (stub *controlStub) Volume(action string) error {
+	stub.volumeCalls = append(stub.volumeCalls, action)
+	return stub.err
+}
+
+func (stub *controlStub) VolumeSet(value int) error {
+	stub.volumeSet = append(stub.volumeSet, value)
+	return stub.err
+}
+
+func (stub *controlStub) Mic(action string) error {
+	stub.micCalls = append(stub.micCalls, action)
+	return stub.err
+}
+
+func (stub *controlStub) MicSet(value int) error {
+	stub.micSet = append(stub.micSet, value)
+	return stub.err
+}
+
+func (stub *controlStub) Brightness(action string) error {
+	stub.brightness = append(stub.brightness, action)
+	return stub.err
+}
+
+func (stub *controlStub) BrightnessSet(value int) error {
+	stub.brightnessSet = append(stub.brightnessSet, value)
+	return stub.err
+}
+
+func (stub *displayServiceStub) Discover(context.Context) display.Result {
+	return stub.discover
+}
+
+func (stub *displayServiceStub) Set(_ context.Context, connector string, value int) display.Result {
+	stub.setCalls = append(stub.setCalls, displaySetCall{connector: connector, value: value})
+	return stub.set
 }
 
 type capabilityStub struct {
@@ -348,5 +409,295 @@ func TestDoctorReportsRequiredFailuresAndOptionalWarnings(t *testing.T) {
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestVolumeActionsApplyThroughShell(t *testing.T) {
+	cases := []struct {
+		name     string
+		args     []string
+		stdout   string
+		recorder func(stub *controlStub) string
+	}{
+		{
+			name:   "volume up",
+			args:   []string{"volume", "up"},
+			stdout: "volume updated\n",
+			recorder: func(stub *controlStub) string {
+				return strings.Join(stub.volumeCalls, ",")
+			},
+		},
+		{
+			name:   "volume down",
+			args:   []string{"volume", "down"},
+			stdout: "volume updated\n",
+			recorder: func(stub *controlStub) string {
+				return strings.Join(stub.volumeCalls, ",")
+			},
+		},
+		{
+			name:   "mic mute",
+			args:   []string{"mic", "mute"},
+			stdout: "microphone updated\n",
+			recorder: func(stub *controlStub) string {
+				return strings.Join(stub.micCalls, ",")
+			},
+		},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			stub := &controlStub{}
+
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{AudioControl: stub})
+
+			if exitCode != 0 {
+				t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
+			}
+			if got := stdout.String(); got != testCase.stdout {
+				t.Fatalf("stdout = %q, want %q", got, testCase.stdout)
+			}
+			if got := testCase.recorder(stub); got == "" {
+				t.Fatal("action was not applied")
+			}
+		})
+	}
+}
+
+func TestVolumeSetAppliesAbsoluteValue(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &controlStub{}
+
+	exitCode := cli.Run([]string{"volume", "set", "80"}, &stdout, &stderr, cli.Dependencies{AudioControl: stub})
+
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if got := stdout.String(); got != "volume updated\n" {
+		t.Fatalf("stdout = %q", got)
+	}
+	if len(stub.volumeSet) != 1 || stub.volumeSet[0] != 80 {
+		t.Fatalf("volumeSet calls = %v", stub.volumeSet)
+	}
+}
+
+func TestAudioActionsRejectInvalidUsage(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{"volume alone", []string{"volume"}},
+		{"volume bad action", []string{"volume", "frob"}},
+		{"volume set without value", []string{"volume", "set"}},
+		{"volume set above range", []string{"volume", "set", "151"}},
+		{"volume set not a number", []string{"volume", "set", "loud"}},
+		{"mic set negative", []string{"mic", "set", "-1"}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{AudioControl: &controlStub{}})
+
+			if exitCode != 2 {
+				t.Fatalf("exit code = %d, want usage failure", exitCode)
+			}
+			if !strings.Contains(stderr.String(), "usage: mitishell") {
+				t.Fatalf("stderr = %q", stderr.String())
+			}
+		})
+	}
+}
+
+func TestAudioActionsReportUnavailableControl(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	exitCode := cli.Run([]string{"volume", "up"}, &stdout, &stderr, cli.Dependencies{})
+
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want unavailable failure", exitCode)
+	}
+	if !strings.Contains(stderr.String(), "volume actions unavailable") {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestAudioActionsReportShellFailure(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &controlStub{err: errors.New("shell not running")}
+
+	exitCode := cli.Run([]string{"mic", "mute"}, &stdout, &stderr, cli.Dependencies{AudioControl: stub})
+
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want failure", exitCode)
+	}
+	if got := stderr.String(); got != "mitishell: microphone unavailable: shell not running\n" {
+		t.Fatalf("stderr = %q", got)
+	}
+}
+
+func TestBrightnessActionsApplyThroughShell(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &controlStub{}
+
+	exitCode := cli.Run([]string{"brightness", "up"}, &stdout, &stderr, cli.Dependencies{DisplayControl: stub})
+
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if got := stdout.String(); got != "brightness updated\n" {
+		t.Fatalf("stdout = %q", got)
+	}
+	if strings.Join(stub.brightness, ",") != "up" {
+		t.Fatalf("brightness calls = %v", stub.brightness)
+	}
+}
+
+func TestBrightnessSetAppliesAbsoluteValue(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &controlStub{}
+
+	exitCode := cli.Run([]string{"brightness", "set", "0"}, &stdout, &stderr, cli.Dependencies{DisplayControl: stub})
+
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if len(stub.brightnessSet) != 1 || stub.brightnessSet[0] != 0 {
+		t.Fatalf("brightnessSet calls = %v", stub.brightnessSet)
+	}
+}
+
+func TestBrightnessActionsRejectInvalidUsage(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{"brightness alone", []string{"brightness"}},
+		{"brightness mute", []string{"brightness", "mute"}},
+		{"brightness set above range", []string{"brightness", "set", "101"}},
+		{"brightness set not a number", []string{"brightness", "set", "bright"}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{DisplayControl: &controlStub{}})
+
+			if exitCode != 2 {
+				t.Fatalf("exit code = %d, want usage failure", exitCode)
+			}
+			if !strings.Contains(stderr.String(), "usage: mitishell brightness") {
+				t.Fatalf("stderr = %q", stderr.String())
+			}
+		})
+	}
+}
+
+func TestBrightnessReportsUnavailableControl(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	exitCode := cli.Run([]string{"brightness", "up"}, &stdout, &stderr, cli.Dependencies{})
+
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want unavailable failure", exitCode)
+	}
+	if !strings.Contains(stderr.String(), "brightness actions unavailable") {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestInternalDisplayDiscoverEncodesResult(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	service := &displayServiceStub{discover: display.Result{
+		State: display.Ready,
+		Displays: []display.Display{
+			{Connector: "DP-4", Bus: 8, Brightness: 55, Max: 100},
+		},
+	}}
+
+	exitCode := cli.Run([]string{"_display-discover"}, &stdout, &stderr, cli.Dependencies{DisplayService: service})
+
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	var result display.Result
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatalf("decode output: %v", err)
+	}
+	if result.State != display.Ready || len(result.Displays) != 1 || result.Displays[0].Connector != "DP-4" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestInternalDisplayDiscoverReportsMissingService(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	exitCode := cli.Run([]string{"_display-discover"}, &stdout, &stderr, cli.Dependencies{})
+
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want failure", exitCode)
+	}
+	if !strings.Contains(stderr.String(), "display discovery unavailable") {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestInternalDisplaySetAppliesValue(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	service := &displayServiceStub{set: display.Result{State: display.Ready}}
+
+	exitCode := cli.Run([]string{"_display-set", "all", "55"}, &stdout, &stderr, cli.Dependencies{DisplayService: service})
+
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if len(service.setCalls) != 1 || service.setCalls[0].connector != "all" || service.setCalls[0].value != 55 {
+		t.Fatalf("set calls = %#v", service.setCalls)
+	}
+	var result display.Result
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatalf("decode output: %v", err)
+	}
+	if result.State != display.Ready {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestInternalDisplaySetRejectsInvalidValue(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{"above range", []string{"_display-set", "all", "101"}},
+		{"negative", []string{"_display-set", "all", "-5"}},
+		{"not a number", []string{"_display-set", "all", "bright"}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			service := &displayServiceStub{}
+
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{DisplayService: service})
+
+			if exitCode != 2 {
+				t.Fatalf("exit code = %d, want usage failure", exitCode)
+			}
+			if len(service.setCalls) != 0 {
+				t.Fatalf("set should not run, got %#v", service.setCalls)
+			}
+		})
 	}
 }
