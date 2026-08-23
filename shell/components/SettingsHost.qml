@@ -225,6 +225,57 @@ PanelWindow {
 
                 SectionCard {
                     width: parent.width
+                    title: "Clock & Calendar"
+                    accent: Theme.blue
+
+                    Column {
+                        id: clockSection
+
+                        width: parent.width
+                        spacing: Theme.spaceMd
+
+                        SettingsChoiceRow {
+                            width: parent.width
+                            label: "Format"
+                            fieldKey: "clock.format"
+                            value: Config.clock.format
+                            choices: [
+                                { value: "auto", label: "Locale" },
+                                { value: "24h", label: "24-hour" },
+                                { value: "12h", label: "12-hour" },
+                                { value: "24h-seconds", label: "24-hour + seconds" },
+                                { value: "12h-seconds", label: "12-hour + seconds" },
+                            ]
+                        }
+
+                        ToggleRow {
+                            width: parent.width
+                            accent: Theme.blue
+                            label: "Date"
+                            description: "Show the date beside the clock."
+                            checked: Config.clock.showDate
+                            onToggled: Settings.setField(
+                                "clock.showDate", checked ? "false" : "true")
+                        }
+
+                        ToggleRow {
+                            width: parent.width
+                            accent: Theme.blue
+                            label: "Week numbers"
+                            description: "Show ISO week numbers in the calendar."
+                            checked: Config.calendar.showWeekNumbers
+                            onToggled: Settings.setField(
+                                "calendar.showWeekNumbers", checked ? "false" : "true")
+                        }
+
+                        SettingsTimezonesRow {
+                            width: parent.width
+                        }
+                    }
+                }
+
+                SectionCard {
+                    width: parent.width
                     title: "Weather"
                     accent: Theme.cyan
 

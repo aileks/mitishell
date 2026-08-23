@@ -1,13 +1,17 @@
 pragma Singleton
 
 import QtQuick
+import "../lib/ClockModel.js" as ClockModel
 
 QtObject {
     id: root
 
     property date now: new Date()
     readonly property var locale: Qt.locale()
-    readonly property string timeFormat: withoutSeconds(locale.timeFormat(Locale.ShortFormat))
+    readonly property string timeFormat: ClockModel.timePattern(
+        Config.clock.format,
+        withoutSeconds(locale.timeFormat(Locale.ShortFormat)),
+    )
     readonly property var today: ({
         "year": now.getFullYear(),
         "month": now.getMonth(),

@@ -42,6 +42,14 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
     "showMedia": true,
     "systemMetrics": "combined"
   },
+  "clock": {
+    "format": "24h-seconds",
+    "showDate": true,
+    "timezones": ["Europe/Berlin", "Pacific/Auckland"]
+  },
+  "calendar": {
+    "showWeekNumbers": true
+  },
   "weather": {
     "enabled": true,
     "units": "fahrenheit"
@@ -70,6 +78,14 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
 			ShowMedia:        true,
 			SystemMetrics:    "combined",
 		},
+		Clock: config.Clock{
+			Format:    "24h-seconds",
+			ShowDate:  true,
+			Timezones: []string{"Europe/Berlin", "Pacific/Auckland"},
+		},
+		Calendar: config.Calendar{
+			ShowWeekNumbers: true,
+		},
 		Weather: config.Weather{
 			Enabled: true,
 			Units:   "fahrenheit",
@@ -81,6 +97,30 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Load() = %#v, want %#v", got, want)
+	}
+}
+
+func TestLoadFillsMissingClockSectionWithDefaults(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	contents := `{
+  "version": 1,
+  "bar": {"outputs": ["*"], "height": 36, "marginTop": 6, "marginHorizontal": 8, "showWindowTitle": true, "showMedia": true, "systemMetrics": "separate"},
+  "calendar": {"showWeekNumbers": false},
+  "weather": {"enabled": false, "units": "auto"},
+  "motion": {"enabled": true, "reduced": false}
+}`
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := config.Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	want := config.Defaults().Clock
+	if !reflect.DeepEqual(got.Clock, want) {
+		t.Fatalf("Load().Clock = %#v, want %#v", got.Clock, want)
 	}
 }
 
@@ -135,6 +175,19 @@ func TestValidateRejectsInvalidValues(t *testing.T) {
 		"large side margin": func(cfg *config.Config) { cfg.Bar.MarginHorizontal = 65 },
 		"metrics mode":      func(cfg *config.Config) { cfg.Bar.SystemMetrics = "stacked" },
 		"weather units":     func(cfg *config.Config) { cfg.Weather.Units = "kelvin" },
+		"clock format":      func(cfg *config.Config) { cfg.Clock.Format = "swatch" },
+		"blank timezone":    func(cfg *config.Config) { cfg.Clock.Timezones = []string{""} },
+		"duplicate timezone": func(cfg *config.Config) {
+			cfg.Clock.Timezones = []string{"Europe/Berlin", "Europe/Berlin"}
+		},
+		"unknown timezone": func(cfg *config.Config) { cfg.Clock.Timezones = []string{"Mars/Olympus"} },
+		"too many timezones": func(cfg *config.Config) {
+			cfg.Clock.Timezones = []string{
+				"UTC", "Europe/Berlin", "Europe/London", "America/New_York",
+				"America/Los_Angeles", "Asia/Tokyo", "Asia/Kolkata", "Australia/Sydney",
+				"Pacific/Auckland",
+			}
+		},
 	}
 
 	for name, mutate := range tests {
@@ -207,6 +260,10 @@ func TestSetAndGetKnownFields(t *testing.T) {
 		{key: "bar.systemMetrics", value: "combined", want: `"combined"`},
 		{key: "weather.enabled", value: "true", want: "true"},
 		{key: "weather.units", value: "celsius", want: `"celsius"`},
+		{key: "clock.format", value: "12h-seconds", want: `"12h-seconds"`},
+		{key: "clock.showDate", value: "true", want: "true"},
+		{key: "clock.timezones", value: `["Europe/Berlin","UTC"]`, want: `["Europe/Berlin","UTC"]`},
+		{key: "calendar.showWeekNumbers", value: "true", want: "true"},
 		{key: "motion.enabled", value: "false", want: "false"},
 		{key: "motion.reduced", value: "true", want: "true"},
 	}
@@ -238,6 +295,11 @@ func TestSetFieldRejectsUnknownOrInvalidValues(t *testing.T) {
 		{key: "bar.height", value: "10"},
 		{key: "weather.enabled", value: "yes"},
 		{key: "weather.units", value: "kelvin"},
+		{key: "clock.format", value: "swatch"},
+		{key: "clock.showDate", value: "maybe"},
+		{key: "clock.timezones", value: "Europe/Berlin"},
+		{key: "clock.timezones", value: `["Mars/Olympus"]`},
+		{key: "calendar.showWeekNumbers", value: "sometimes"},
 	}
 
 	for _, test := range tests {
