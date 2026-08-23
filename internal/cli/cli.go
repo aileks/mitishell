@@ -21,6 +21,7 @@ type Shell interface {
 	Reload() error
 	ToggleNotifications() error
 	OpenPowerMenu() error
+	OpenSettings() error
 }
 
 // AudioControl applies audio actions in the running shell, which shows the
@@ -307,6 +308,14 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		fmt.Fprintln(stdout, "power menu opened")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "settings" {
+		if err := dependencies.Shell.OpenSettings(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: settings unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "settings opened")
 		return 0
 	}
 	if len(args) != 1 {

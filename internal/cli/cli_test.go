@@ -21,6 +21,7 @@ type shellStub struct {
 	reloadErr        error
 	notificationsErr error
 	powerErr         error
+	settingsErr      error
 }
 
 type controlStub struct {
@@ -130,6 +131,10 @@ func (stub shellStub) ToggleNotifications() error {
 
 func (stub shellStub) OpenPowerMenu() error {
 	return stub.powerErr
+}
+
+func (stub shellStub) OpenSettings() error {
+	return stub.settingsErr
 }
 
 type powerStub struct {
@@ -271,6 +276,41 @@ func TestNotificationsDndTogglesThroughShell(t *testing.T) {
 	}
 	if got := stdout.String(); got != "do not disturb toggled\n" {
 		t.Fatalf("stdout = %q", got)
+	}
+}
+
+func TestSettingsOpensWindow(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	dependencies := cli.Dependencies{Shell: shellStub{}}
+
+	exitCode := cli.Run([]string{"settings"}, &stdout, &stderr, dependencies)
+
+	if exitCode != 0 {
+		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if got := stdout.String(); got != "settings opened\n" {
+		t.Fatalf("stdout = %q", got)
+	}
+}
+
+func TestSettingsReportsUnavailableAction(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	dependencies := cli.Dependencies{
+		Shell: shellStub{settingsErr: errors.New("IPC open failed")},
+	}
+
+	exitCode := cli.Run([]string{"settings"}, &stdout, &stderr, dependencies)
+
+	if exitCode == 0 {
+		t.Fatal("Run() returned success for unavailable settings")
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if got := stderr.String(); got != "mitishell: settings unavailable: IPC open failed\n" {
+		t.Fatalf("stderr = %q", got)
 	}
 }
 

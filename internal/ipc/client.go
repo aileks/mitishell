@@ -54,6 +54,11 @@ func (client Client) OpenPowerMenu() error {
 	return client.action("power", "open", "power menu opened")
 }
 
+// OpenSettings toggles the settings window on the focused output.
+func (client Client) OpenSettings() error {
+	return client.action("settings", "open", "settings opened")
+}
+
 // Volume applies an output volume step action: up, down, or mute.
 func (client Client) Volume(action string) error {
 	return client.action("audio", "volume", "volume updated", action)

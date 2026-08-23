@@ -30,6 +30,11 @@ OsdHost 1.0 OsdHost.qml
 PowerHost 1.0 PowerHost.qml
 PowerIsland 1.0 PowerIsland.qml
 ShellSlider 1.0 ShellSlider.qml
+SettingsChoiceRow 1.0 SettingsChoiceRow.qml
+SettingsHost 1.0 SettingsHost.qml
+SettingsNumberRow 1.0 SettingsNumberRow.qml
+SettingsOutputsRow 1.0 SettingsOutputsRow.qml
+SettingsPill 1.0 SettingsPill.qml
 SignalBars 1.0 SignalBars.qml
 SystemMetricsIsland 1.0 SystemMetricsIsland.qml
 SystemPopover 1.0 SystemPopover.qml

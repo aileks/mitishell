@@ -223,6 +223,12 @@ Flickable {
             spacing: Theme.spaceXl
 
             IconButton {
+                iconSource: "../assets/icons/settings.svg"
+                accessibleName: "Open settings"
+                onClicked: SurfaceCoordinator.toggle("settings", SurfaceCoordinator.originScreen)
+            }
+
+            IconButton {
                 iconSource: "../assets/icons/power.svg"
                 accessibleName: "Open power menu"
                 onClicked: SurfaceCoordinator.toggle("power", SurfaceCoordinator.originScreen)
