@@ -82,12 +82,15 @@ Item {
 
         Item {
             width: parent.width
-            height: 28
+            height: 26
 
             Rectangle {
+                id: progressBar
+
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 2
                 height: 4
                 radius: 2
                 color: Theme.overlay
@@ -101,8 +104,11 @@ Item {
             }
 
             Text {
+                id: positionLabel
+
                 anchors.left: parent.left
-                anchors.bottom: parent.bottom
+                anchors.top: progressBar.bottom
+                anchors.topMargin: Theme.spaceXs
                 text: MediaModel.duration(Media.displayPosition)
                 color: Theme.textMuted
                 font.family: Theme.fontMono
@@ -111,7 +117,7 @@ Item {
 
             Text {
                 anchors.right: parent.right
-                anchors.bottom: parent.bottom
+                anchors.top: positionLabel.top
                 text: MediaModel.duration(root.trackLength)
                 color: Theme.textMuted
                 font.family: Theme.fontMono
