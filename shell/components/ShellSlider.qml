@@ -2,12 +2,15 @@ import QtQuick
 import QtQuick.Controls.Basic as Controls
 import "../core"
 
-// The shell's slider control: orange fill, blue focus handle. Callers own
+// The shell's slider control: accent fill, blue focus handle. Callers own
 // the range, value binding, and onMoved handling.
 Controls.Slider {
     id: root
 
     activeFocusOnTab: true
+
+    // Orange for runtime controls, blue for configuration.
+    property color accent: Theme.orange
 
     background: Rectangle {
         x: root.leftPadding
@@ -21,7 +24,7 @@ Controls.Slider {
             width: root.visualPosition * parent.width
             height: parent.height
             radius: parent.radius
-            color: Theme.orange
+            color: root.accent
         }
     }
 

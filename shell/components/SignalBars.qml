@@ -15,19 +15,26 @@ Row {
     Repeater {
         model: 4
 
-        delegate: Rectangle {
+        delegate: Item {
             id: bar
 
             required property int index
 
             width: 3
-            height: 4 + bar.index * 3
-            radius: 1
-            color: bar.index < root.bars ? Theme.blue : Theme.overlay
+            height: 13
 
-            Behavior on color {
-                ColorAnimation {
-                    duration: Motion.duration(Motion.quick)
+            // Bars share a baseline and grow upward like a signal meter.
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 4 + bar.index * 3
+                radius: 1
+                color: bar.index < root.bars ? Theme.blue : Theme.overlay
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Motion.duration(Motion.quick)
+                    }
                 }
             }
         }

@@ -21,6 +21,7 @@ type Shell interface {
 	Reload() error
 	ToggleNotifications() error
 	OpenPowerMenu() error
+	OpenSettings() error
 }
 
 // AudioControl applies audio actions in the running shell, which shows the
@@ -309,6 +310,14 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		fmt.Fprintln(stdout, "power menu opened")
 		return 0
 	}
+	if len(args) == 1 && args[0] == "settings" {
+		if err := dependencies.Shell.OpenSettings(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: settings unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "settings opened")
+		return 0
+	}
 	if len(args) != 1 {
 		fmt.Fprintln(stderr, "mitishell: usage: mitishell <command>")
 		return 2
@@ -401,9 +410,9 @@ func runControlAction(args []string, stdout io.Writer, stderr io.Writer, depende
 		page = args[1]
 	}
 	valid := slices.Contains(
-		[]string{"home", "audio", "media", "display", "notifications", "network", "bluetooth"}, page)
+		[]string{"home", "audio", "media", "display", "network", "bluetooth"}, page)
 	if len(args) > 2 || !valid {
-		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display>")
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display|network|bluetooth>")
 		return 2
 	}
 	if dependencies.ControlCenter == nil {

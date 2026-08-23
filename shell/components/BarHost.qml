@@ -201,8 +201,15 @@ PanelWindow {
                 screen: root.modelData
             }
 
-            NotificationIsland {
+            BarPopoverTrigger {
+                id: notificationsTrigger
+
+                popoverKey: "notifications"
                 screen: root.modelData
+
+                NotificationIsland {
+                    open: notificationsTrigger.active
+                }
             }
 
             Rectangle {
@@ -270,6 +277,22 @@ PanelWindow {
             CalendarPopover {
                 anchors.fill: parent
             }
+        }
+
+        AnchoredPopover {
+            anchorItem: notificationsTrigger
+            open: notificationsTrigger.active
+            contentWidth: 380
+            contentHeight: 460
+
+            NotificationsPopover {
+                anchors.fill: parent
+            }
+        }
+
+        NotificationPopups {
+            anchorItem: notificationsTrigger
+            screen: root.modelData
         }
 
         AnchoredPopover {

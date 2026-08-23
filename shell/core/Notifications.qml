@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import "../lib/NotificationModel.js" as NotificationModel
@@ -24,6 +25,15 @@ QtObject {
     property var liveById: ({})
 
     readonly property int unread: NotificationModel.unreadCount(history, lastSeenAt)
+
+    // Popups anchor under the bell island, so they need an output that has
+    // a bar: the focused one when it qualifies, otherwise the first that does.
+    readonly property var screenNames: {
+        const screens = Quickshell.screens !== undefined ? Quickshell.screens : [];
+        return screens.map(function(screen) { return screen.name; });
+    }
+    readonly property string popupScreenName: NotificationModel.popupTarget(
+        Osd.screenName, screenNames, Config.bar.outputs)
 
     function toggleDoNotDisturb() {
         doNotDisturb = !doNotDisturb;

@@ -27,13 +27,13 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        delegate: NotificationsPopupHost {}
+        delegate: PowerHost {}
     }
 
     Variants {
         model: Quickshell.screens
 
-        delegate: PowerHost {}
+        delegate: SettingsHost {}
     }
 
     IpcHandler {
@@ -79,6 +79,19 @@ ShellRoot {
             }
             SurfaceCoordinator.toggle("power", screen);
             return "power menu opened";
+        }
+    }
+
+    IpcHandler {
+        target: "settings"
+
+        function open(): string {
+            const screen = focusedScreen();
+            if (screen === null) {
+                return "settings unavailable";
+            }
+            SurfaceCoordinator.toggle("settings", screen);
+            return "settings opened";
         }
     }
 

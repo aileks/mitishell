@@ -1,28 +1,18 @@
 import QtQuick
 import "../core"
 
-// The bell island: unread count badge, opening the notifications page.
+// The bell island: unread count badge. The surrounding bar popover trigger
+// owns activation; this only renders the state.
 FocusScope {
     id: root
 
-    required property var screen
-
-    readonly property bool active: SurfaceCoordinator.activeKey === "control"
-        && SurfaceCoordinator.originScreen === screen
-        && Control.page === "notifications"
+    property bool open: false
 
     implicitWidth: content.implicitWidth + Theme.spaceSm * 2
     implicitHeight: 24
-    activeFocusOnTab: true
     Accessible.name: Notifications.unread > 0
         ? "Notifications, " + Notifications.unread + " unread" : "Notifications"
     Accessible.role: Accessible.Button
-    Accessible.onPressAction: activate()
-
-    function activate() {
-        Control.selectPage("notifications");
-        SurfaceCoordinator.toggle("control", screen);
-    }
 
     Row {
         id: content
@@ -54,28 +44,15 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: root.active || root.activeFocus || hover.hovered
+        color: root.open || root.activeFocus || hover.hovered
             ? Theme.overlay
             : "transparent"
-        border.width: root.activeFocus ? 2 : (root.active ? 1 : 0)
+        border.width: root.activeFocus ? 2 : (root.open ? 1 : 0)
         border.color: root.activeFocus ? Theme.blue : Theme.orange
         z: -1
     }
 
     HoverHandler {
         id: hover
-    }
-
-    TapHandler {
-        onTapped: root.activate()
-    }
-
-    Keys.onReturnPressed: function(event) {
-        root.activate();
-        event.accepted = true;
-    }
-    Keys.onSpacePressed: function(event) {
-        root.activate();
-        event.accepted = true;
     }
 }

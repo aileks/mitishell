@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/godbus/dbus/v5"
+
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/config"
 )
@@ -34,6 +36,9 @@ func (doctor systemDoctor) Checks() []cli.Check {
 
 	checks = append(checks, quickshellVersionCheck())
 	checks = append(checks, hyprlandCheck())
+	checks = append(checks, busNameCheck("session", "org.freedesktop.Notifications", "notifications"))
+	checks = append(checks, busNameCheck("system", "org.freedesktop.NetworkManager", "networkmanager"))
+	checks = append(checks, busNameCheck("system", "org.bluez", "bluez"))
 	if _, err := config.Load(doctor.configPath); err != nil {
 		checks = append(checks, cli.Check{
 			Name: "config", Status: cli.StatusFailure, Detail: err.Error(),
@@ -94,6 +99,36 @@ func hyprlandCheck() cli.Check {
 		}
 	}
 	return cli.Check{Name: "hyprland", Status: cli.StatusOK, Detail: "session reachable"}
+}
+
+// busNameCheck reports whether a DBus service is up: the session bus for
+// the notification server, the system bus for NetworkManager and BlueZ.
+// A missing name only degrades the matching capability, so it warns.
+func busNameCheck(bus string, name string, checkName string) cli.Check {
+	var connection *dbus.Conn
+	var err error
+	if bus == "system" {
+		connection, err = dbus.SystemBus()
+	} else {
+		connection, err = dbus.SessionBus()
+	}
+	if err != nil {
+		return cli.Check{Name: checkName, Status: cli.StatusWarning, Detail: err.Error()}
+	}
+	var owner string
+	err = connection.Object(
+		"org.freedesktop.DBus", "/org/freedesktop/DBus",
+	).Call("org.freedesktop.DBus.GetNameOwner", 0, name).Store(&owner)
+	if err != nil {
+		return cli.Check{Name: checkName, Status: cli.StatusWarning, Detail: "no owner for " + name}
+	}
+	var pid int
+	if pidErr := connection.Object(
+		"org.freedesktop.DBus", "/org/freedesktop/DBus",
+	).Call("org.freedesktop.DBus.GetConnectionUnixProcessID", 0, owner).Store(&pid); pidErr == nil {
+		return cli.Check{Name: checkName, Status: cli.StatusOK, Detail: fmt.Sprintf("%s (pid %d)", name, pid)}
+	}
+	return cli.Check{Name: checkName, Status: cli.StatusOK, Detail: name}
 }
 
 func fontCheck(font string) cli.Check {

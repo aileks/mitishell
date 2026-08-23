@@ -15,8 +15,10 @@ QtObject {
         ? (Qt.locale().measurementSystem === Locale.ImperialUSSystem
             ? "fahrenheit" : "celsius")
         : Config.weather.units
+    // The island stays up in every enabled state except locating, which is
+    // a brief flicker; failure renders red instead of vanishing.
     readonly property bool visible: Config.weather.enabled
-        && (state === "ready" || state === "stale")
+        && (state === "ready" || state === "stale" || state === "unavailable")
 
     function refresh() {
         if (!Config.weather.enabled) {
@@ -74,6 +76,33 @@ QtObject {
         repeat: true
         running: Config.weather.enabled
         onTriggered: root.refresh()
+    }
+
+    // A failed fetch usually means the network is down; retry gently
+    // until it comes back instead of waiting half an hour.
+    property Timer retryTimer: Timer {
+        interval: 5 * 60 * 1000
+        repeat: true
+        running: Config.weather.enabled && state === "unavailable"
+        onTriggered: root.refresh()
+    }
+
+    // Suspend freezes Qt timers but not the wall clock: a forward leap
+    // means the session slept through ticks, so refresh on wake.
+    property Timer resumeProbe: Timer {
+        interval: 5000
+        repeat: true
+        running: Config.weather.enabled
+
+        property real lastNow: 0
+
+        onTriggered: {
+            const now = Date.now();
+            if (lastNow > 0 && now - lastNow > 30000) {
+                root.refresh();
+            }
+            lastNow = now;
+        }
     }
 
     Component.onCompleted: refresh()

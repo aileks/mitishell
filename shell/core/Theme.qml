@@ -3,6 +3,11 @@ pragma Singleton
 import QtQuick
 
 QtObject {
+    // Accent colors map to categories: orange is the shell's identity and
+    // runtime controls, blue is configuration and technical detail (plus
+    // focus rings), red is destructive or failed, yellow is stale or
+    // warning. Green, purple, cyan, and pink are unassigned.
+
     readonly property color background: "#131210"
     readonly property color container: "#1B1916"
     readonly property color surface: "#23201C"

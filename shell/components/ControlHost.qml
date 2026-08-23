@@ -117,7 +117,6 @@ PanelWindow {
                         { key: "audio", label: "Audio", icon: "../assets/icons/volume-2.svg" },
                         { key: "media", label: "Media", icon: "../assets/icons/play.svg" },
                         { key: "display", label: "Display", icon: "../assets/icons/sun.svg" },
-                        { key: "notifications", label: "Notifications", icon: "../assets/icons/bell.svg" },
                         { key: "network", label: "Network", icon: "../assets/icons/wifi.svg" },
                         { key: "bluetooth", label: "Bluetooth", icon: "../assets/icons/bluetooth.svg" },
                     ]
@@ -186,7 +185,6 @@ PanelWindow {
                 sourceComponent: Control.page === "audio" ? audioPage
                     : Control.page === "media" ? mediaPage
                     : Control.page === "display" ? displayPage
-                    : Control.page === "notifications" ? notificationsPage
                     : Control.page === "network" ? networkPage
                     : Control.page === "bluetooth" ? bluetoothPage
                     : homePage
@@ -219,14 +217,6 @@ PanelWindow {
                     id: displayPage
 
                     ControlDisplayPage {
-                        anchors.fill: parent
-                    }
-                }
-
-                Component {
-                    id: notificationsPage
-
-                    ControlNotificationsPage {
                         anchors.fill: parent
                     }
                 }

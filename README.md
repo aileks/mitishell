@@ -38,20 +38,29 @@ bin/mitishell config get bar.outputs
 bin/mitishell config set weather.enabled true
 bin/mitishell notifications dnd
 bin/mitishell power menu
+bin/mitishell settings
 bin/mitishell control
 ```
 
 ## Control center
 
-`mitishell control` toggles the control center on the focused output. It has Home, Audio, Media, Display, Notifications, Network, and Bluetooth pages; pass a page to land somewhere specific, for example `mitishell control audio`. The bar's control island opens it too. `mitishell network` and `mitishell bluetooth` are page shortcuts.
+`mitishell control` toggles the control center on the focused output. It has Home, Audio, Media, Display, Network, and Bluetooth pages; pass a page to land somewhere specific, for example `mitishell control audio`. The bar's control island opens it too. `mitishell network` and `mitishell bluetooth` are page shortcuts.
 
 ```ini
 bindl = SUPER, D, exec, mitishell control
 ```
 
+## Settings
+
+`mitishell settings` opens a centered settings window, also reachable from the control center's Home page. It exposes bar layout, islands, weather, and motion fields. Every change saves immediately through the same validation as `mitishell config set`, applies live, and reports validation errors inline.
+
+```ini
+bindl = SUPER, C, exec, mitishell settings
+```
+
 ## Notifications, power, and connectivity
 
-Mitishell runs its own notification server, so no external daemon is needed. Popup cards stack top-right under the bar on the focused output, pause while that output is fullscreen or the session is locked, and land in the notifications page. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
+Mitishell runs its own notification server, so no external daemon is needed. The bar's bell island opens a popover with recent history, actions, and the do-not-disturb switch; toast cards stack under the same island, pause while that output is fullscreen or the session is locked, and land in history. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
 
 The power menu is a centered overlay with lock, logout, suspend, hibernate, reboot, and shutdown. Choosing an action morphs it into a confirmation. Suspend and hibernate appear only when logind supports them, and locking goes through the session's lock signal so your idle daemon decides what locks the screen.
 

@@ -33,6 +33,9 @@ run: build
 install: build
 	install -Dm755 bin/mitishell $(BIN_INSTALL_DIR)/mitishell
 	install -Dm644 data/mitishell.desktop $(DESKTOP_INSTALL_DIR)/mitishell.desktop
+	# Remove the previous install first so deleted source files do not
+	# linger; the directory holds only program files.
+	rm -rf $(SHELL_INSTALL_DIR)
 	find shell -type f -print0 | while IFS= read -r -d '' file; do \
 		relative="$${file#shell/}"; \
 		install -Dm644 "$$file" "$(SHELL_INSTALL_DIR)/$$relative"; \
@@ -41,8 +44,6 @@ install: build
 uninstall:
 	rm -f $(BIN_INSTALL_DIR)/mitishell
 	rm -f $(DESKTOP_INSTALL_DIR)/mitishell.desktop
-	find shell -type f -print0 | while IFS= read -r -d '' file; do \
-		relative="$${file#shell/}"; \
-		rm -f "$(SHELL_INSTALL_DIR)/$$relative"; \
-	done
-	find $(SHELL_INSTALL_DIR) -depth -type d -empty -delete 2>/dev/null || true
+	# The data directory holds only installed program files; user config
+	# and cache live elsewhere and stay untouched.
+	rm -rf $(XDG_DATA_HOME)/mitishell

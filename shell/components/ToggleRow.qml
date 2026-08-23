@@ -1,13 +1,15 @@
 import QtQuick
 import "../core"
 
-// A labeled switch row. The pill slides and fills orange when on.
+// A labeled switch row. The pill slides and fills the accent color when on.
 FocusScope {
     id: root
 
     property string label: ""
     property string description: ""
     property bool checked: false
+    // Orange for runtime controls, blue for configuration.
+    property color accent: Theme.orange
     signal toggled
 
     implicitWidth: parent ? parent.width : 320
@@ -50,7 +52,7 @@ FocusScope {
             width: 44
             height: 24
             radius: Theme.radiusPill
-            color: root.checked ? Theme.orange
+            color: root.checked ? root.accent
                 : (root.activeFocus || hover.hovered ? Theme.overlay : Theme.container)
             border.width: root.activeFocus ? 2 : 1
             border.color: root.activeFocus ? Theme.blue : Theme.overlay

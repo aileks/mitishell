@@ -19,10 +19,24 @@ Item {
         anchors.fill: parent
         spacing: Theme.spaceMd
 
+        // Failure replaces the forecast with the reason; the island's red
+        // reading is the summary and this is the detail.
+        Text {
+            width: parent.width
+            visible: Weather.state === "unavailable"
+            wrapMode: Text.Wrap
+            text: "Weather unavailable: "
+                + (Weather.error !== "" ? Weather.error : "no data")
+            color: Theme.red
+            font.family: Theme.fontSans
+            font.pixelSize: Theme.fontSizeBody
+        }
+
         Row {
             width: parent.width
             height: 66
             spacing: Theme.spaceMd
+            visible: Weather.state !== "unavailable"
 
             WeatherIcon {
                 width: 54
@@ -62,6 +76,7 @@ Item {
         }
 
         Text {
+            visible: Weather.state !== "unavailable"
             text: "Next 12 hours"
             color: Theme.textMuted
             font.family: Theme.fontSans
@@ -70,6 +85,7 @@ Item {
         }
 
         Flickable {
+            visible: Weather.state !== "unavailable"
             width: parent.width
             height: 72
             contentWidth: hourlyRow.implicitWidth
@@ -180,6 +196,7 @@ Item {
 
         Text {
             text: "Weather data by Open-Meteo"
+            visible: Weather.state !== "unavailable"
             color: Theme.textMuted
             font.family: Theme.fontSans
             font.pixelSize: Theme.fontSizeCaption

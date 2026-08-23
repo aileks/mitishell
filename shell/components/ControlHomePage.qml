@@ -198,7 +198,8 @@ Flickable {
                                 ? Weather.snapshot.current.temperature
                                 : Number.NaN,
                         )
-                        color: Weather.state === "stale" ? Theme.yellow : Theme.text
+                        color: Weather.state === "unavailable" ? Theme.red
+                            : (Weather.state === "stale" ? Theme.yellow : Theme.text)
                         font.family: Theme.fontMono
                         font.pixelSize: Theme.fontSizeBody
                     }
@@ -221,6 +222,12 @@ Flickable {
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spaceXl
+
+            IconButton {
+                iconSource: "../assets/icons/settings.svg"
+                accessibleName: "Open settings"
+                onClicked: SurfaceCoordinator.toggle("settings", SurfaceCoordinator.originScreen)
+            }
 
             IconButton {
                 iconSource: "../assets/icons/power.svg"
