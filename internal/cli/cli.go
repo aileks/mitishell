@@ -410,9 +410,9 @@ func runControlAction(args []string, stdout io.Writer, stderr io.Writer, depende
 		page = args[1]
 	}
 	valid := slices.Contains(
-		[]string{"home", "audio", "media", "display", "notifications", "network", "bluetooth"}, page)
+		[]string{"home", "audio", "media", "display", "network", "bluetooth"}, page)
 	if len(args) > 2 || !valid {
-		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display>")
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display|network|bluetooth>")
 		return 2
 	}
 	if dependencies.ControlCenter == nil {

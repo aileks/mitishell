@@ -13,9 +13,12 @@ PopupWindow {
     required property Item anchorItem
 
     // The stack pauses while the session is locked or the focused output is
-    // fullscreen; history still records everything.
+    // fullscreen, and steps aside while the history popover is open on this
+    // screen; history still records everything.
     readonly property bool suppressed: Notifications.sessionLocked
         || Notifications.focusedFullscreen
+        || (SurfaceCoordinator.activeKey === "notifications"
+            && SurfaceCoordinator.originScreen === screen)
     readonly property var popups: Notifications.popupScreenName === screen.name
         && !suppressed ? Notifications.popups : []
 

@@ -18,7 +18,6 @@ ControlHost 1.0 ControlHost.qml
 ControlIsland 1.0 ControlIsland.qml
 ControlMediaPage 1.0 ControlMediaPage.qml
 ControlNetworkPage 1.0 ControlNetworkPage.qml
-ControlNotificationsPage 1.0 ControlNotificationsPage.qml
 IconButton 1.0 IconButton.qml
 MediaIsland 1.0 MediaIsland.qml
 MediaPopover 1.0 MediaPopover.qml
@@ -26,6 +25,7 @@ MetricCard 1.0 MetricCard.qml
 NotificationCard 1.0 NotificationCard.qml
 NotificationIsland 1.0 NotificationIsland.qml
 NotificationPopups 1.0 NotificationPopups.qml
+NotificationsPopover 1.0 NotificationsPopover.qml
 OsdHost 1.0 OsdHost.qml
 PowerHost 1.0 PowerHost.qml
 PowerIsland 1.0 PowerIsland.qml

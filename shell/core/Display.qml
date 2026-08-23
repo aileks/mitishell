@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import "../lib/DisplayModel.js" as DisplayModel
 
@@ -200,6 +201,18 @@ QtObject {
     property Timer connectorWriteTimer: Timer {
         interval: 200
         onTriggered: root.flushConnectorWrite()
+    }
+
+    property Timer churnTimer: Timer {
+        interval: 1000
+        onTriggered: root.refresh()
+    }
+
+    // Hotplug changes which connectors exist; re-discover once the churn
+    // settles instead of keeping stale entries or missing new monitors.
+    property Connections screenConnections: Connections {
+        target: Quickshell
+        function onScreensChanged() { churnTimer.restart(); }
     }
 
     Component.onCompleted: refresh()

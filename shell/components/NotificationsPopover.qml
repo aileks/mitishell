@@ -2,8 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import "../core"
-import "../lib/NotificationModel.js" as NotificationModel
 
+// The bell popover: recent history with actions, quick dismiss, and the
+// do-not-disturb switch, anchored under the island.
 Flickable {
     id: root
 
@@ -24,54 +25,28 @@ Flickable {
         width: root.width
         spacing: Theme.spaceMd
 
-        Text {
-            text: "Notifications"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeHeading
-            font.weight: Font.DemiBold
-        }
-
-        Rectangle {
-            width: parent.width
-            implicitHeight: dndRow.implicitHeight + Theme.spaceMd * 2
-            radius: Theme.radiusMedium
-            color: Theme.container
-
-            ToggleRow {
-                id: dndRow
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Theme.spaceMd
-                label: "Do not disturb"
-                description: "Popups pause; critical notifications and history keep working."
-                checked: Notifications.doNotDisturb
-                onToggled: Notifications.toggleDoNotDisturb()
-            }
-        }
-
         Row {
             width: parent.width
-            visible: Notifications.history.length > 0
             spacing: Theme.spaceMd
 
             Text {
+                id: heading
+
                 anchors.verticalCenter: parent.verticalCenter
-                text: "History"
-                color: Theme.textMuted
+                text: "Notifications"
+                color: Theme.textBright
                 font.family: Theme.fontSans
-                font.pixelSize: Theme.fontSizeCaption
+                font.pixelSize: Theme.fontSizeHeading
                 font.weight: Font.DemiBold
             }
 
-            Item { width: parent.width - clearAll.implicitWidth - historyLabel.implicitWidth - Theme.spaceMd; height: 1 }
+            Item { width: parent.width - clearAll.implicitWidth - heading.implicitWidth - Theme.spaceMd; height: 1 }
 
             Rectangle {
                 id: clearAll
 
                 anchors.verticalCenter: parent.verticalCenter
+                visible: Notifications.history.length > 0
                 width: clearAllLabel.implicitWidth + Theme.spaceLg * 2
                 height: 28
                 radius: Theme.radiusPill
@@ -110,6 +85,14 @@ Flickable {
                     event.accepted = true;
                 }
             }
+        }
+
+        ToggleRow {
+            width: parent.width
+            label: "Do not disturb"
+            description: "Popups pause; critical notifications and history keep working."
+            checked: Notifications.doNotDisturb
+            onToggled: Notifications.toggleDoNotDisturb()
         }
 
         Text {

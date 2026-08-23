@@ -10,7 +10,7 @@ QtObject {
     // IPC can move it while open.
     property string page: "home"
 
-    readonly property var pages: ["home", "audio", "media", "display", "notifications", "network"]
+    readonly property var pages: ["home", "audio", "media", "display", "network", "bluetooth"]
 
     function selectPage(next) {
         if (pages.indexOf(next) !== -1) {
