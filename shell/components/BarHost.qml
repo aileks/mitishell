@@ -297,10 +297,12 @@ PanelWindow {
         AnchoredPopover {
             anchorItem: clockTrigger
             open: clockTrigger.active
-            contentWidth: 320
-            contentHeight: 348
+            contentWidth: calendarPopover.implicitWidth
+            contentHeight: calendarPopover.implicitHeight + Theme.spaceLg * 2
 
             CalendarPopover {
+                id: calendarPopover
+
                 anchors.fill: parent
             }
         }

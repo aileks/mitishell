@@ -8,15 +8,18 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 const CurrentVersion = 1
 
 type Config struct {
-	Version int     `json:"version"`
-	Bar     Bar     `json:"bar"`
-	Weather Weather `json:"weather"`
-	Motion  Motion  `json:"motion"`
+	Version  int      `json:"version"`
+	Bar      Bar      `json:"bar"`
+	Clock    Clock    `json:"clock"`
+	Calendar Calendar `json:"calendar"`
+	Weather  Weather  `json:"weather"`
+	Motion   Motion   `json:"motion"`
 }
 
 type Bar struct {
@@ -32,6 +35,16 @@ type Bar struct {
 type Weather struct {
 	Enabled bool   `json:"enabled"`
 	Units   string `json:"units"`
+}
+
+type Clock struct {
+	Format    string   `json:"format"`
+	ShowDate  bool     `json:"showDate"`
+	Timezones []string `json:"timezones"`
+}
+
+type Calendar struct {
+	ShowWeekNumbers bool `json:"showWeekNumbers"`
 }
 
 type Motion struct {
@@ -54,6 +67,10 @@ func Defaults() Config {
 		Weather: Weather{
 			Units: "auto",
 		},
+		Clock: Clock{
+			Format: "auto",
+		},
+		Calendar: Calendar{},
 		Motion: Motion{
 			Enabled: true,
 		},
@@ -88,6 +105,11 @@ func Load(path string) (Config, error) {
 	var result Config
 	if err := decoder.Decode(&result); err != nil {
 		return Config{}, fmt.Errorf("decode config: %w", err)
+	}
+	// Configs written before the clock section existed decode with an
+	// empty format; treat that as "section absent" rather than invalid.
+	if result.Clock.Format == "" {
+		result.Clock = Defaults().Clock
 	}
 	if err := Validate(result); err != nil {
 		return Config{}, fmt.Errorf("validate config: %w", err)
@@ -138,6 +160,27 @@ func Validate(cfg Config) error {
 	case "auto", "celsius", "fahrenheit":
 	default:
 		return errors.New("weather.units must be auto, celsius, or fahrenheit")
+	}
+	switch cfg.Clock.Format {
+	case "auto", "24h", "12h", "24h-seconds", "12h-seconds":
+	default:
+		return errors.New("clock.format must be auto, 24h, 12h, 24h-seconds, or 12h-seconds")
+	}
+	if len(cfg.Clock.Timezones) > 8 {
+		return errors.New("clock.timezones must list at most 8 zones")
+	}
+	seenZones := make(map[string]struct{}, len(cfg.Clock.Timezones))
+	for _, zone := range cfg.Clock.Timezones {
+		if zone == "" {
+			return errors.New("clock.timezones must not contain blank zones")
+		}
+		if _, exists := seenZones[zone]; exists {
+			return fmt.Errorf("clock.timezones contains duplicate zone %q", zone)
+		}
+		seenZones[zone] = struct{}{}
+		if _, err := time.LoadLocation(zone); err != nil {
+			return fmt.Errorf("clock.timezones contains unknown zone %q", zone)
+		}
 	}
 
 	return nil
@@ -191,6 +234,7 @@ func Write(path string, cfg Config) error {
 func SetField(cfg Config, key string, value string) (Config, error) {
 	result := cfg
 	result.Bar.Outputs = append([]string(nil), cfg.Bar.Outputs...)
+	result.Clock.Timezones = append([]string(nil), cfg.Clock.Timezones...)
 
 	switch key {
 	case "bar.outputs":
@@ -239,6 +283,26 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 		result.Weather.Enabled = parsed
 	case "weather.units":
 		result.Weather.Units = parseString(value)
+	case "clock.format":
+		result.Clock.Format = parseString(value)
+	case "clock.showDate":
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			return cfg, errors.New("clock.showDate must be true or false")
+		}
+		result.Clock.ShowDate = parsed
+	case "clock.timezones":
+		var zones []string
+		if err := json.Unmarshal([]byte(value), &zones); err != nil {
+			return cfg, fmt.Errorf("clock.timezones must be a JSON string array: %w", err)
+		}
+		result.Clock.Timezones = zones
+	case "calendar.showWeekNumbers":
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			return cfg, errors.New("calendar.showWeekNumbers must be true or false")
+		}
+		result.Calendar.ShowWeekNumbers = parsed
 	case "motion.enabled":
 		parsed, err := strconv.ParseBool(value)
 		if err != nil {
@@ -284,6 +348,14 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Weather.Enabled
 	case "weather.units":
 		value = cfg.Weather.Units
+	case "clock.format":
+		value = cfg.Clock.Format
+	case "clock.showDate":
+		value = cfg.Clock.ShowDate
+	case "clock.timezones":
+		value = cfg.Clock.Timezones
+	case "calendar.showWeekNumbers":
+		value = cfg.Calendar.ShowWeekNumbers
 	case "motion.enabled":
 		value = cfg.Motion.Enabled
 	case "motion.reduced":

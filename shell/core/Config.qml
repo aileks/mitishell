@@ -23,6 +23,14 @@ QtObject {
             "enabled": false,
             "units": "auto"
         },
+        "clock": {
+            "format": "auto",
+            "showDate": false,
+            "timezones": []
+        },
+        "calendar": {
+            "showWeekNumbers": false
+        },
         "motion": {
             "enabled": true,
             "reduced": false
@@ -34,6 +42,8 @@ QtObject {
 
     readonly property var bar: value.bar
     readonly property var weather: value.weather
+    readonly property var clock: value.clock
+    readonly property var calendar: value.calendar
     readonly property var motion: value.motion
     readonly property string binary: Quickshell.env("MITISHELL_BIN") || "mitishell"
     readonly property string configRoot: Quickshell.env("XDG_CONFIG_HOME")
