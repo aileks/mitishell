@@ -202,6 +202,8 @@ PanelWindow {
             }
 
             NotificationIsland {
+                id: notificationIsland
+
                 screen: root.modelData
             }
 
@@ -270,6 +272,11 @@ PanelWindow {
             CalendarPopover {
                 anchors.fill: parent
             }
+        }
+
+        NotificationPopups {
+            anchorItem: notificationIsland
+            screen: root.modelData
         }
 
         AnchoredPopover {

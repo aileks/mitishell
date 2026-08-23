@@ -58,3 +58,13 @@ test("time labels and unread counting", () => {
     assert.equal(NotificationModel.unreadCount(history, 400), 2);
     assert.equal(NotificationModel.unreadCount(history, 1000), 0);
 });
+
+test("popup target follows the focused output when it has a bar", () => {
+    const outputs = ["DP-1", "HDMI-A-1"];
+    assert.equal(NotificationModel.popupTarget("DP-1", ["DP-1", "HDMI-A-1"], outputs), "DP-1");
+    assert.equal(NotificationModel.popupTarget("eDP-1", ["DP-1", "HDMI-A-1"], outputs), "DP-1");
+    assert.equal(NotificationModel.popupTarget("eDP-1", ["DP-1", "HDMI-A-1"], ["*"]), "eDP-1");
+    assert.equal(NotificationModel.popupTarget("eDP-1", ["DP-1", "HDMI-A-1"], ["HDMI-A-1"]), "HDMI-A-1");
+    assert.equal(NotificationModel.popupTarget("DP-1", [], ["*"]), "DP-1");
+    assert.equal(NotificationModel.popupTarget("DP-1", [], ["HDMI-A-1"]), "");
+});

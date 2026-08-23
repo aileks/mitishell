@@ -27,12 +27,6 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        delegate: NotificationsPopupHost {}
-    }
-
-    Variants {
-        model: Quickshell.screens
-
         delegate: PowerHost {}
     }
 

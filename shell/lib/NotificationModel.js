@@ -74,11 +74,30 @@ function unreadCount(history, lastSeenAt) {
     }).length;
 }
 
+// The output that shows toast popups: the focused output when it has a bar,
+// otherwise the first output with one. An empty name means no popups.
+function popupTarget(focusedName, screenNames, outputs) {
+    const wildcard = outputs.indexOf("*") !== -1;
+    const enabled = function(name) {
+        return wildcard || outputs.indexOf(name) !== -1;
+    };
+    if (enabled(focusedName)) {
+        return focusedName;
+    }
+    for (let index = 0; index < screenNames.length; index++) {
+        if (enabled(screenNames[index])) {
+            return screenNames[index];
+        }
+    }
+    return "";
+}
+
 if (typeof module !== "undefined") {
     module.exports = {
         historyLimit,
         popupDuration,
         plainBody,
+        popupTarget,
         snapshotOf,
         timeLabel,
         unreadCount,
