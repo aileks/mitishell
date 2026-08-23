@@ -19,10 +19,6 @@ Item {
         anchors.fill: parent
         spacing: Theme.spaceMd
 
-    Column {
-        anchors.fill: parent
-        spacing: Theme.spaceMd
-
         // Failure replaces the forecast with the reason; the island's red
         // reading is the summary and this is the detail.
         Text {
