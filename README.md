@@ -38,6 +38,7 @@ bin/mitishell config get bar.outputs
 bin/mitishell config set weather.enabled true
 bin/mitishell notifications dnd
 bin/mitishell power menu
+bin/mitishell settings
 bin/mitishell control
 ```
 
@@ -47,6 +48,14 @@ bin/mitishell control
 
 ```ini
 bindl = SUPER, D, exec, mitishell control
+```
+
+## Settings
+
+`mitishell settings` opens a centered settings window, also reachable from the control center's Home page. It exposes bar layout, islands, weather, and motion fields. Every change saves immediately through the same validation as `mitishell config set`, applies live, and reports validation errors inline.
+
+```ini
+bindl = SUPER, C, exec, mitishell settings
 ```
 
 ## Notifications, power, and connectivity
