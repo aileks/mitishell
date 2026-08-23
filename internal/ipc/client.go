@@ -3,7 +3,9 @@ package ipc
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +20,23 @@ func NewClient(executable string, shellPath string) Client {
 	return Client{executable: executable, shellPath: shellPath}
 }
 
+// ResolveShellPath locates the running shell's directory, honoring the
+// development override before the installed location.
+func ResolveShellPath() (string, error) {
+	if override := os.Getenv("MITISHELL_QS_PATH"); override != "" {
+		return filepath.Abs(override)
+	}
+	directory := os.Getenv("XDG_DATA_HOME")
+	if directory == "" {
+		homeDirectory, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("resolve user data directory: %w", err)
+		}
+		directory = filepath.Join(homeDirectory, ".local", "share")
+	}
+	return filepath.Join(directory, "mitishell", "shell"), nil
+}
+
 func (client Client) Ping() error {
 	return client.action("shell", "ping", "pong")
 }
@@ -26,8 +45,9 @@ func (client Client) Reload() error {
 	return client.action("shell", "reload", "reload requested")
 }
 
+// ToggleNotifications toggles the shell's do-not-disturb mode.
 func (client Client) ToggleNotifications() error {
-	return client.action("notifications", "toggle", "notifications toggled")
+	return client.action("notifications", "dnd", "do not disturb toggled")
 }
 
 func (client Client) OpenPowerMenu() error {
@@ -71,7 +91,7 @@ func (client Client) ToggleControlCenter(page string) error {
 }
 
 func (client Client) action(target string, method string, acknowledgement string, args ...string) error {
-	response, err := client.call(target, method, args...)
+	response, err := client.Call(target, method, args...)
 	if err != nil {
 		return err
 	}
@@ -81,7 +101,8 @@ func (client Client) action(target string, method string, acknowledgement string
 	return nil
 }
 
-func (client Client) call(target string, method string, args ...string) (string, error) {
+// Call invokes a QuickShell IPC method with positional string arguments.
+func (client Client) Call(target string, method string, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 

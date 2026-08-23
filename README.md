@@ -14,7 +14,7 @@ Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShe
 - Node.js
 - GNU Make
 
-Brightness control additionally needs `ddcutil` and read access to the monitors' i2c buses (typically membership in the `i2c` group). Without it the brightness commands report unavailable and the rest of the shell is unaffected.
+Brightness control additionally needs `ddcutil` and read access to the monitors' i2c buses (typically membership in the `i2c` group). Wi-Fi needs NetworkManager and Bluetooth needs BlueZ running; when either is missing the related page reports unavailable and the rest of the shell is unaffected.
 
 ## Development
 
@@ -36,18 +36,26 @@ bin/mitishell config path
 bin/mitishell config validate
 bin/mitishell config get bar.outputs
 bin/mitishell config set weather.enabled true
-bin/mitishell notifications toggle
+bin/mitishell notifications dnd
 bin/mitishell power menu
 bin/mitishell control
 ```
 
 ## Control center
 
-`mitishell control` toggles the control center on the focused output. It has Home, Audio, Media, and Display pages; pass a page to land somewhere specific, for example `mitishell control audio`. The bar's control island opens it too.
+`mitishell control` toggles the control center on the focused output. It has Home, Audio, Media, Display, Notifications, Network, and Bluetooth pages; pass a page to land somewhere specific, for example `mitishell control audio`. The bar's control island opens it too. `mitishell network` and `mitishell bluetooth` are page shortcuts.
 
 ```ini
 bindl = SUPER, D, exec, mitishell control
 ```
+
+## Notifications, power, and connectivity
+
+Mitishell runs its own notification server, so no external daemon is needed. Popup cards stack top-right under the bar on the focused output, pause while that output is fullscreen or the session is locked, and land in the notifications page. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
+
+The power menu is a centered overlay with lock, logout, suspend, hibernate, reboot, and shutdown. Choosing an action morphs it into a confirmation. Suspend and hibernate appear only when logind supports them, and locking goes through the session's lock signal so your idle daemon decides what locks the screen.
+
+The Network page lists Wi-Fi stations with signal and security, joins secured and hidden networks inline, and shows Ethernet state; it drives NetworkManager. The Bluetooth page pairs and manages devices through BlueZ, including passkey confirmation and battery readouts for devices that report them. Enterprise Wi-Fi sign-in stays out of scope.
 
 ## Volume, microphone, and brightness
 

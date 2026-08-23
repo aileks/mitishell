@@ -24,10 +24,10 @@ func (doctor systemDoctor) Checks() []cli.Check {
 		commandCheck("quickshell", true),
 		commandCheck("qs", true),
 		commandCheck("hyprctl", true),
-		commandCheck("swaync-client", false),
-		commandCheck("wlogout", false),
 		commandCheck("missioncenter", false),
 		commandCheck("ddcutil", false),
+		commandCheck("nmcli", false),
+		commandCheck("bluetoothctl", false),
 		fontCheck("Adwaita Sans"),
 		fontCheck("Adwaita Mono"),
 	}

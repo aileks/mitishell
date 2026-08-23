@@ -1,26 +1,49 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
+	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/ipc"
+	"github.com/aileks/mitishell/internal/network"
+	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
 func main() {
+	if len(os.Args) >= 2 && os.Args[1] == "_bluetooth-agent" {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		if err := bluetooth.RunAgent(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "mitishell: bluetooth agent: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+	if len(os.Args) == 4 && os.Args[1] == "_bluetooth-respond" {
+		if err := bluetooth.Respond(os.Args[2], os.Args[3]); err != nil {
+			fmt.Fprintf(os.Stderr, "mitishell: pairing response: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	configPath, err := config.Path()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
 		os.Exit(1)
 	}
-	shellPath, err := resolveShellPath()
+	shellPath, err := ipc.ResolveShellPath()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
 		os.Exit(1)
@@ -56,30 +79,17 @@ func main() {
 		display.NewFileCache(filepath.Join(cacheDirectory, "mitishell", "displays.json")),
 	)
 	dependencies := cli.Dependencies{
-		ConfigPath:     configPath,
-		Shell:          shell,
-		Doctor:         systemDoctor{configPath: configPath, shell: shell},
-		Weather:        weatherService,
-		Capabilities:   systemCapabilities{},
-		AudioControl:   shell,
-		DisplayControl: shell,
-		DisplayService: displayService,
-		ControlCenter:  shell,
+		ConfigPath:       configPath,
+		Shell:            shell,
+		Doctor:           systemDoctor{configPath: configPath, shell: shell},
+		Weather:          weatherService,
+		AudioControl:     shell,
+		DisplayControl:   shell,
+		DisplayService:   displayService,
+		ControlCenter:    shell,
+		PowerService:     power.NewService(power.LogindCaller{}),
+		NetworkService:   network.NewService(network.NMCaller{}),
+		BluetoothService: bluetooth.NewService(bluetooth.BlueZCaller{}),
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
-}
-
-func resolveShellPath() (string, error) {
-	if override := os.Getenv("MITISHELL_QS_PATH"); override != "" {
-		return filepath.Abs(override)
-	}
-	directory := os.Getenv("XDG_DATA_HOME")
-	if directory == "" {
-		homeDirectory, err := os.UserHomeDir()
-		if err != nil {
-			return "", fmt.Errorf("resolve user data directory: %w", err)
-		}
-		directory = filepath.Join(homeDirectory, ".local", "share")
-	}
-	return filepath.Join(directory, "mitishell", "shell"), nil
 }

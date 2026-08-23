@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 
+	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/network"
+	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -40,20 +44,35 @@ type ControlCenter interface {
 	ToggleControlCenter(page string) error
 }
 
+// PowerService runs session power actions and reports logind support.
+type PowerService interface {
+	Capabilities(ctx context.Context) (power.Capabilities, error)
+	Run(ctx context.Context, action power.Action) error
+}
+
+// NetworkService joins and forgets Wi-Fi networks and snapshots status.
+type NetworkService interface {
+	Snapshot(ctx context.Context) network.Snapshot
+	Connect(ctx context.Context, ssid string, password string, hidden bool) error
+	Forget(ctx context.Context, ssid string) error
+}
+
+// BluetoothService drives BlueZ devices and reports adapter status.
+type BluetoothService interface {
+	Snapshot(ctx context.Context) bluetooth.Snapshot
+	SetDiscovering(ctx context.Context, discovering bool) error
+	Pair(ctx context.Context, address string) error
+	Connect(ctx context.Context, address string) error
+	Disconnect(ctx context.Context, address string) error
+	SetTrusted(ctx context.Context, address string, trusted bool) error
+	Remove(ctx context.Context, address string) error
+}
+
 // DisplayService discovers and drives DDC displays directly, used by the
 // shell's display service through the hidden verbs.
 type DisplayService interface {
 	Discover(context.Context) display.Result
 	Set(ctx context.Context, connector string, value int) display.Result
-}
-
-type Capabilities struct {
-	Notifications bool `json:"notifications"`
-	Power         bool `json:"power"`
-}
-
-type CapabilityDetector interface {
-	Detect() Capabilities
 }
 
 type Status string
@@ -79,29 +98,20 @@ type Weather interface {
 }
 
 type Dependencies struct {
-	ConfigPath     string
-	Shell          Shell
-	Doctor         Doctor
-	Weather        Weather
-	Capabilities   CapabilityDetector
-	AudioControl   AudioControl
-	DisplayControl DisplayControl
-	DisplayService DisplayService
-	ControlCenter  ControlCenter
+	ConfigPath       string
+	Shell            Shell
+	Doctor           Doctor
+	Weather          Weather
+	AudioControl     AudioControl
+	DisplayControl   DisplayControl
+	DisplayService   DisplayService
+	ControlCenter    ControlCenter
+	PowerService     PowerService
+	NetworkService   NetworkService
+	BluetoothService BluetoothService
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
-	if len(args) == 1 && args[0] == "_capabilities" {
-		if dependencies.Capabilities == nil {
-			fmt.Fprintln(stderr, "mitishell: capability detection unavailable")
-			return 1
-		}
-		if err := json.NewEncoder(stdout).Encode(dependencies.Capabilities.Detect()); err != nil {
-			fmt.Fprintf(stderr, "mitishell: encode capabilities: %v\n", err)
-			return 1
-		}
-		return 0
-	}
 	if len(args) == 1 && args[0] == "_config-resolve" {
 		resolved, loadErr := config.Load(dependencies.ConfigPath)
 		if loadErr != nil {
@@ -169,6 +179,111 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "config" {
 		return runConfig(args[1:], stdout, stderr, dependencies)
 	}
+	if len(args) == 1 && args[0] == "_power-capabilities" {
+		if dependencies.PowerService == nil {
+			fmt.Fprintln(stderr, "mitishell: power unavailable")
+			return 1
+		}
+		capabilities, err := dependencies.PowerService.Capabilities(context.Background())
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: power unavailable: %v\n", err)
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(capabilities); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode capabilities: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_power-action" {
+		if dependencies.PowerService == nil {
+			fmt.Fprintln(stderr, "mitishell: power unavailable")
+			return 1
+		}
+		if err := dependencies.PowerService.Run(context.Background(), power.Action(args[1])); err != nil {
+			fmt.Fprintf(stderr, "mitishell: power action unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "power action executed")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_network-snapshot" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(
+			dependencies.NetworkService.Snapshot(context.Background())); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode network: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) > 0 && args[0] == "_network-connect" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		hidden := false
+		arguments := args[1:]
+		if len(arguments) > 0 && arguments[0] == "--hidden" {
+			hidden = true
+			arguments = arguments[1:]
+		}
+		if len(arguments) != 2 {
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell _network-connect [--hidden] <ssid> <password>")
+			return 2
+		}
+		if err := dependencies.NetworkService.Connect(
+			context.Background(), arguments[0], arguments[1], hidden); err != nil {
+			fmt.Fprintf(stderr, "mitishell: network unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "network connection requested")
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_network-forget" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		if err := dependencies.NetworkService.Forget(context.Background(), args[1]); err != nil {
+			fmt.Fprintf(stderr, "mitishell: network unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "network forgotten")
+		return 0
+	}
+	if len(args) > 0 && args[0] == "network" {
+		return runControlAction([]string{"control", "network"}, stdout, stderr, dependencies)
+	}
+	if len(args) > 0 && args[0] == "bluetooth" {
+		return runControlAction([]string{"control", "bluetooth"}, stdout, stderr, dependencies)
+	}
+	if len(args) == 1 && args[0] == "_bluetooth-snapshot" {
+		if dependencies.BluetoothService == nil {
+			fmt.Fprintln(stderr, "mitishell: bluetooth unavailable")
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(
+			dependencies.BluetoothService.Snapshot(context.Background())); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode bluetooth: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) > 0 && args[0] == "_bluetooth-action" {
+		if dependencies.BluetoothService == nil {
+			fmt.Fprintln(stderr, "mitishell: bluetooth unavailable")
+			return 1
+		}
+		exitCode, handled := runBluetoothAction(args[1:], stdout, stderr, dependencies)
+		if handled {
+			return exitCode
+		}
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell _bluetooth-action <verb> <address>")
+		return 2
+	}
 	if len(args) > 0 && args[0] == "control" {
 		return runControlAction(args, stdout, stderr, dependencies)
 	}
@@ -178,12 +293,12 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "brightness" {
 		return runBrightnessAction(args, stdout, stderr, dependencies)
 	}
-	if len(args) == 2 && args[0] == "notifications" && args[1] == "toggle" {
+	if len(args) == 2 && args[0] == "notifications" && args[1] == "dnd" {
 		if err := dependencies.Shell.ToggleNotifications(); err != nil {
-			fmt.Fprintf(stderr, "mitishell: notifications unavailable: %v\n", err)
+			fmt.Fprintf(stderr, "mitishell: do not disturb unavailable: %v\n", err)
 			return 1
 		}
-		fmt.Fprintln(stdout, "notifications toggled")
+		fmt.Fprintln(stdout, "do not disturb toggled")
 		return 0
 	}
 	if len(args) == 2 && args[0] == "power" && args[1] == "menu" {
@@ -285,7 +400,8 @@ func runControlAction(args []string, stdout io.Writer, stderr io.Writer, depende
 	if len(args) == 2 {
 		page = args[1]
 	}
-	valid := page == "home" || page == "audio" || page == "media" || page == "display"
+	valid := slices.Contains(
+		[]string{"home", "audio", "media", "display", "notifications", "network", "bluetooth"}, page)
 	if len(args) > 2 || !valid {
 		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display>")
 		return 2
@@ -370,4 +486,40 @@ func runBrightnessAction(args []string, stdout io.Writer, stderr io.Writer, depe
 	}
 	fmt.Fprintln(stdout, "brightness updated")
 	return 0
+}
+
+func runBluetoothAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) (int, bool) {
+	if len(args) != 2 {
+		return 0, false
+	}
+	verb, address := args[0], args[1]
+
+	var err error
+	ctx := context.Background()
+	switch verb {
+	case "discover-on":
+		err = dependencies.BluetoothService.SetDiscovering(ctx, true)
+	case "discover-off":
+		err = dependencies.BluetoothService.SetDiscovering(ctx, false)
+	case "pair":
+		err = dependencies.BluetoothService.Pair(ctx, address)
+	case "connect":
+		err = dependencies.BluetoothService.Connect(ctx, address)
+	case "disconnect":
+		err = dependencies.BluetoothService.Disconnect(ctx, address)
+	case "trust":
+		err = dependencies.BluetoothService.SetTrusted(ctx, address, true)
+	case "untrust":
+		err = dependencies.BluetoothService.SetTrusted(ctx, address, false)
+	case "remove":
+		err = dependencies.BluetoothService.Remove(ctx, address)
+	default:
+		return 0, false
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: bluetooth unavailable: %v\n", err)
+		return 1, true
+	}
+	fmt.Fprintln(stdout, "bluetooth action executed")
+	return 0, true
 }

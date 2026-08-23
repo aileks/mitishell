@@ -89,6 +89,13 @@ Flickable {
                         onMoved: Display.setBrightness(value)
                     }
                 }
+
+                ToggleRow {
+                    width: parent.width
+                    label: "Do not disturb"
+                    checked: Notifications.doNotDisturb
+                    onToggled: Notifications.toggleDoNotDisturb()
+                }
             }
         }
 
@@ -213,22 +220,12 @@ Flickable {
 
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: CompatibilityActions.notificationsAvailable
-                || CompatibilityActions.powerAvailable
             spacing: Theme.spaceXl
 
             IconButton {
-                visible: CompatibilityActions.notificationsAvailable
-                iconSource: "../assets/icons/bell.svg"
-                accessibleName: "Toggle notifications"
-                onClicked: CompatibilityActions.toggleNotifications()
-            }
-
-            IconButton {
-                visible: CompatibilityActions.powerAvailable
                 iconSource: "../assets/icons/power.svg"
                 accessibleName: "Open power menu"
-                onClicked: CompatibilityActions.openPowerMenu()
+                onClicked: SurfaceCoordinator.toggle("power", SurfaceCoordinator.originScreen)
             }
         }
     }
