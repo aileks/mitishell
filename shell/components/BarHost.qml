@@ -222,6 +222,22 @@ PanelWindow {
                 }
             }
 
+            BarPopoverTrigger {
+                id: remindersTrigger
+
+                visible: Reminders.count > 0
+                popoverKey: "reminders"
+                screen: root.modelData
+                Accessible.name: Reminders.count === 1
+                    ? "1 active reminder"
+                    : Reminders.count + " active reminders"
+                Accessible.role: Accessible.Button
+
+                ReminderIsland {
+                    open: remindersTrigger.active
+                }
+            }
+
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1

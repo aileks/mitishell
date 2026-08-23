@@ -36,6 +36,12 @@ ShellRoot {
         delegate: SettingsHost {}
     }
 
+    Variants {
+        model: Quickshell.screens
+
+        delegate: ReminderHost {}
+    }
+
     IpcHandler {
         target: "shell"
 
@@ -67,6 +73,26 @@ ShellRoot {
             return Osd.showGeneric(icon, message, progress, duration)
                 ? "OSD shown"
                 : "OSD invalid";
+        }
+    }
+
+    IpcHandler {
+        target: "reminders"
+
+        function open(): string {
+            const screen = focusedScreen();
+            if (screen === null) {
+                return "Reminder overlay unavailable";
+            }
+            Reminders.refresh();
+            SurfaceCoordinator.toggle("reminders", screen);
+            return "Reminder overlay opened";
+        }
+
+        function changed(message: string): string {
+            Reminders.refresh();
+            Osd.showReminder(message);
+            return "Reminder state refreshed";
         }
     }
 

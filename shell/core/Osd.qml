@@ -116,6 +116,19 @@ QtObject {
         });
     }
 
+    function showReminder(message) {
+        showState({
+            kind: "reminder",
+            icon: "󰔛",
+            message: String(message || "Reminder updated"),
+            hasProgress: false,
+            progress: 0,
+            label: "",
+            durationMS: 1600,
+            accent: Theme.pink,
+        });
+    }
+
     property Timer hideTimer: Timer {
         interval: root.durationMS
         onTriggered: root.open = false

@@ -131,9 +131,9 @@ QtObject {
         watchForUpdates(notification, snapshot.liveId);
 
         upsertHistory(snapshot);
-        // Critical notifications break through do-not-disturb; suppressed
-        // ones still land in history, except transient popups.
-        if (doNotDisturb && snapshot.urgency !== 2) {
+        // Critical and explicit reminder traffic break through do-not-disturb;
+        // suppressed records still land in history, except transient popups.
+        if (!NotificationModel.popupAllowed(doNotDisturb, snapshot)) {
             if (snapshot.transient) {
                 notification.tracked = false;
                 delete liveById[snapshot.liveId];

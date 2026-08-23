@@ -38,6 +38,7 @@ function snapshotOf(notification, timestamp, recordId) {
     });
     const urgency = Number(notification.urgency);
     const expireTimeout = Number(notification.expireTimeout);
+    const hints = notification.hints || {};
     return {
         recordId: String(recordId || (Math.round(timestamp) + "-" + notification.id)),
         liveId: notification.id,
@@ -52,6 +53,7 @@ function snapshotOf(notification, timestamp, recordId) {
         urgency: Number.isFinite(urgency) ? urgency : 1,
         timeout: popupDuration(urgency, expireTimeout),
         transient: notification.transient === true,
+        reminder: hints["x-mitishell-reminder"] === true,
         actions: actions,
         timestamp: timestamp,
         live: true,
@@ -68,6 +70,7 @@ function durableEntry(snapshot) {
         summary: snapshot.summary,
         body: snapshot.body,
         urgency: snapshot.urgency,
+        reminder: snapshot.reminder === true,
         timestamp: snapshot.timestamp,
     };
 }
@@ -93,10 +96,15 @@ function restoredSnapshot(entry) {
         urgency: Number(entry.urgency),
         timeout: 0,
         transient: false,
+        reminder: entry.reminder === true,
         actions: [],
         timestamp: Number(entry.timestamp),
         live: false,
     };
+}
+
+function popupAllowed(doNotDisturb, snapshot) {
+    return !doNotDisturb || snapshot.urgency === 2 || snapshot.reminder === true;
 }
 
 function timeLabel(timestamp, now) {
@@ -145,6 +153,7 @@ if (typeof module !== "undefined") {
         durableEntry,
         durableEntries,
         popupDuration,
+        popupAllowed,
         plainBody,
         popupTarget,
         restoredSnapshot,
