@@ -61,6 +61,16 @@ ShellRoot {
     }
 
     IpcHandler {
+        target: "osd"
+
+        function show(icon: string, message: string, progress: string, duration: string): string {
+            return Osd.showGeneric(icon, message, progress, duration)
+                ? "OSD shown"
+                : "OSD invalid";
+        }
+    }
+
+    IpcHandler {
         target: "bluetooth"
 
         function pairRequest(payload: string): string {
