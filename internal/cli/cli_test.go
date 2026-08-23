@@ -13,6 +13,7 @@ import (
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/notifications"
+	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -34,6 +35,91 @@ type controlStub struct {
 	brightnessSet []int
 	controlPages  []string
 	err           error
+}
+
+type osdStub struct {
+	requests []osd.Request
+	err      error
+}
+
+func (stub *osdStub) ShowOSD(request osd.Request) error {
+	stub.requests = append(stub.requests, request)
+	return stub.err
+}
+
+func TestOSDPassesValidatedStateToShell(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &osdStub{}
+	code := cli.Run([]string{
+		"osd",
+		"--icon", "reminder",
+		"--message", "Tea is ready",
+		"--progress", "62.5",
+		"--duration", "2400",
+	}, &stdout, &stderr, cli.Dependencies{OSD: stub})
+	if code != 0 || len(stub.requests) != 1 {
+		t.Fatalf("code=%d requests=%#v stderr=%q", code, stub.requests, stderr.String())
+	}
+	request := stub.requests[0]
+	if request.Icon != "reminder" || request.Message != "Tea is ready" ||
+		request.Progress == nil || *request.Progress != 62.5 || request.DurationMS != 2400 {
+		t.Fatalf("request = %#v", request)
+	}
+	if stdout.String() != "OSD shown\n" {
+		t.Fatalf("stdout = %q", stdout.String())
+	}
+}
+
+func TestOSDUsesDefaultDurationAndPreservesGlyph(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &osdStub{}
+	code := cli.Run([]string{"osd", "--icon", "󰀻"}, &stdout, &stderr,
+		cli.Dependencies{OSD: stub})
+	if code != 0 || len(stub.requests) != 1 {
+		t.Fatalf("code=%d requests=%#v stderr=%q", code, stub.requests, stderr.String())
+	}
+	if stub.requests[0].Icon != "󰀻" || stub.requests[0].DurationMS != osd.DefaultDurationMS {
+		t.Fatalf("request = %#v", stub.requests[0])
+	}
+}
+
+func TestOSDRejectsInvalidInput(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{name: "empty", args: []string{"osd"}},
+		{name: "negative progress", args: []string{"osd", "--progress", "-1"}},
+		{name: "nan progress", args: []string{"osd", "--progress", "NaN"}},
+		{name: "short duration", args: []string{"osd", "--message", "x", "--duration", "249"}},
+		{name: "infinite duration", args: []string{"osd", "--message", "x", "--duration", "+Inf"}},
+		{name: "remote icon", args: []string{"osd", "--icon", "https://example.com/icon.png"}},
+		{name: "positional text", args: []string{"osd", "hello"}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			stub := &osdStub{}
+			code := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{OSD: stub})
+			if code != 2 || len(stub.requests) != 0 {
+				t.Fatalf("code=%d requests=%#v stderr=%q", code, stub.requests, stderr.String())
+			}
+		})
+	}
+}
+
+func TestOSDReportsUnavailableShell(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &osdStub{err: errors.New("shell not running")}
+	code := cli.Run([]string{"osd", "--message", "hello"}, &stdout, &stderr,
+		cli.Dependencies{OSD: stub})
+	if code != 1 || !strings.Contains(stderr.String(), "shell not running") {
+		t.Fatalf("code=%d stderr=%q", code, stderr.String())
+	}
 }
 
 type displaySetCall struct {

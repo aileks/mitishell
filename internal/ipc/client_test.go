@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aileks/mitishell/internal/ipc"
+	"github.com/aileks/mitishell/internal/osd"
 )
 
 func TestPingAcceptsOnlyMitishellPong(t *testing.T) {
@@ -33,6 +34,20 @@ func TestToggleNotificationsAcceptsAcknowledgement(t *testing.T) {
 	client := ipc.NewClient(fakeQS(t, "do not disturb toggled"), "/tmp/mitishell-shell")
 	if err := client.ToggleNotifications(); err != nil {
 		t.Fatalf("ToggleNotifications() error = %v", err)
+	}
+}
+
+func TestShowOSDPassesEveryFieldPositionally(t *testing.T) {
+	client := ipc.NewClient(fakeQSCheckingOSD(t), "/tmp/mitishell-shell")
+	progress := 37.5
+	err := client.ShowOSD(osd.Request{
+		Icon:       "reminder",
+		Message:    "Tea ready",
+		Progress:   &progress,
+		DurationMS: 2400,
+	})
+	if err != nil {
+		t.Fatalf("ShowOSD() error = %v", err)
 	}
 }
 
@@ -102,6 +117,22 @@ func fakeQSCheckingArg(t *testing.T, argument string, response string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "qs")
 	contents := "#!/bin/sh\n[ \"$8\" = '" + argument + "' ] && printf '%s\\n' '" + response + "' || printf 'wrong argument %s\\n' \"$8\"\n"
+	if err := os.WriteFile(path, []byte(contents), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func fakeQSCheckingOSD(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "qs")
+	contents := `#!/bin/sh
+if [ "$8" = 'reminder' ] && [ "$9" = 'Tea ready' ] && [ "${10}" = '37.5' ] && [ "${11}" = '2400' ]; then
+    printf '%s\n' 'OSD shown'
+else
+    printf '%s\n' 'wrong OSD arguments'
+fi
+`
 	if err := os.WriteFile(path, []byte(contents), 0o700); err != nil {
 		t.Fatal(err)
 	}

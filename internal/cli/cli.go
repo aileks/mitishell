@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"slices"
@@ -13,6 +14,7 @@ import (
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/notifications"
+	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -106,6 +108,10 @@ type NotificationHistory interface {
 	ImportMedia(notifications.MediaImport) (string, error)
 }
 
+type OSDControl interface {
+	ShowOSD(osd.Request) error
+}
+
 type Dependencies struct {
 	ConfigPath          string
 	Shell               Shell
@@ -119,6 +125,7 @@ type Dependencies struct {
 	NetworkService      NetworkService
 	BluetoothService    BluetoothService
 	NotificationHistory NotificationHistory
+	OSD                 OSDControl
 	Stdin               io.Reader
 }
 
@@ -365,6 +372,9 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "control" {
 		return runControlAction(args, stdout, stderr, dependencies)
 	}
+	if len(args) > 0 && args[0] == "osd" {
+		return runOSD(args[1:], stdout, stderr, dependencies)
+	}
 	if len(args) > 0 && (args[0] == "volume" || args[0] == "mic") {
 		return runAudioAction(args, stdout, stderr, dependencies)
 	}
@@ -429,6 +439,64 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 
 	fmt.Fprintln(stderr, "mitishell: usage: mitishell <command>")
 	return 2
+}
+
+func runOSD(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	flags := flag.NewFlagSet("osd", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	icon := flags.String("icon", "", "icon alias, path, theme name, glyph, or text")
+	message := flags.String("message", "", "message text")
+	progress := optionalFloat{}
+	flags.Var(&progress, "progress", "progress from 0 through 100")
+	durationMS := flags.Float64("duration", osd.DefaultDurationMS, "display duration in milliseconds")
+	if err := flags.Parse(args); err != nil || flags.NArg() != 0 {
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell osd [--icon <value>] [--message <text>] [--progress <0-100>] [--duration <ms>]")
+		return 2
+	}
+	request, err := osd.NewRequest(*icon, *message, progress.Pointer(), *durationMS)
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: invalid OSD: %v\n", err)
+		return 2
+	}
+	if dependencies.OSD == nil {
+		fmt.Fprintln(stderr, "mitishell: OSD unavailable")
+		return 1
+	}
+	if err := dependencies.OSD.ShowOSD(request); err != nil {
+		fmt.Fprintf(stderr, "mitishell: OSD unavailable: %v\n", err)
+		return 1
+	}
+	fmt.Fprintln(stdout, "OSD shown")
+	return 0
+}
+
+type optionalFloat struct {
+	value float64
+	set   bool
+}
+
+func (value *optionalFloat) String() string {
+	if !value.set {
+		return ""
+	}
+	return strconv.FormatFloat(value.value, 'f', -1, 64)
+}
+
+func (value *optionalFloat) Set(raw string) error {
+	parsed, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return err
+	}
+	value.value = parsed
+	value.set = true
+	return nil
+}
+
+func (value optionalFloat) Pointer() *float64 {
+	if !value.set {
+		return nil
+	}
+	return &value.value
 }
 
 func runConfig(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {

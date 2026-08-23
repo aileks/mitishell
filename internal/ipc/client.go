@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aileks/mitishell/internal/osd"
 )
 
 type Client struct {
@@ -93,6 +95,22 @@ func (client Client) BrightnessSet(value int) error {
 // starting on the given page.
 func (client Client) ToggleControlCenter(page string) error {
 	return client.action("control", "toggle", "control center toggled", page)
+}
+
+func (client Client) ShowOSD(request osd.Request) error {
+	progress := ""
+	if request.Progress != nil {
+		progress = strconv.FormatFloat(*request.Progress, 'f', -1, 64)
+	}
+	return client.action(
+		"osd",
+		"show",
+		"OSD shown",
+		request.Icon,
+		request.Message,
+		progress,
+		strconv.Itoa(request.DurationMS),
+	)
 }
 
 func (client Client) action(target string, method string, acknowledgement string, args ...string) error {
