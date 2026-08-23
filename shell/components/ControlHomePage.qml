@@ -220,14 +220,12 @@ Flickable {
 
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: CompatibilityActions.powerAvailable
             spacing: Theme.spaceXl
 
             IconButton {
-                visible: CompatibilityActions.powerAvailable
                 iconSource: "../assets/icons/power.svg"
                 accessibleName: "Open power menu"
-                onClicked: CompatibilityActions.openPowerMenu()
+                onClicked: SurfaceCoordinator.toggle("power", SurfaceCoordinator.originScreen)
             }
         }
     }

@@ -30,6 +30,12 @@ ShellRoot {
         delegate: NotificationsPopupHost {}
     }
 
+    Variants {
+        model: Quickshell.screens
+
+        delegate: PowerHost {}
+    }
+
     IpcHandler {
         target: "shell"
 
@@ -58,8 +64,12 @@ ShellRoot {
         target: "power"
 
         function open(): string {
-            return CompatibilityActions.openPowerMenu()
-                ? "power menu opened" : "power menu unavailable";
+            const screen = focusedScreen();
+            if (screen === null) {
+                return "power menu unavailable";
+            }
+            SurfaceCoordinator.toggle("power", screen);
+            return "power menu opened";
         }
     }
 
@@ -170,17 +180,7 @@ ShellRoot {
         target: "control"
 
         function toggle(page: string): string {
-            const screens = Quickshell.screens !== undefined ? Quickshell.screens : [];
-            let target = null;
-            for (let index = 0; index < screens.length; index++) {
-                if (screens[index].name === Osd.screenName) {
-                    target = screens[index];
-                    break;
-                }
-            }
-            if (target === null && screens.length > 0) {
-                target = screens[0];
-            }
+            const target = focusedScreen();
             if (target === null) {
                 return "control center unavailable";
             }
@@ -193,4 +193,14 @@ ShellRoot {
     // Display has no island that would instantiate it at startup, but its
     // discovery needs to run before the first brightness call arrives.
     Component.onCompleted: Display.refresh()
+
+    function focusedScreen() {
+        const screens = Quickshell.screens !== undefined ? Quickshell.screens : [];
+        for (let index = 0; index < screens.length; index++) {
+            if (screens[index].name === Osd.screenName) {
+                return screens[index];
+            }
+        }
+        return screens.length > 0 ? screens[0] : null;
+    }
 }

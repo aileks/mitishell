@@ -9,6 +9,7 @@ import (
 
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -40,19 +41,17 @@ type ControlCenter interface {
 	ToggleControlCenter(page string) error
 }
 
+// PowerService runs session power actions and reports logind support.
+type PowerService interface {
+	Capabilities(ctx context.Context) (power.Capabilities, error)
+	Run(ctx context.Context, action power.Action) error
+}
+
 // DisplayService discovers and drives DDC displays directly, used by the
 // shell's display service through the hidden verbs.
 type DisplayService interface {
 	Discover(context.Context) display.Result
 	Set(ctx context.Context, connector string, value int) display.Result
-}
-
-type Capabilities struct {
-	Power bool `json:"power"`
-}
-
-type CapabilityDetector interface {
-	Detect() Capabilities
 }
 
 type Status string
@@ -82,25 +81,14 @@ type Dependencies struct {
 	Shell          Shell
 	Doctor         Doctor
 	Weather        Weather
-	Capabilities   CapabilityDetector
 	AudioControl   AudioControl
 	DisplayControl DisplayControl
 	DisplayService DisplayService
 	ControlCenter  ControlCenter
+	PowerService   PowerService
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
-	if len(args) == 1 && args[0] == "_capabilities" {
-		if dependencies.Capabilities == nil {
-			fmt.Fprintln(stderr, "mitishell: capability detection unavailable")
-			return 1
-		}
-		if err := json.NewEncoder(stdout).Encode(dependencies.Capabilities.Detect()); err != nil {
-			fmt.Fprintf(stderr, "mitishell: encode capabilities: %v\n", err)
-			return 1
-		}
-		return 0
-	}
 	if len(args) == 1 && args[0] == "_config-resolve" {
 		resolved, loadErr := config.Load(dependencies.ConfigPath)
 		if loadErr != nil {
@@ -167,6 +155,34 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	}
 	if len(args) > 0 && args[0] == "config" {
 		return runConfig(args[1:], stdout, stderr, dependencies)
+	}
+	if len(args) == 1 && args[0] == "_power-capabilities" {
+		if dependencies.PowerService == nil {
+			fmt.Fprintln(stderr, "mitishell: power unavailable")
+			return 1
+		}
+		capabilities, err := dependencies.PowerService.Capabilities(context.Background())
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: power unavailable: %v\n", err)
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(capabilities); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode capabilities: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_power-action" {
+		if dependencies.PowerService == nil {
+			fmt.Fprintln(stderr, "mitishell: power unavailable")
+			return 1
+		}
+		if err := dependencies.PowerService.Run(context.Background(), power.Action(args[1])); err != nil {
+			fmt.Fprintf(stderr, "mitishell: power action unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "power action executed")
+		return 0
 	}
 	if len(args) > 0 && args[0] == "control" {
 		return runControlAction(args, stdout, stderr, dependencies)

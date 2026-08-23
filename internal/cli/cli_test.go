@@ -12,6 +12,7 @@ import (
 
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -88,10 +89,6 @@ func (stub *displayServiceStub) Set(_ context.Context, connector string, value i
 	return stub.set
 }
 
-type capabilityStub struct {
-	capabilities cli.Capabilities
-}
-
 type doctorStub struct {
 	checks []cli.Check
 }
@@ -135,26 +132,73 @@ func (stub shellStub) OpenPowerMenu() error {
 	return stub.powerErr
 }
 
-func (stub capabilityStub) Detect() cli.Capabilities {
-	return stub.capabilities
+type powerStub struct {
+	capabilities power.Capabilities
+	calls        []power.Action
+	err          error
 }
 
-func TestInternalCapabilitiesReportsAvailableCompatibilityActions(t *testing.T) {
+func (stub *powerStub) Capabilities(context.Context) (power.Capabilities, error) {
+	return stub.capabilities, stub.err
+}
+
+func (stub *powerStub) Run(_ context.Context, action power.Action) error {
+	stub.calls = append(stub.calls, action)
+	return stub.err
+}
+
+func TestInternalPowerCapabilitiesEncodesResult(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	dependencies := cli.Dependencies{
-		Capabilities: capabilityStub{capabilities: cli.Capabilities{
-			Power: false,
+		PowerService: &powerStub{capabilities: power.Capabilities{
+			Suspend:   true,
+			Hibernate: false,
 		}},
 	}
 
-	exitCode := cli.Run([]string{"_capabilities"}, &stdout, &stderr, dependencies)
+	exitCode := cli.Run([]string{"_power-capabilities"}, &stdout, &stderr, dependencies)
 
 	if exitCode != 0 {
 		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
 	}
-	if got := stdout.String(); got != "{\"power\":false}\n" {
+	if got := stdout.String(); got != "{\"suspend\":true,\"hibernate\":false}\n" {
 		t.Fatalf("stdout = %q", got)
+	}
+}
+
+func TestInternalPowerActionRunsRequestedAction(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &powerStub{}
+
+	exitCode := cli.Run([]string{"_power-action", "lock"}, &stdout, &stderr,
+		cli.Dependencies{PowerService: stub})
+
+	if exitCode != 0 {
+		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
+	}
+	if got := stdout.String(); got != "power action executed\n" {
+		t.Fatalf("stdout = %q", got)
+	}
+	if len(stub.calls) != 1 || stub.calls[0] != power.Lock {
+		t.Fatalf("calls = %v", stub.calls)
+	}
+}
+
+func TestInternalPowerActionReportsFailure(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &powerStub{err: errors.New("logind unreachable")}
+
+	exitCode := cli.Run([]string{"_power-action", "suspend"}, &stdout, &stderr,
+		cli.Dependencies{PowerService: stub})
+
+	if exitCode != 1 {
+		t.Fatalf("Run() exit code = %d, want failure", exitCode)
+	}
+	if !strings.Contains(stderr.String(), "logind unreachable") {
+		t.Fatalf("stderr = %q", stderr.String())
 	}
 }
 

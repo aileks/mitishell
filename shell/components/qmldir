@@ -25,6 +25,8 @@ NotificationCard 1.0 NotificationCard.qml
 NotificationIsland 1.0 NotificationIsland.qml
 NotificationsPopupHost 1.0 NotificationsPopupHost.qml
 OsdHost 1.0 OsdHost.qml
+PowerHost 1.0 PowerHost.qml
+PowerIsland 1.0 PowerIsland.qml
 ShellSlider 1.0 ShellSlider.qml
 SystemMetricsIsland 1.0 SystemMetricsIsland.qml
 SystemPopover 1.0 SystemPopover.qml
@@ -34,5 +36,5 @@ TrayMenu 1.0 TrayMenu.qml
 WeatherIcon 1.0 WeatherIcon.qml
 WeatherIsland 1.0 WeatherIsland.qml
 WeatherPopover 1.0 WeatherPopover.qml
-WorkspaceStrip 1.0 WorkspaceStrip.qml
 WindowTitle 1.0 WindowTitle.qml
+WorkspaceStrip 1.0 WorkspaceStrip.qml

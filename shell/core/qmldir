@@ -1,6 +1,5 @@
 singleton Audio 1.0 Audio.qml
 singleton Clock 1.0 Clock.qml
-singleton CompatibilityActions 1.0 CompatibilityActions.qml
 singleton Config 1.0 Config.qml
 singleton Control 1.0 Control.qml
 singleton Display 1.0 Display.qml
@@ -8,6 +7,7 @@ singleton Media 1.0 Media.qml
 singleton Motion 1.0 Motion.qml
 singleton Notifications 1.0 Notifications.qml
 singleton Osd 1.0 Osd.qml
+singleton Power 1.0 Power.qml
 singleton SurfaceCoordinator 1.0 SurfaceCoordinator.qml
 singleton SystemMetrics 1.0 SystemMetrics.qml
 singleton Theme 1.0 Theme.qml
