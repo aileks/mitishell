@@ -27,7 +27,7 @@ Keep framework and I/O concerns at the edges. If logic is awkward to test, look 
 
 **Optional integrations:** missing external programs or services should make the related capability unavailable, not break the shell.
 
-**Weather privacy:** weather is opt-in. Do not add silent IP geolocation, persistent coordinate storage, or broader location sharing as a fallback.
+**Weather privacy:** weather is opt-in will use `wttr.in` as the source with manual location setting. This is planned for a future release. Current implementation was tentative.
 
 ## Verification
 
