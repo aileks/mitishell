@@ -119,6 +119,7 @@ PanelWindow {
                         { key: "display", label: "Display", icon: "../assets/icons/sun.svg" },
                         { key: "notifications", label: "Notifications", icon: "../assets/icons/bell.svg" },
                         { key: "network", label: "Network", icon: "../assets/icons/wifi.svg" },
+                        { key: "bluetooth", label: "Bluetooth", icon: "../assets/icons/bluetooth.svg" },
                     ]
 
                     delegate: Rectangle {
@@ -187,6 +188,7 @@ PanelWindow {
                     : Control.page === "display" ? displayPage
                     : Control.page === "notifications" ? notificationsPage
                     : Control.page === "network" ? networkPage
+                    : Control.page === "bluetooth" ? bluetoothPage
                     : homePage
 
                 Component {
@@ -233,6 +235,14 @@ PanelWindow {
                     id: networkPage
 
                     ControlNetworkPage {
+                        anchors.fill: parent
+                    }
+                }
+
+                Component {
+                    id: bluetoothPage
+
+                    ControlBluetoothPage {
                         anchors.fill: parent
                     }
                 }

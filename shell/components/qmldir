@@ -11,6 +11,7 @@ BarPopoverTrigger 1.0 BarPopoverTrigger.qml
 CalendarPopover 1.0 CalendarPopover.qml
 ClockIsland 1.0 ClockIsland.qml
 ControlAudioPage 1.0 ControlAudioPage.qml
+ControlBluetoothPage 1.0 ControlBluetoothPage.qml
 ControlDisplayPage 1.0 ControlDisplayPage.qml
 ControlHomePage 1.0 ControlHomePage.qml
 ControlHost 1.0 ControlHost.qml

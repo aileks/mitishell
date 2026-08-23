@@ -61,6 +61,15 @@ ShellRoot {
     }
 
     IpcHandler {
+        target: "bluetooth"
+
+        function pairRequest(payload: string): string {
+            Bluetooth.handlePairRequest(payload);
+            return "pair request shown";
+        }
+    }
+
+    IpcHandler {
         target: "power"
 
         function open(): string {

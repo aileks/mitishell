@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/network"
@@ -56,6 +57,17 @@ type NetworkService interface {
 	Forget(ctx context.Context, ssid string) error
 }
 
+// BluetoothService drives BlueZ devices and reports adapter status.
+type BluetoothService interface {
+	Snapshot(ctx context.Context) bluetooth.Snapshot
+	SetDiscovering(ctx context.Context, discovering bool) error
+	Pair(ctx context.Context, address string) error
+	Connect(ctx context.Context, address string) error
+	Disconnect(ctx context.Context, address string) error
+	SetTrusted(ctx context.Context, address string, trusted bool) error
+	Remove(ctx context.Context, address string) error
+}
+
 // DisplayService discovers and drives DDC displays directly, used by the
 // shell's display service through the hidden verbs.
 type DisplayService interface {
@@ -86,16 +98,17 @@ type Weather interface {
 }
 
 type Dependencies struct {
-	ConfigPath     string
-	Shell          Shell
-	Doctor         Doctor
-	Weather        Weather
-	AudioControl   AudioControl
-	DisplayControl DisplayControl
-	DisplayService DisplayService
-	ControlCenter  ControlCenter
-	PowerService   PowerService
-	NetworkService NetworkService
+	ConfigPath       string
+	Shell            Shell
+	Doctor           Doctor
+	Weather          Weather
+	AudioControl     AudioControl
+	DisplayControl   DisplayControl
+	DisplayService   DisplayService
+	ControlCenter    ControlCenter
+	PowerService     PowerService
+	NetworkService   NetworkService
+	BluetoothService BluetoothService
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
@@ -244,6 +257,33 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "network" {
 		return runControlAction([]string{"control", "network"}, stdout, stderr, dependencies)
 	}
+	if len(args) > 0 && args[0] == "bluetooth" {
+		return runControlAction([]string{"control", "bluetooth"}, stdout, stderr, dependencies)
+	}
+	if len(args) == 1 && args[0] == "_bluetooth-snapshot" {
+		if dependencies.BluetoothService == nil {
+			fmt.Fprintln(stderr, "mitishell: bluetooth unavailable")
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(
+			dependencies.BluetoothService.Snapshot(context.Background())); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode bluetooth: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) > 0 && args[0] == "_bluetooth-action" {
+		if dependencies.BluetoothService == nil {
+			fmt.Fprintln(stderr, "mitishell: bluetooth unavailable")
+			return 1
+		}
+		exitCode, handled := runBluetoothAction(args[1:], stdout, stderr, dependencies)
+		if handled {
+			return exitCode
+		}
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell _bluetooth-action <verb> <address>")
+		return 2
+	}
 	if len(args) > 0 && args[0] == "control" {
 		return runControlAction(args, stdout, stderr, dependencies)
 	}
@@ -361,7 +401,7 @@ func runControlAction(args []string, stdout io.Writer, stderr io.Writer, depende
 		page = args[1]
 	}
 	valid := slices.Contains(
-		[]string{"home", "audio", "media", "display", "notifications", "network"}, page)
+		[]string{"home", "audio", "media", "display", "notifications", "network", "bluetooth"}, page)
 	if len(args) > 2 || !valid {
 		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display>")
 		return 2
@@ -446,4 +486,40 @@ func runBrightnessAction(args []string, stdout io.Writer, stderr io.Writer, depe
 	}
 	fmt.Fprintln(stdout, "brightness updated")
 	return 0
+}
+
+func runBluetoothAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) (int, bool) {
+	if len(args) != 2 {
+		return 0, false
+	}
+	verb, address := args[0], args[1]
+
+	var err error
+	ctx := context.Background()
+	switch verb {
+	case "discover-on":
+		err = dependencies.BluetoothService.SetDiscovering(ctx, true)
+	case "discover-off":
+		err = dependencies.BluetoothService.SetDiscovering(ctx, false)
+	case "pair":
+		err = dependencies.BluetoothService.Pair(ctx, address)
+	case "connect":
+		err = dependencies.BluetoothService.Connect(ctx, address)
+	case "disconnect":
+		err = dependencies.BluetoothService.Disconnect(ctx, address)
+	case "trust":
+		err = dependencies.BluetoothService.SetTrusted(ctx, address, true)
+	case "untrust":
+		err = dependencies.BluetoothService.SetTrusted(ctx, address, false)
+	case "remove":
+		err = dependencies.BluetoothService.Remove(ctx, address)
+	default:
+		return 0, false
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: bluetooth unavailable: %v\n", err)
+		return 1, true
+	}
+	fmt.Fprintln(stdout, "bluetooth action executed")
+	return 0, true
 }
