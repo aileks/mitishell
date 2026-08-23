@@ -5,23 +5,20 @@ import Quickshell
 import Quickshell.Hyprland
 import "../lib/AudioModel.js" as AudioModel
 import "../lib/DisplayModel.js" as DisplayModel
+import "../lib/OsdModel.js" as OsdModel
 
 QtObject {
     id: root
 
-    // Transient on-screen display state shared by every per-screen surface;
-    // only the surface on the focused output is shown.
-
     property bool open: false
     property string kind: ""
+    property string icon: ""
     property string message: ""
+    property bool hasProgress: false
     property real progress: 0
     property string label: ""
-
-    readonly property bool barVisible: message === ""
-    readonly property bool muted: kind === "mic"
-        ? Audio.inputMuted
-        : kind === "volume" && Audio.outputMuted
+    property int durationMS: 1200
+    property color accent: Theme.orange
 
     readonly property string screenName: {
         const monitor = Hyprland.focusedMonitor;
@@ -32,41 +29,95 @@ QtObject {
         return screens !== undefined && screens.length > 0 ? screens[0].name : "";
     }
 
-    function reveal(kind, progress, label, message) {
-        // State is assigned before opening so a fresh OSD starts at its new
-        // value; only updates while it remains open animate the bar.
-        root.kind = kind;
-        root.progress = progress;
-        root.label = label;
-        root.message = message;
+    function showState(state) {
+        root.kind = state.kind || "generic";
+        root.icon = state.icon || "";
+        root.message = state.message || "";
+        root.hasProgress = state.hasProgress === true;
+        root.progress = Math.max(0, Math.min(1, Number(state.progress || 0)));
+        root.label = state.label || "";
+        root.durationMS = Math.round(Number(state.durationMS || 1200));
+        root.accent = state.accent || Theme.orange;
         root.open = true;
         hideTimer.restart();
     }
 
+    function showGeneric(icon, message, progressValue, durationValue) {
+        const duration = Number(durationValue);
+        const layout = OsdModel.genericLayout(message, progressValue);
+        if (!Number.isFinite(duration) || duration < 250 || duration > 30000
+                || (!icon && !layout.hasMessage && !layout.hasProgress)) {
+            return false;
+        }
+        showState({
+            kind: "generic",
+            icon: String(icon || ""),
+            message: layout.message,
+            hasProgress: layout.hasProgress,
+            progress: layout.progress,
+            label: layout.label,
+            durationMS: duration,
+            accent: Theme.orange,
+        });
+        return true;
+    }
+
     function showVolume() {
         const percent = AudioModel.percent(Audio.outputVolume);
-        reveal("volume", Math.min(percent, 100) / 100, percent + "%", "");
+        showState({
+            kind: "volume",
+            icon: OsdModel.iconFor("volume", percent, Audio.outputMuted),
+            message: "",
+            hasProgress: true,
+            progress: Math.min(percent, 100) / 100,
+            label: percent + "%",
+            durationMS: 1200,
+            accent: Theme.orange,
+        });
     }
 
     function showMicVolume() {
         const percent = AudioModel.percent(Audio.inputVolume);
-        reveal("mic", Math.min(percent, 100) / 100, percent + "%", "");
+        showState({
+            kind: "mic",
+            icon: OsdModel.iconFor("mic", percent, Audio.inputMuted),
+            message: "",
+            hasProgress: true,
+            progress: Math.min(percent, 100) / 100,
+            label: percent + "%",
+            durationMS: 1200,
+            accent: Theme.orange,
+        });
     }
 
     function showMicMuted(muted) {
-        reveal("mic", 0, "", muted ? "Microphone muted" : "Microphone on");
+        showState({
+            kind: "mic",
+            icon: muted ? "mic-off" : "mic",
+            message: muted ? "Microphone muted" : "Microphone on",
+            hasProgress: false,
+            progress: 0,
+            label: "",
+            durationMS: 1200,
+            accent: Theme.orange,
+        });
     }
 
     function showBrightness() {
-        reveal(
-            "brightness",
-            DisplayModel.progress(Display.brightness),
-            DisplayModel.percentLabel(Display.brightness),
-            "");
+        showState({
+            kind: "brightness",
+            icon: "sun",
+            message: "",
+            hasProgress: true,
+            progress: DisplayModel.progress(Display.brightness),
+            label: DisplayModel.percentLabel(Display.brightness),
+            durationMS: 1200,
+            accent: Theme.orange,
+        });
     }
 
     property Timer hideTimer: Timer {
-        interval: 1200
+        interval: root.durationMS
         onTriggered: root.open = false
     }
 }

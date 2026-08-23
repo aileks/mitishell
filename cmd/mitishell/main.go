@@ -97,6 +97,7 @@ func main() {
 		NetworkService:      network.NewService(network.NMCaller{}),
 		BluetoothService:    bluetooth.NewService(bluetooth.BlueZCaller{}),
 		NotificationHistory: notifications.NewFileHistory(notificationHistoryPath),
+		OSD:                 shell,
 		Stdin:               os.Stdin,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
