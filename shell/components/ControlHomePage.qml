@@ -198,7 +198,8 @@ Flickable {
                                 ? Weather.snapshot.current.temperature
                                 : Number.NaN,
                         )
-                        color: Weather.state === "stale" ? Theme.yellow : Theme.text
+                        color: Weather.state === "unavailable" ? Theme.red
+                            : (Weather.state === "stale" ? Theme.yellow : Theme.text)
                         font.family: Theme.fontMono
                         font.pixelSize: Theme.fontSizeBody
                     }
