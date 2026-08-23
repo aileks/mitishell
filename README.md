@@ -13,8 +13,11 @@ Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShe
 - Qt 6 QML tooling
 - Node.js
 - GNU Make
+- A Nerd Font for shell and literal OSD glyphs
 
 Brightness control additionally needs `ddcutil` and read access to the monitors' i2c buses (typically membership in the `i2c` group). Wi-Fi needs NetworkManager and Bluetooth needs BlueZ running; when either is missing the related page reports unavailable and the rest of the shell is unaffected.
+
+Reminders additionally need a working user systemd session with `systemd-run` and `systemctl`. Missing reminder dependencies disable reminders without affecting the rest of the shell.
 
 ## Development
 
@@ -62,6 +65,8 @@ bindl = SUPER, C, exec, mitishell settings
 
 Mitishell runs its own notification server, so no external daemon is needed. The bar's bell island opens a popover with recent history, actions, and the do-not-disturb switch; toast cards stack under the same island, pause while that output is fullscreen or the session is locked, and land in history. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
 
+The newest 50 non-transient notifications persist across reloads and restarts. State lives at `$XDG_STATE_HOME/mitishell/notifications/history.json`, or `~/.local/state/mitishell/notifications/history.json` when `XDG_STATE_HOME` is unset. Captured avatars and content images live in the sibling `media` directory. Restored notifications are history-only and do not retain live actions.
+
 The power menu is a centered overlay with lock, logout, suspend, hibernate, reboot, and shutdown. Choosing an action morphs it into a confirmation. Suspend and hibernate appear only when logind supports them, and locking goes through the session's lock signal so your idle daemon decides what locks the screen.
 
 The Network page lists Wi-Fi stations with signal and security, joins secured and hidden networks inline, and shows Ethernet state; it drives NetworkManager. The Bluetooth page pairs and manages devices through BlueZ, including passkey confirmation and battery readouts for devices that report them. Enterprise Wi-Fi sign-in stays out of scope.
@@ -81,10 +86,37 @@ bindel = , XF86MonBrightnessDown, exec, mitishell brightness down
 
 Both also accept absolute values (`mitishell volume set 40`, `mitishell brightness set 60`). Volume steps stay within 100 percent and unmute; the audio island wheel and popover slider still reach 150 percent. Brightness drives every DDC/CI monitor, floors at 1 percent so a step can always be undone on screen, and coalesces rapid changes into few ddcutil writes.
 
+## Generic OSD
+
+Show a focused-output OSD from scripts with any combination of icon, message, and progress:
+
+```bash
+mitishell osd --icon info --message "Build finished"
+mitishell osd --message "Syncing" --progress 65 --duration 2000
+mitishell osd --icon '󰔛' --message "Literal Nerd Font glyph"
+```
+
+At least one of `--icon`, `--message`, or `--progress` is required. Progress accepts 0 through 100, duration accepts 250 through 30000 milliseconds, and the default duration is 1200 milliseconds. Icons resolve through Mitishell aliases, readable local files, bundled icons, freedesktop theme icons, then literal Nerd Font glyphs or text. Remote image URLs are rejected.
+
+## Reminders
+
+`mitishell reminder` opens the centered review-and-create overlay on the focused output. The CLI can also schedule, list, and clear timers:
+
+```bash
+mitishell reminder 10
+mitishell reminder 25 Check the oven
+mitishell reminder list
+mitishell reminder clear
+```
+
+Messages are optional. An omitted message becomes `Your N minutes are up`. Active reminders appear beside the notification control and remain individually cancellable in the overlay. Scheduling and cancellation use a pink OSD instead of adding history entries.
+
+Timers are transient user-systemd units. Their private metadata lives under `$XDG_RUNTIME_DIR/mitishell/reminders`, so active and pending reminders end with the login session and do not survive logout or reboot. Fired reminders become normal-urgency Mitishell notifications, bypass do-not-disturb, and remain in notification history. If the notification server is absent when a timer fires, Mitishell retains that delivery until it returns during the same login.
+
 ## Source installation
 
 > [!IMPORTANT]  
-> `make uninstall` removes only installed program files. It doesn't remove user configuration or cache data.
+> `make uninstall` removes only installed program files. It retains user configuration, cache data, and notification history under the state directory.
 
 ```bash
 make install
