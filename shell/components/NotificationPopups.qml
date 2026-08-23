@@ -6,7 +6,8 @@ import "../core"
 
 // Toast popups anchored under the bar's bell island, right-aligned with it.
 // Passive by design: no keyboard focus and no grab, so the rest of the
-// screen stays live while cards come and go.
+// screen stays live while cards come and go. The popup inherits its screen
+// from the parent bar window; only that bar's island shows toasts.
 PopupWindow {
     id: root
 

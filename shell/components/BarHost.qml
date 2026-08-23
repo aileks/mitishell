@@ -292,7 +292,6 @@ PanelWindow {
 
         NotificationPopups {
             anchorItem: notificationsTrigger
-            screen: root.modelData
         }
 
         AnchoredPopover {
