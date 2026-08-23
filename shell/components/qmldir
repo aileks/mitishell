@@ -26,6 +26,7 @@ MediaPopover 1.0 MediaPopover.qml
 MetricCard 1.0 MetricCard.qml
 NotificationCard 1.0 NotificationCard.qml
 NotificationIsland 1.0 NotificationIsland.qml
+NotificationMediaCache 1.0 NotificationMediaCache.qml
 NotificationPopups 1.0 NotificationPopups.qml
 NotificationsPopover 1.0 NotificationsPopover.qml
 OsdHost 1.0 OsdHost.qml

@@ -29,61 +29,43 @@ Flickable {
             width: parent.width
             spacing: Theme.spaceMd
 
-            Text {
+            SurfaceHeader {
                 id: heading
 
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Notifications"
-                color: Theme.textBright
-                font.family: Theme.fontSans
-                font.pixelSize: Theme.fontSizeHeading
-                font.weight: Font.DemiBold
+                width: parent.width - clearAll.width - parent.spacing
+                title: "Notifications"
+                description: Notifications.unread > 0
+                    ? Notifications.unread + " unread"
+                    : "Recent activity"
+                accent: Theme.pink
             }
 
-            Item { width: parent.width - clearAll.implicitWidth - heading.implicitWidth - Theme.spaceMd; height: 1 }
-
-            Rectangle {
+            ActionButton {
                 id: clearAll
 
                 anchors.verticalCenter: parent.verticalCenter
                 visible: Notifications.history.length > 0
-                width: clearAllLabel.implicitWidth + Theme.spaceLg * 2
-                height: 28
-                radius: Theme.radiusPill
-                color: activeFocus || clearHover.hovered ? Theme.overlay : Theme.container
-                border.width: activeFocus ? 2 : 1
-                border.color: activeFocus ? Theme.blue : Theme.overlay
-                activeFocusOnTab: true
-                Accessible.name: "Clear notification history"
-                Accessible.role: Accessible.Button
-                Accessible.onPressAction: Notifications.clearHistory()
+                implicitWidth: 82
+                implicitHeight: Theme.controlHeightSm
+                label: "Clear all"
+                accent: Theme.pink
+                onActivated: Notifications.clearHistory()
+            }
+        }
 
-                Text {
-                    id: clearAllLabel
+        SectionCard {
+            visible: Notifications.historyError !== ""
+            width: parent.width
+            title: "History unavailable"
+            accent: Theme.yellow
 
-                    anchors.centerIn: parent
-                    text: "Clear all"
-                    color: Theme.text
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                HoverHandler {
-                    id: clearHover
-                }
-
-                TapHandler {
-                    onTapped: Notifications.clearHistory()
-                }
-
-                Keys.onReturnPressed: function(event) {
-                    Notifications.clearHistory();
-                    event.accepted = true;
-                }
-                Keys.onSpacePressed: function(event) {
-                    Notifications.clearHistory();
-                    event.accepted = true;
-                }
+            Text {
+                width: parent.width
+                text: Notifications.historyError
+                color: Theme.text
+                font.family: Theme.fontSans
+                font.pixelSize: Theme.fontSizeBodySmall
+                wrapMode: Text.Wrap
             }
         }
 
@@ -95,13 +77,12 @@ Flickable {
             onToggled: Notifications.toggleDoNotDisturb()
         }
 
-        Text {
+        StateMessage {
             width: parent.width
             visible: Notifications.history.length === 0
-            text: "No notifications"
-            color: Theme.textMuted
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
+            title: "No notifications"
+            description: "New activity will appear here."
+            accent: Theme.pink
         }
 
         Repeater {
@@ -115,7 +96,7 @@ Flickable {
                 width: parent.width
                 notification: modelData
                 historyMode: true
-                onDismissed: Notifications.dismissFromHistory(modelData.id)
+                onDismissed: Notifications.dismissFromHistory(modelData.recordId)
             }
         }
     }

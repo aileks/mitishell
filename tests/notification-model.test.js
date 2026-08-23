@@ -27,6 +27,9 @@ test("snapshots copy drawable fields without the live object", () => {
     const snapshot = NotificationModel.snapshotOf({
         id: 7,
         appName: "Zen",
+        appIcon: "zen-browser",
+        desktopEntry: "app.zen_browser.zen",
+        image: "file:///tmp/preview.png",
         summary: "Download <b>finished</b>",
         body: "file.tar.zst",
         urgency: 1,
@@ -35,8 +38,12 @@ test("snapshots copy drawable fields without the live object", () => {
         actions: [{ identifier: "default", text: "" }, { identifier: "open", text: "Open" }],
     }, 1000);
 
-    assert.equal(snapshot.id, 7);
+    assert.equal(snapshot.recordId, "1000-7");
+    assert.equal(snapshot.liveId, 7);
     assert.equal(snapshot.appName, "Zen");
+    assert.equal(snapshot.appIcon, "zen-browser");
+    assert.equal(snapshot.desktopEntry, "app.zen_browser.zen");
+    assert.equal(snapshot.image, "file:///tmp/preview.png");
     assert.equal(snapshot.summary, "Download finished");
     assert.equal(snapshot.timeout, 8000);
     assert.equal(snapshot.timestamp, 1000);
@@ -45,6 +52,84 @@ test("snapshots copy drawable fields without the live object", () => {
         { identifier: "open", text: "Open" },
     ]);
     assert.ok(!snapshot.actions[0].invoke);
+    assert.equal(snapshot.live, true);
+});
+
+test("durable snapshots omit actions and restored records are history only", () => {
+    const live = NotificationModel.snapshotOf({
+        id: 9,
+        appName: "Camera",
+        appIcon: "camera",
+        image: "image://notifications/9",
+        summary: "Saved",
+        body: "photo.png",
+        urgency: 1,
+        expireTimeout: 0,
+        actions: [{ identifier: "open", text: "Open" }],
+    }, 2000);
+    live.persistedAppIcon = "file:///state/avatar.png";
+    live.persistedImage = "file:///state/image.png";
+
+    const durable = NotificationModel.durableEntry(live);
+    assert.deepEqual(durable, {
+        recordId: "2000-9",
+        appName: "Camera",
+        desktopEntry: "",
+        appIcon: "file:///state/avatar.png",
+        image: "file:///state/image.png",
+        summary: "Saved",
+        body: "photo.png",
+        urgency: 1,
+        timestamp: 2000,
+    });
+    assert.equal(durable.actions, undefined);
+
+    const restored = NotificationModel.restoredSnapshot(durable);
+    assert.equal(restored.live, false);
+    assert.equal(restored.liveId, -1);
+    assert.deepEqual(restored.actions, []);
+    assert.equal(restored.appIcon, "file:///state/avatar.png");
+    assert.equal(restored.timeout, 0);
+});
+
+test("transient notifications are excluded from durable history", () => {
+    const durable = { recordId: "1-1", transient: false };
+    const transient = { recordId: "1-2", transient: true };
+    const entries = NotificationModel.durableEntries([
+        Object.assign({
+            appName: "",
+            desktopEntry: "",
+            persistedAppIcon: "",
+            persistedImage: "",
+            summary: "saved",
+            body: "",
+            urgency: 1,
+            timestamp: 1,
+        }, durable),
+        Object.assign({
+            appName: "",
+            desktopEntry: "",
+            persistedAppIcon: "",
+            persistedImage: "",
+            summary: "temporary",
+            body: "",
+            urgency: 1,
+            timestamp: 1,
+        }, transient),
+    ]);
+    assert.deepEqual(entries.map((entry) => entry.recordId), ["1-1"]);
+});
+
+test("replacement snapshots retain their stable record identity", () => {
+    const replacement = NotificationModel.snapshotOf({
+        id: 3,
+        summary: "Updated",
+        urgency: 1,
+        actions: [],
+    }, 5000, "1000-3");
+    assert.equal(replacement.recordId, "1000-3");
+    assert.equal(replacement.liveId, 3);
+    assert.equal(replacement.summary, "Updated");
 });
 
 test("time labels and unread counting", () => {
