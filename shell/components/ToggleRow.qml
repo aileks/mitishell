@@ -13,7 +13,7 @@ FocusScope {
     signal toggled
 
     implicitWidth: parent ? parent.width : 320
-    implicitHeight: column.implicitHeight
+    implicitHeight: Math.max(copy.implicitHeight, toggle.height)
     activeFocusOnTab: true
     Accessible.name: label
     Accessible.role: Accessible.CheckBox
@@ -25,10 +25,12 @@ FocusScope {
     }
 
     Column {
-        id: column
+        id: copy
 
         anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.right: toggle.left
+        anchors.rightMargin: Theme.spaceMd
+        anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceXs
 
         Text {
@@ -48,38 +50,44 @@ FocusScope {
             font.pixelSize: Theme.fontSizeCaption
         }
 
+    }
+
+    Rectangle {
+        id: toggle
+
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        width: 44
+        height: 24
+        radius: Theme.radiusPill
+        color: root.checked ? root.accent
+            : (press.pressed ? Theme.pressedFill
+                : (root.activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised))
+        border.width: root.activeFocus ? 2 : 1
+        border.color: root.activeFocus ? Theme.blue
+            : (root.checked ? root.accent : Theme.borderSubtle)
+
         Rectangle {
-            width: 44
-            height: 24
+            x: root.checked ? parent.width - width - 3 : 3
+            anchors.verticalCenter: parent.verticalCenter
+            width: 18
+            height: 18
             radius: Theme.radiusPill
-            color: root.checked ? root.accent
-                : (root.activeFocus || hover.hovered ? Theme.overlay : Theme.container)
-            border.width: root.activeFocus ? 2 : 1
-            border.color: root.activeFocus ? Theme.blue : Theme.overlay
+            color: root.checked ? Theme.background : Theme.textBright
 
-            Rectangle {
-                x: root.checked ? parent.width - width - 3 : 3
-                anchors.verticalCenter: parent.verticalCenter
-                width: 18
-                height: 18
-                radius: Theme.radiusPill
-                color: root.checked ? Theme.background : Theme.textBright
-
-                Behavior on x {
-                    NumberAnimation {
-                        duration: Motion.duration(Motion.quick)
-                        easing.type: Easing.OutCubic
-                    }
+            Behavior on x {
+                NumberAnimation {
+                    duration: Motion.duration(Motion.quick)
+                    easing.type: Motion.easingStandard
                 }
             }
-
-            HoverHandler {
-                id: hover
-            }
         }
+
+        HoverHandler { id: hover }
     }
 
     TapHandler {
+        id: press
         onTapped: root.activate()
     }
 

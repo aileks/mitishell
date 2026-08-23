@@ -35,12 +35,14 @@ PanelWindow {
         width: Math.min(leftContent.implicitWidth + Theme.spaceLg * 2, 560)
         height: parent.height
         radius: Theme.radiusPill
-        color: Theme.container
+        color: Theme.layerRaised
+        border.width: 1
+        border.color: Theme.borderSubtle
 
         Behavior on width {
             NumberAnimation {
                 duration: Motion.duration(Motion.normal)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.easingStandard
             }
         }
 
@@ -84,7 +86,9 @@ PanelWindow {
             : 0
         height: parent.height
         radius: Theme.radiusPill
-        color: Theme.container
+        color: Theme.layerRaised
+        border.width: 1
+        border.color: Theme.alpha(Theme.purple, 0.42)
         visible: Config.bar.showMedia && Media.meaningful
             && root.availableCenterWidth >= 72
         clip: true
@@ -92,7 +96,7 @@ PanelWindow {
         Behavior on width {
             NumberAnimation {
                 duration: Motion.duration(Motion.normal)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.easingStandard
             }
         }
 
@@ -130,7 +134,9 @@ PanelWindow {
             ? rightContent.implicitWidth + Theme.spaceLg * 2 : 0
         height: parent.height
         radius: Theme.radiusPill
-        color: Theme.container
+        color: Theme.layerRaised
+        border.width: 1
+        border.color: Theme.borderSubtle
         visible: width > 0
 
         Row {

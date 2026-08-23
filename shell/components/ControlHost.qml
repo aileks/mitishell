@@ -32,6 +32,19 @@ PanelWindow {
         right: true
     }
 
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.scrim
+        opacity: root.open ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Motion.duration(Motion.quick)
+                easing.type: Motion.easingStandard
+            }
+        }
+    }
+
     // A hotkey-summoned layer surface needs a short exclusive keyboard grab
     // before on-demand focus sticks; relax once the surface is mapped.
     property Timer focusPrime: Timer {
@@ -75,22 +88,28 @@ PanelWindow {
         onActivated: SurfaceCoordinator.close()
     }
 
-    Rectangle {
+    SurfaceFrame {
         id: card
 
         anchors.centerIn: parent
         width: 620
         height: 520
-        radius: Theme.radiusLarge
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.overlay
+        floating: true
+        padding: Theme.spaceLg
         opacity: root.open ? 1 : 0
+        scale: root.open ? 1 : 0.98
 
         Behavior on opacity {
             NumberAnimation {
                 duration: Motion.duration(Motion.quick)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.easingStandard
+            }
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Motion.duration(Motion.quick)
+                easing.type: Motion.easingStandard
             }
         }
 
@@ -100,25 +119,24 @@ PanelWindow {
 
         Row {
             anchors.fill: parent
-            anchors.margins: Theme.spaceLg
             spacing: Theme.spaceLg
 
             Column {
                 id: rail
 
-                width: 40
+                width: Theme.controlHeightLg
                 spacing: Theme.spaceSm
 
                 Repeater {
                     id: railRepeater
 
                     model: [
-                        { key: "home", label: "Home", icon: "../assets/icons/home.svg" },
-                        { key: "audio", label: "Audio", icon: "../assets/icons/volume-2.svg" },
-                        { key: "media", label: "Media", icon: "../assets/icons/play.svg" },
-                        { key: "display", label: "Display", icon: "../assets/icons/sun.svg" },
-                        { key: "network", label: "Network", icon: "../assets/icons/wifi.svg" },
-                        { key: "bluetooth", label: "Bluetooth", icon: "../assets/icons/bluetooth.svg" },
+                        { key: "home", label: "Home", icon: "../assets/icons/home.svg", accent: Theme.orange },
+                        { key: "audio", label: "Audio", icon: "../assets/icons/volume-2.svg", accent: Theme.orange },
+                        { key: "media", label: "Media", icon: "../assets/icons/play.svg", accent: Theme.purple },
+                        { key: "display", label: "Display", icon: "../assets/icons/sun.svg", accent: Theme.blue },
+                        { key: "network", label: "Network", icon: "../assets/icons/wifi.svg", accent: Theme.cyan },
+                        { key: "bluetooth", label: "Bluetooth", icon: "../assets/icons/bluetooth.svg", accent: Theme.cyan },
                     ]
 
                     delegate: Rectangle {
@@ -127,14 +145,15 @@ PanelWindow {
                         required property var modelData
                         required property int index
 
-                        width: 40
-                        height: 40
+                        width: Theme.controlHeightLg
+                        height: Theme.controlHeightLg
                         radius: Theme.radiusPill
-                        color: activeFocus || hover.hovered || Control.page === modelData.key
-                            ? Theme.overlay
-                            : "transparent"
-                        border.width: activeFocus ? 2 : (Control.page === modelData.key ? 1 : 0)
-                        border.color: activeFocus ? Theme.blue : Theme.orange
+                        color: Control.page === modelData.key
+                            ? Theme.alpha(modelData.accent, 0.22)
+                            : (activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised)
+                        border.width: activeFocus ? 2 : 1
+                        border.color: activeFocus ? Theme.blue
+                            : (Control.page === modelData.key ? modelData.accent : Theme.borderSubtle)
                         activeFocusOnTab: true
                         Accessible.name: modelData.label
                         Accessible.role: Accessible.Button
@@ -142,8 +161,8 @@ PanelWindow {
 
                         Image {
                             anchors.centerIn: parent
-                            width: 18
-                            height: 18
+                            width: Theme.iconSm
+                            height: Theme.iconSm
                             source: railButton.modelData.icon
                             sourceSize.width: 18
                             sourceSize.height: 18
@@ -188,6 +207,13 @@ PanelWindow {
                     : Control.page === "network" ? networkPage
                     : Control.page === "bluetooth" ? bluetoothPage
                     : homePage
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Motion.duration(Motion.normal)
+                        easing.type: Motion.easingStandard
+                    }
+                }
 
                 Component {
                     id: homePage

@@ -13,12 +13,13 @@ Rectangle {
     signal chosen
 
     width: pillLabel.implicitWidth + Theme.spaceMd * 2
-    height: 28
+    height: Theme.controlHeightSm
     radius: Theme.radiusPill
-    color: root.checked ? Theme.overlay
-        : (root.activeFocus || pillHover.hovered ? Theme.overlay : Theme.surface)
-    border.width: root.activeFocus ? 2 : (root.checked ? 1 : 0)
-    border.color: Theme.blue
+    color: root.checked ? Theme.alpha(Theme.blue, 0.22)
+        : (pillPress.pressed ? Theme.pressedFill
+            : (root.activeFocus || pillHover.hovered ? Theme.hoverFill : Theme.layerInset))
+    border.width: root.activeFocus ? 2 : 1
+    border.color: root.activeFocus || root.checked ? Theme.blue : Theme.borderSubtle
     activeFocusOnTab: true
     Accessible.name: label
     Accessible.role: Accessible.Button
@@ -40,6 +41,7 @@ Rectangle {
     }
 
     TapHandler {
+        id: pillPress
         onTapped: root.chosen()
     }
 

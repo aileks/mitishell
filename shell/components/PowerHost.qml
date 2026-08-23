@@ -52,6 +52,19 @@ PanelWindow {
         right: true
     }
 
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.scrim
+        opacity: root.open ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Motion.duration(Motion.quick)
+                easing.type: Motion.easingStandard
+            }
+        }
+    }
+
     // A hotkey-summoned layer surface needs a short exclusive keyboard grab
     // before on-demand focus sticks; relax once the surface is mapped.
     property Timer focusPrime: Timer {
@@ -85,30 +98,37 @@ PanelWindow {
         }
     }
 
-    Rectangle {
+    SurfaceFrame {
         id: card
 
         anchors.centerIn: parent
         width: 440
         height: root.pendingAction !== "" ? confirmColumn.implicitHeight + Theme.spaceXl * 2
             : grid.implicitHeight + Theme.spaceXl * 2
-        radius: Theme.radiusLarge
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.overlay
+        floating: true
+        padding: 0
+        accent: root.pendingAction !== "" ? Theme.red : Theme.orange
         opacity: root.open ? 1 : 0
+        scale: root.open ? 1 : 0.98
 
         Behavior on opacity {
             NumberAnimation {
                 duration: Motion.duration(Motion.quick)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.easingStandard
+            }
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Motion.duration(Motion.quick)
+                easing.type: Motion.easingStandard
             }
         }
 
         Behavior on height {
             NumberAnimation {
                 duration: Motion.duration(Motion.normal)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.easingEmphasized
             }
         }
 
@@ -134,7 +154,7 @@ PanelWindow {
             Behavior on opacity {
                 NumberAnimation {
                     duration: Motion.duration(Motion.quick)
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.easingStandard
                 }
             }
 
@@ -149,9 +169,10 @@ PanelWindow {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 84
                     radius: Theme.radiusMedium
-                    color: activeFocus || hover.hovered ? Theme.overlay : Theme.container
+                    color: tilePress.pressed ? Theme.pressedFill
+                        : (activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised)
                     border.width: activeFocus ? 2 : 1
-                    border.color: activeFocus ? Theme.blue : Theme.overlay
+                    border.color: activeFocus ? Theme.blue : Theme.borderSubtle
                     activeFocusOnTab: true
                     Accessible.name: actionTile.modelData.label
                     Accessible.role: Accessible.Button
@@ -184,6 +205,7 @@ PanelWindow {
                     }
 
                     TapHandler {
+                        id: tilePress
                         onTapped: root.choose(actionTile.modelData.key)
                     }
 
@@ -213,7 +235,7 @@ PanelWindow {
             Behavior on opacity {
                 NumberAnimation {
                     duration: Motion.duration(Motion.quick)
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.easingStandard
                 }
             }
 
@@ -293,9 +315,10 @@ PanelWindow {
                     width: 120
                     height: 40
                     radius: Theme.radiusMedium
-                    color: activeFocus || cancelHover.hovered ? Theme.overlay : Theme.container
+                    color: cancelPress.pressed ? Theme.pressedFill
+                        : (activeFocus || cancelHover.hovered ? Theme.hoverFill : Theme.layerRaised)
                     border.width: activeFocus ? 2 : 1
-                    border.color: activeFocus ? Theme.blue : Theme.overlay
+                    border.color: activeFocus ? Theme.blue : Theme.borderSubtle
                     activeFocusOnTab: true
                     Accessible.name: "Cancel"
                     Accessible.role: Accessible.Button
@@ -314,6 +337,7 @@ PanelWindow {
                     }
 
                     TapHandler {
+                        id: cancelPress
                         onTapped: root.pendingAction = ""
                     }
 

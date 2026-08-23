@@ -1,6 +1,5 @@
 import QtQuick
 import "../core"
-import "../lib/AudioModel.js" as AudioModel
 
 Flickable {
     id: root
@@ -16,12 +15,11 @@ Flickable {
         width: root.width
         spacing: Theme.spaceMd
 
-        Text {
-            text: "Audio"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeHeading
-            font.weight: Font.DemiBold
+        SurfaceHeader {
+            width: parent.width
+            title: "Audio"
+            description: "Devices and application streams"
+            accent: Theme.orange
         }
 
         AudioDeviceSections {

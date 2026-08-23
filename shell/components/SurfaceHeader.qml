@@ -10,20 +10,10 @@ Item {
 
     implicitHeight: heading.implicitHeight + (description !== "" ? subheading.implicitHeight + Theme.spaceXs : 0)
 
-    Rectangle {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        width: 4
-        height: heading.implicitHeight
-        radius: Theme.radiusPill
-        color: root.accent
-    }
-
     Text {
         id: heading
 
         anchors.left: parent.left
-        anchors.leftMargin: Theme.spaceMd
         anchors.right: parent.right
         text: root.title
         color: Theme.textBright

@@ -35,6 +35,19 @@ PanelWindow {
         right: true
     }
 
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.scrim
+        opacity: root.open ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Motion.duration(Motion.quick)
+                easing.type: Motion.easingStandard
+            }
+        }
+    }
+
     property Timer focusPrime: Timer {
         interval: 75
         running: root.open
@@ -65,22 +78,28 @@ PanelWindow {
         onActivated: SurfaceCoordinator.close()
     }
 
-    Rectangle {
+    SurfaceFrame {
         id: card
 
         anchors.centerIn: parent
         width: 520
         height: 540
-        radius: Theme.radiusLarge
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.overlay
+        floating: true
+        padding: Theme.spaceLg
         opacity: root.open ? 1 : 0
+        scale: root.open ? 1 : 0.98
 
         Behavior on opacity {
             NumberAnimation {
                 duration: Motion.duration(Motion.quick)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.easingStandard
+            }
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Motion.duration(Motion.quick)
+                easing.type: Motion.easingStandard
             }
         }
 
@@ -92,7 +111,6 @@ PanelWindow {
             id: content
 
             anchors.fill: parent
-            anchors.margins: Theme.spaceLg
             contentWidth: width
             contentHeight: settingsColumn.implicitHeight
             clip: true
@@ -129,28 +147,16 @@ PanelWindow {
                     }
                 }
 
-                Rectangle {
+                SectionCard {
                     width: parent.width
-                    implicitHeight: barSection.implicitHeight + Theme.spaceMd * 2
-                    radius: Theme.radiusMedium
-                    color: Theme.container
+                    title: "Bar"
+                    accent: Theme.orange
 
                     Column {
                         id: barSection
 
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: Theme.spaceMd
+                        width: parent.width
                         spacing: Theme.spaceMd
-
-                        Text {
-                            text: "Bar"
-                            color: Theme.textMuted
-                            font.family: Theme.fontSans
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: Font.DemiBold
-                        }
 
                         SettingsNumberRow {
                             width: parent.width
@@ -217,28 +223,16 @@ PanelWindow {
                     }
                 }
 
-                Rectangle {
+                SectionCard {
                     width: parent.width
-                    implicitHeight: weatherSection.implicitHeight + Theme.spaceMd * 2
-                    radius: Theme.radiusMedium
-                    color: Theme.container
+                    title: "Weather"
+                    accent: Theme.cyan
 
                     Column {
                         id: weatherSection
 
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: Theme.spaceMd
+                        width: parent.width
                         spacing: Theme.spaceMd
-
-                        Text {
-                            text: "Weather"
-                            color: Theme.textMuted
-                            font.family: Theme.fontSans
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: Font.DemiBold
-                        }
 
                         ToggleRow {
                             width: parent.width
@@ -264,28 +258,16 @@ PanelWindow {
                     }
                 }
 
-                Rectangle {
+                SectionCard {
                     width: parent.width
-                    implicitHeight: motionSection.implicitHeight + Theme.spaceMd * 2
-                    radius: Theme.radiusMedium
-                    color: Theme.container
+                    title: "Motion"
+                    accent: Theme.blue
 
                     Column {
                         id: motionSection
 
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: Theme.spaceMd
+                        width: parent.width
                         spacing: Theme.spaceMd
-
-                        Text {
-                            text: "Motion"
-                            color: Theme.textMuted
-                            font.family: Theme.fontSans
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: Font.DemiBold
-                        }
 
                         ToggleRow {
                             width: parent.width

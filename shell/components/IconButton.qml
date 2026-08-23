@@ -8,8 +8,8 @@ FocusScope {
     required property string accessibleName
     signal clicked
 
-    implicitWidth: 36
-    implicitHeight: 36
+    implicitWidth: Theme.controlHeight
+    implicitHeight: Theme.controlHeight
     activeFocusOnTab: enabled
     Accessible.name: accessibleName
     Accessible.role: Accessible.Button
@@ -24,13 +24,16 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: root.activeFocus || hover.hovered ? Theme.overlay : "transparent"
+        color: press.pressed ? Theme.pressedFill
+            : (root.activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised)
+        border.width: root.activeFocus ? 2 : 1
+        border.color: root.activeFocus ? Theme.blue : Theme.borderSubtle
         opacity: root.enabled ? 1 : 0.35
 
         Image {
             anchors.centerIn: parent
-            width: 18
-            height: 18
+            width: Theme.iconSm
+            height: Theme.iconSm
             source: root.iconSource
             sourceSize.width: 18
             sourceSize.height: 18
@@ -42,6 +45,7 @@ FocusScope {
     }
 
     TapHandler {
+        id: press
         enabled: root.enabled
         onTapped: root.activate()
     }

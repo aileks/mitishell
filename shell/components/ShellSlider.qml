@@ -18,7 +18,7 @@ Controls.Slider {
         width: root.availableWidth
         height: 5
         radius: 3
-        color: Theme.overlay
+        color: Theme.borderStrong
 
         Rectangle {
             width: root.visualPosition * parent.width
@@ -35,5 +35,7 @@ Controls.Slider {
         height: 14
         radius: 7
         color: root.activeFocus ? Theme.blue : Theme.textBright
+        border.width: 2
+        border.color: Theme.layerInset
     }
 }

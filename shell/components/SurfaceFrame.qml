@@ -17,8 +17,10 @@ Item {
 
     Rectangle {
         visible: root.floating
-        anchors.fill: frame
-        anchors.topMargin: Theme.floatingOffset
+        x: Theme.floatingOffset
+        y: Theme.floatingOffset
+        width: root.width
+        height: root.height
         radius: root.cornerRadius
         color: Theme.shadow
     }
@@ -30,17 +32,8 @@ Item {
         radius: root.cornerRadius
         color: root.fill
         border.width: 1
-        border.color: root.outline
+        border.color: root.accent.a > 0 ? Theme.alpha(root.accent, 0.45) : root.outline
         clip: true
-
-        Rectangle {
-            visible: root.accent !== "transparent"
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: 3
-            color: root.accent
-        }
 
         Item {
             id: content

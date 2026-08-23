@@ -34,12 +34,11 @@ Flickable {
         width: root.width
         spacing: Theme.spaceMd
 
-        Text {
-            text: "Network"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeHeading
-            font.weight: Font.DemiBold
+        SurfaceHeader {
+            width: parent.width
+            title: "Network"
+            description: "Wi-Fi and Ethernet"
+            accent: Theme.cyan
         }
 
         Text {

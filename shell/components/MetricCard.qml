@@ -6,11 +6,14 @@ Rectangle {
 
     required property string label
     required property string value
+    property color accent: Theme.orange
 
     implicitWidth: 148
     implicitHeight: 64
     radius: Theme.radiusMedium
-    color: Theme.container
+    color: Theme.layerRaised
+    border.width: 1
+    border.color: Theme.alpha(root.accent, 0.38)
 
     Column {
         anchors.fill: parent

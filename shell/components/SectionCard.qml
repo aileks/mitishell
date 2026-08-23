@@ -14,7 +14,7 @@ Rectangle {
     radius: Theme.radiusMedium
     color: Theme.layerRaised
     border.width: 1
-    border.color: Theme.borderSubtle
+    border.color: root.accent.a > 0 ? Theme.alpha(root.accent, 0.38) : Theme.borderSubtle
 
     Column {
         id: column
@@ -30,23 +30,12 @@ Rectangle {
             width: parent.width
             implicitHeight: sectionTitle.implicitHeight
 
-            Rectangle {
-                visible: root.accent !== "transparent"
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: 3
-                height: 14
-                radius: Theme.radiusPill
-                color: root.accent
-            }
-
             Text {
                 id: sectionTitle
 
                 anchors.left: parent.left
-                anchors.leftMargin: root.accent !== "transparent" ? Theme.spaceSm : 0
                 text: root.title
-                color: Theme.textMuted
+                color: root.accent.a > 0 ? root.accent : Theme.textMuted
                 font.family: Theme.fontSans
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Font.DemiBold
