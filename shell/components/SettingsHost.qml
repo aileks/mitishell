@@ -181,6 +181,7 @@ PanelWindow {
 
                         ToggleRow {
                             width: parent.width
+                            accent: Theme.blue
                             label: "Window title"
                             description: "Show the focused window's title on the bar."
                             checked: Config.bar.showWindowTitle
@@ -190,6 +191,7 @@ PanelWindow {
 
                         ToggleRow {
                             width: parent.width
+                            accent: Theme.blue
                             label: "Media controls"
                             description: "Show the media island when something plays."
                             checked: Config.bar.showMedia
@@ -240,6 +242,7 @@ PanelWindow {
 
                         ToggleRow {
                             width: parent.width
+                            accent: Theme.blue
                             label: "Enabled"
                             description: "Fetches forecasts from Open-Meteo using your rough location."
                             checked: Config.weather.enabled
@@ -286,6 +289,7 @@ PanelWindow {
 
                         ToggleRow {
                             width: parent.width
+                            accent: Theme.blue
                             label: "Animations"
                             description: "Animate popovers, popups, and island changes."
                             checked: Config.motion.enabled
@@ -295,6 +299,7 @@ PanelWindow {
 
                         ToggleRow {
                             width: parent.width
+                            accent: Theme.blue
                             label: "Reduced motion"
                             description: "Shortens animations when they stay enabled."
                             checked: Config.motion.reduced

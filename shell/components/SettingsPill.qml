@@ -3,8 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../core"
 
-// One selectable output chip: orange accent when active, blue focus ring
-// when focused, keyboard activatable.
+// One selectable settings chip: blue accent when active (configuration
+// category), keyboard activatable.
 Rectangle {
     id: root
 
@@ -18,7 +18,7 @@ Rectangle {
     color: root.checked ? Theme.overlay
         : (root.activeFocus || pillHover.hovered ? Theme.overlay : Theme.surface)
     border.width: root.activeFocus ? 2 : (root.checked ? 1 : 0)
-    border.color: root.activeFocus ? Theme.blue : Theme.orange
+    border.color: Theme.blue
     activeFocusOnTab: true
     Accessible.name: label
     Accessible.role: Accessible.Button
@@ -29,7 +29,7 @@ Rectangle {
 
         anchors.centerIn: parent
         text: root.label
-        color: root.checked ? Theme.orange : Theme.text
+        color: root.checked ? Theme.blue : Theme.text
         font.family: Theme.fontSans
         font.pixelSize: Theme.fontSizeCaption
         font.weight: root.checked ? Font.DemiBold : Font.Normal

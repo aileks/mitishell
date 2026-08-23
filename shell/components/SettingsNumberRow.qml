@@ -49,6 +49,7 @@ Column {
         id: slider
 
         width: parent.width
+        accent: Theme.blue
         from: root.from
         to: root.to
         stepSize: 1
