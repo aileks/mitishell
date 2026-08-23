@@ -16,6 +16,7 @@ ControlHomePage 1.0 ControlHomePage.qml
 ControlHost 1.0 ControlHost.qml
 ControlIsland 1.0 ControlIsland.qml
 ControlMediaPage 1.0 ControlMediaPage.qml
+ControlNetworkPage 1.0 ControlNetworkPage.qml
 ControlNotificationsPage 1.0 ControlNotificationsPage.qml
 IconButton 1.0 IconButton.qml
 MediaIsland 1.0 MediaIsland.qml
@@ -28,6 +29,7 @@ OsdHost 1.0 OsdHost.qml
 PowerHost 1.0 PowerHost.qml
 PowerIsland 1.0 PowerIsland.qml
 ShellSlider 1.0 ShellSlider.qml
+SignalBars 1.0 SignalBars.qml
 SystemMetricsIsland 1.0 SystemMetricsIsland.qml
 SystemPopover 1.0 SystemPopover.qml
 ToggleRow 1.0 ToggleRow.qml

@@ -118,6 +118,7 @@ PanelWindow {
                         { key: "media", label: "Media", icon: "../assets/icons/play.svg" },
                         { key: "display", label: "Display", icon: "../assets/icons/sun.svg" },
                         { key: "notifications", label: "Notifications", icon: "../assets/icons/bell.svg" },
+                        { key: "network", label: "Network", icon: "../assets/icons/wifi.svg" },
                     ]
 
                     delegate: Rectangle {
@@ -185,6 +186,7 @@ PanelWindow {
                     : Control.page === "media" ? mediaPage
                     : Control.page === "display" ? displayPage
                     : Control.page === "notifications" ? notificationsPage
+                    : Control.page === "network" ? networkPage
                     : homePage
 
                 Component {
@@ -223,6 +225,14 @@ PanelWindow {
                     id: notificationsPage
 
                     ControlNotificationsPage {
+                        anchors.fill: parent
+                    }
+                }
+
+                Component {
+                    id: networkPage
+
+                    ControlNetworkPage {
                         anchors.fill: parent
                     }
                 }

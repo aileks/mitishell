@@ -11,6 +11,7 @@ import (
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/ipc"
+	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -66,6 +67,7 @@ func main() {
 		DisplayService: displayService,
 		ControlCenter:  shell,
 		PowerService:   power.NewService(power.LogindCaller{}),
+		NetworkService: network.NewService(network.NMCaller{}),
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
 }

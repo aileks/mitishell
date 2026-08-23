@@ -787,7 +787,7 @@ func TestControlActionRejectsInvalidUsage(t *testing.T) {
 		name string
 		args []string
 	}{
-		{"unknown page", []string{"control", "network"}},
+		{"unknown page", []string{"control", "teleport"}},
 		{"extra argument", []string{"control", "audio", "now"}},
 	}
 	for _, testCase := range cases {

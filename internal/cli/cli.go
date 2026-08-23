@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -45,6 +47,13 @@ type ControlCenter interface {
 type PowerService interface {
 	Capabilities(ctx context.Context) (power.Capabilities, error)
 	Run(ctx context.Context, action power.Action) error
+}
+
+// NetworkService joins and forgets Wi-Fi networks and snapshots status.
+type NetworkService interface {
+	Snapshot(ctx context.Context) network.Snapshot
+	Connect(ctx context.Context, ssid string, password string, hidden bool) error
+	Forget(ctx context.Context, ssid string) error
 }
 
 // DisplayService discovers and drives DDC displays directly, used by the
@@ -86,6 +95,7 @@ type Dependencies struct {
 	DisplayService DisplayService
 	ControlCenter  ControlCenter
 	PowerService   PowerService
+	NetworkService NetworkService
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
@@ -183,6 +193,56 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		}
 		fmt.Fprintln(stdout, "power action executed")
 		return 0
+	}
+	if len(args) == 1 && args[0] == "_network-snapshot" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(
+			dependencies.NetworkService.Snapshot(context.Background())); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode network: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) > 0 && args[0] == "_network-connect" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		hidden := false
+		arguments := args[1:]
+		if len(arguments) > 0 && arguments[0] == "--hidden" {
+			hidden = true
+			arguments = arguments[1:]
+		}
+		if len(arguments) != 2 {
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell _network-connect [--hidden] <ssid> <password>")
+			return 2
+		}
+		if err := dependencies.NetworkService.Connect(
+			context.Background(), arguments[0], arguments[1], hidden); err != nil {
+			fmt.Fprintf(stderr, "mitishell: network unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "network connection requested")
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_network-forget" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		if err := dependencies.NetworkService.Forget(context.Background(), args[1]); err != nil {
+			fmt.Fprintf(stderr, "mitishell: network unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "network forgotten")
+		return 0
+	}
+	if len(args) > 0 && args[0] == "network" {
+		return runControlAction([]string{"control", "network"}, stdout, stderr, dependencies)
 	}
 	if len(args) > 0 && args[0] == "control" {
 		return runControlAction(args, stdout, stderr, dependencies)
@@ -300,7 +360,8 @@ func runControlAction(args []string, stdout io.Writer, stderr io.Writer, depende
 	if len(args) == 2 {
 		page = args[1]
 	}
-	valid := page == "home" || page == "audio" || page == "media" || page == "display"
+	valid := slices.Contains(
+		[]string{"home", "audio", "media", "display", "notifications", "network"}, page)
 	if len(args) > 2 || !valid {
 		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display>")
 		return 2
