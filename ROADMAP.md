@@ -2,7 +2,7 @@
 
 Mitishell grows through vertical features. Each completed feature updates this document in the same branch.
 
-## v0.1 Waybar replacement
+## v0.1.0 Waybar replacement
 
 - [x] Shell foundation, configuration, IPC, CLI, and source installation
 - [x] Workspaces and active window
@@ -14,16 +14,14 @@ Mitishell grows through vertical features. Each completed feature updates this d
 - [x] System tray and menus
 - [x] Notification and power compatibility actions
 
-## Planned releases
+## Releases
 
-- [x] v0.2: focused-output volume, microphone, and brightness OSDs; DDC discovery, connector mapping, caching, and coalesced writes; audio and brightness CLI actions
-- [x] v0.3: focused-output control center with Home, Audio, Media, and Display pages; reliable per-application stream controls; shared state with bar popovers
-- [x] v0.4: notification daemon, popup cards, actions, live notification center, session DND, and lock and fullscreen policies; replace SwayNC
-- [x] v0.5: WPA2 and WPA3 Personal Wi-Fi, hidden and saved networks, phone-hotspot joining, connection details and failures, and Ethernet status
-- [x] v0.6: Bluetooth discovery, pairing, passkey entry and confirmation, trust, connection management, battery state, and a Go BlueZ Agent1 adapter
-- [x] v0.7: lock, logout, suspend, conditional hibernate, reboot, and shutdown with morphing confirmation; replace wlogout
-- [x] v0.8: centered settings window, immediate atomic configuration updates, validation errors, weather opt-in, and a restrained set of supported fields
-- [x] v0.9: keyboard and reduced-motion consistency, monitor and device churn, failure states, diagnostics, install and uninstall hardening, and weather refresh after resume or meaningful network recovery
+The plan below originally split this work across v0.2 through v0.9. Scope merged along the way, and the work shipped as five tagged releases.
+
+- [x] v0.2.0: focused-output volume, microphone, and brightness OSDs; DDC discovery, connector mapping, caching, and coalesced writes; audio and brightness CLI actions
+- [x] v0.3.0: focused-output control center with Home, Audio, Media, and Display pages; reliable per-application stream controls; shared state with bar popovers
+- [x] v0.4.0: notifications, power, and connectivity. A notification server with popup cards, actions, history, session do-not-disturb, and lock and fullscreen policies, replacing swaync. WPA2 and WPA3 Personal Wi-Fi with hidden and saved networks, connection failures, and Ethernet status. Bluetooth discovery, pairing with passkey entry and confirmation, trust, connection management, battery state, and a Go BlueZ Agent1 adapter. Lock, logout, suspend, conditional hibernate, reboot, and shutdown with morphing confirmation, replacing wlogout.
+- [x] v0.5.0: settings and hardening. A centered settings window with immediate validated configuration updates and inline errors. Keyboard and reduced-motion consistency, monitor churn recovery, service failure states, diagnostics for the notification server and bus services, install and uninstall hardening, and weather refresh after resume or network recovery.
 - [ ] v1.0: one week of normal-use dogfooding followed by user acceptance and an annotated release tag
 
 ## Known issues
@@ -38,7 +36,7 @@ Mitishell grows through vertical features. Each completed feature updates this d
 ## Planned after v1
 
 - Validated laptop battery, charging, backlight, lid, dock, suspend, and resume support
-- Hotspot hosting
+- hotspot hosting
 - AUR packaging
 - Keyboard-backlight OSD
 - Caps-lock and num-lock OSD
