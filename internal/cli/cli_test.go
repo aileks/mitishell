@@ -144,8 +144,7 @@ func TestInternalCapabilitiesReportsAvailableCompatibilityActions(t *testing.T) 
 	var stderr bytes.Buffer
 	dependencies := cli.Dependencies{
 		Capabilities: capabilityStub{capabilities: cli.Capabilities{
-			Notifications: true,
-			Power:         false,
+			Power: false,
 		}},
 	}
 
@@ -154,7 +153,7 @@ func TestInternalCapabilitiesReportsAvailableCompatibilityActions(t *testing.T) 
 	if exitCode != 0 {
 		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
 	}
-	if got := stdout.String(); got != "{\"notifications\":true,\"power\":false}\n" {
+	if got := stdout.String(); got != "{\"power\":false}\n" {
 		t.Fatalf("stdout = %q", got)
 	}
 }
@@ -216,17 +215,17 @@ func TestReloadReportsSuccessfulRequest(t *testing.T) {
 	}
 }
 
-func TestNotificationsToggleUsesShellAction(t *testing.T) {
+func TestNotificationsDndTogglesThroughShell(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	dependencies := cli.Dependencies{Shell: shellStub{}}
 
-	exitCode := cli.Run([]string{"notifications", "toggle"}, &stdout, &stderr, dependencies)
+	exitCode := cli.Run([]string{"notifications", "dnd"}, &stdout, &stderr, dependencies)
 
 	if exitCode != 0 {
 		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
 	}
-	if got := stdout.String(); got != "notifications toggled\n" {
+	if got := stdout.String(); got != "do not disturb toggled\n" {
 		t.Fatalf("stdout = %q", got)
 	}
 }

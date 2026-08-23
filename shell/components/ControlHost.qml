@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -115,6 +117,7 @@ PanelWindow {
                         { key: "audio", label: "Audio", icon: "../assets/icons/volume-2.svg" },
                         { key: "media", label: "Media", icon: "../assets/icons/play.svg" },
                         { key: "display", label: "Display", icon: "../assets/icons/sun.svg" },
+                        { key: "notifications", label: "Notifications", icon: "../assets/icons/bell.svg" },
                     ]
 
                     delegate: Rectangle {
@@ -181,6 +184,7 @@ PanelWindow {
                 sourceComponent: Control.page === "audio" ? audioPage
                     : Control.page === "media" ? mediaPage
                     : Control.page === "display" ? displayPage
+                    : Control.page === "notifications" ? notificationsPage
                     : homePage
 
                 Component {
@@ -211,6 +215,14 @@ PanelWindow {
                     id: displayPage
 
                     ControlDisplayPage {
+                        anchors.fill: parent
+                    }
+                }
+
+                Component {
+                    id: notificationsPage
+
+                    ControlNotificationsPage {
                         anchors.fill: parent
                     }
                 }

@@ -10,8 +10,7 @@ type systemCapabilities struct{}
 
 func (systemCapabilities) Detect() cli.Capabilities {
 	return cli.Capabilities{
-		Notifications: executableAvailable("swaync-client"),
-		Power:         executableAvailable("wlogout"),
+		Power: executableAvailable("wlogout"),
 	}
 }
 

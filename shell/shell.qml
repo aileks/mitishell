@@ -24,6 +24,12 @@ ShellRoot {
         delegate: ControlHost {}
     }
 
+    Variants {
+        model: Quickshell.screens
+
+        delegate: NotificationsPopupHost {}
+    }
+
     IpcHandler {
         target: "shell"
 
@@ -42,9 +48,9 @@ ShellRoot {
     IpcHandler {
         target: "notifications"
 
-        function toggle(): string {
-            return CompatibilityActions.toggleNotifications()
-                ? "notifications toggled" : "notifications unavailable";
+        function dnd(): string {
+            Notifications.toggleDoNotDisturb();
+            return "do not disturb toggled";
         }
     }
 

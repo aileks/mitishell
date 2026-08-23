@@ -48,8 +48,7 @@ type DisplayService interface {
 }
 
 type Capabilities struct {
-	Notifications bool `json:"notifications"`
-	Power         bool `json:"power"`
+	Power bool `json:"power"`
 }
 
 type CapabilityDetector interface {
@@ -178,12 +177,12 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "brightness" {
 		return runBrightnessAction(args, stdout, stderr, dependencies)
 	}
-	if len(args) == 2 && args[0] == "notifications" && args[1] == "toggle" {
+	if len(args) == 2 && args[0] == "notifications" && args[1] == "dnd" {
 		if err := dependencies.Shell.ToggleNotifications(); err != nil {
-			fmt.Fprintf(stderr, "mitishell: notifications unavailable: %v\n", err)
+			fmt.Fprintf(stderr, "mitishell: do not disturb unavailable: %v\n", err)
 			return 1
 		}
-		fmt.Fprintln(stdout, "notifications toggled")
+		fmt.Fprintln(stdout, "do not disturb toggled")
 		return 0
 	}
 	if len(args) == 2 && args[0] == "power" && args[1] == "menu" {

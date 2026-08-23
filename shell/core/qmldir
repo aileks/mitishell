@@ -6,6 +6,7 @@ singleton Control 1.0 Control.qml
 singleton Display 1.0 Display.qml
 singleton Media 1.0 Media.qml
 singleton Motion 1.0 Motion.qml
+singleton Notifications 1.0 Notifications.qml
 singleton Osd 1.0 Osd.qml
 singleton SurfaceCoordinator 1.0 SurfaceCoordinator.qml
 singleton SystemMetrics 1.0 SystemMetrics.qml

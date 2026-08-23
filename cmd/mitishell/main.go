@@ -20,7 +20,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
 		os.Exit(1)
 	}
-	shellPath, err := resolveShellPath()
+	shellPath, err := ipc.ResolveShellPath()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
 		os.Exit(1)
@@ -67,19 +67,4 @@ func main() {
 		ControlCenter:  shell,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
-}
-
-func resolveShellPath() (string, error) {
-	if override := os.Getenv("MITISHELL_QS_PATH"); override != "" {
-		return filepath.Abs(override)
-	}
-	directory := os.Getenv("XDG_DATA_HOME")
-	if directory == "" {
-		homeDirectory, err := os.UserHomeDir()
-		if err != nil {
-			return "", fmt.Errorf("resolve user data directory: %w", err)
-		}
-		directory = filepath.Join(homeDirectory, ".local", "share")
-	}
-	return filepath.Join(directory, "mitishell", "shell"), nil
 }

@@ -30,7 +30,7 @@ func TestReloadAcceptsAcknowledgement(t *testing.T) {
 }
 
 func TestToggleNotificationsAcceptsAcknowledgement(t *testing.T) {
-	client := ipc.NewClient(fakeQS(t, "notifications toggled"), "/tmp/mitishell-shell")
+	client := ipc.NewClient(fakeQS(t, "do not disturb toggled"), "/tmp/mitishell-shell")
 	if err := client.ToggleNotifications(); err != nil {
 		t.Fatalf("ToggleNotifications() error = %v", err)
 	}
