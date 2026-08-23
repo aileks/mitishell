@@ -29,7 +29,7 @@ Rectangle {
 
         anchors.centerIn: parent
         text: root.label
-        color: root.checked ? Theme.blue : Theme.text
+        color: root.checked ? Theme.textBright : Theme.text
         font.family: Theme.fontSans
         font.pixelSize: Theme.fontSizeCaption
         font.weight: root.checked ? Font.DemiBold : Font.Normal
