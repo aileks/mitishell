@@ -12,6 +12,10 @@ PopupWindow {
     id: root
 
     required property Item anchorItem
+    readonly property var anchorWindow: anchorItem.QsWindow.window
+    readonly property var ownerScreen: anchorWindow === null || anchorWindow === undefined
+        ? null
+        : anchorWindow.screen
 
     // The stack pauses while the session is locked or the focused output is
     // fullscreen, and steps aside while the history popover is open on this
@@ -19,11 +23,10 @@ PopupWindow {
     readonly property bool suppressed: Notifications.sessionLocked
         || Notifications.focusedFullscreen
         || (SurfaceCoordinator.activeKey === "notifications"
-            && SurfaceCoordinator.originScreen === screen)
-    readonly property var popups: Notifications.popupScreenName === screen.name
+            && SurfaceCoordinator.originScreen === ownerScreen)
+    readonly property var popups: ownerScreen !== null
+        && Notifications.popupScreenName === ownerScreen.name
         && !suppressed ? Notifications.popups : []
-
-    readonly property var anchorWindow: anchorItem.QsWindow.window
 
     visible: popups.length > 0
     color: "transparent"
@@ -77,7 +80,9 @@ PopupWindow {
 
                 notification: modelData
                 historyMode: false
-                onDismissed: Notifications.dismissPopup(modelData.id, false)
+                onDismissed: function(expired) {
+                    Notifications.dismissPopup(modelData.recordId, expired);
+                }
             }
         }
     }

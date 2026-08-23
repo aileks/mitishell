@@ -16,6 +16,7 @@ import (
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/ipc"
 	"github.com/aileks/mitishell/internal/network"
+	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -78,18 +79,25 @@ func main() {
 		"/sys/class/drm",
 		display.NewFileCache(filepath.Join(cacheDirectory, "mitishell", "displays.json")),
 	)
+	notificationHistoryPath, err := notifications.Path()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
+		os.Exit(1)
+	}
 	dependencies := cli.Dependencies{
-		ConfigPath:       configPath,
-		Shell:            shell,
-		Doctor:           systemDoctor{configPath: configPath, shell: shell},
-		Weather:          weatherService,
-		AudioControl:     shell,
-		DisplayControl:   shell,
-		DisplayService:   displayService,
-		ControlCenter:    shell,
-		PowerService:     power.NewService(power.LogindCaller{}),
-		NetworkService:   network.NewService(network.NMCaller{}),
-		BluetoothService: bluetooth.NewService(bluetooth.BlueZCaller{}),
+		ConfigPath:          configPath,
+		Shell:               shell,
+		Doctor:              systemDoctor{configPath: configPath, shell: shell},
+		Weather:             weatherService,
+		AudioControl:        shell,
+		DisplayControl:      shell,
+		DisplayService:      displayService,
+		ControlCenter:       shell,
+		PowerService:        power.NewService(power.LogindCaller{}),
+		NetworkService:      network.NewService(network.NMCaller{}),
+		BluetoothService:    bluetooth.NewService(bluetooth.BlueZCaller{}),
+		NotificationHistory: notifications.NewFileHistory(notificationHistoryPath),
+		Stdin:               os.Stdin,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
 }

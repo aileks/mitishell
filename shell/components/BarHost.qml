@@ -28,6 +28,10 @@ PanelWindow {
         right: Config.bar.marginHorizontal
     }
 
+    NotificationMediaCache {
+        screen: root.modelData
+    }
+
     Rectangle {
         id: leftIsland
 

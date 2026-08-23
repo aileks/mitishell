@@ -12,6 +12,7 @@ import (
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/network"
+	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -98,21 +99,97 @@ type Weather interface {
 	Snapshot(context.Context, bool, weather.Units) weather.Result
 }
 
+type NotificationHistory interface {
+	Load() (notifications.State, error)
+	Save(notifications.State) error
+	Clear() error
+	ImportMedia(notifications.MediaImport) (string, error)
+}
+
 type Dependencies struct {
-	ConfigPath       string
-	Shell            Shell
-	Doctor           Doctor
-	Weather          Weather
-	AudioControl     AudioControl
-	DisplayControl   DisplayControl
-	DisplayService   DisplayService
-	ControlCenter    ControlCenter
-	PowerService     PowerService
-	NetworkService   NetworkService
-	BluetoothService BluetoothService
+	ConfigPath          string
+	Shell               Shell
+	Doctor              Doctor
+	Weather             Weather
+	AudioControl        AudioControl
+	DisplayControl      DisplayControl
+	DisplayService      DisplayService
+	ControlCenter       ControlCenter
+	PowerService        PowerService
+	NetworkService      NetworkService
+	BluetoothService    BluetoothService
+	NotificationHistory NotificationHistory
+	Stdin               io.Reader
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 1 && args[0] == "_notification-history-load" {
+		if dependencies.NotificationHistory == nil {
+			fmt.Fprintln(stderr, "mitishell: notification history unavailable")
+			return 1
+		}
+		state, err := dependencies.NotificationHistory.Load()
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: notification history unavailable: %v\n", err)
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode notification history: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_notification-history-save" {
+		if dependencies.NotificationHistory == nil || dependencies.Stdin == nil {
+			fmt.Fprintln(stderr, "mitishell: notification history unavailable")
+			return 1
+		}
+		state := notifications.State{}
+		decoder := json.NewDecoder(dependencies.Stdin)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: decode notification history: %v\n", err)
+			return 2
+		}
+		if err := dependencies.NotificationHistory.Save(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: save notification history: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "notification history saved")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_notification-history-clear" {
+		if dependencies.NotificationHistory == nil {
+			fmt.Fprintln(stderr, "mitishell: notification history unavailable")
+			return 1
+		}
+		if err := dependencies.NotificationHistory.Clear(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: clear notification history: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "notification history cleared")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_notification-history-import" {
+		if dependencies.NotificationHistory == nil || dependencies.Stdin == nil {
+			fmt.Fprintln(stderr, "mitishell: notification history unavailable")
+			return 1
+		}
+		media := notifications.MediaImport{}
+		decoder := json.NewDecoder(dependencies.Stdin)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&media); err != nil {
+			fmt.Fprintf(stderr, "mitishell: decode notification media: %v\n", err)
+			return 2
+		}
+		mediaURL, err := dependencies.NotificationHistory.ImportMedia(media)
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: import notification media: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, mediaURL)
+		return 0
+	}
 	if len(args) == 1 && args[0] == "_config-resolve" {
 		resolved, loadErr := config.Load(dependencies.ConfigPath)
 		if loadErr != nil {

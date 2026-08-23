@@ -32,16 +32,21 @@ function plainBody(body) {
 
 // Copy the drawable fields of a live notification into a plain object;
 // models must never hold the notification QObject itself.
-function snapshotOf(notification, timestamp) {
+function snapshotOf(notification, timestamp, recordId) {
     const actions = (notification.actions || []).map(function(action) {
         return { identifier: action.identifier, text: action.text };
     });
     const urgency = Number(notification.urgency);
     const expireTimeout = Number(notification.expireTimeout);
     return {
-        id: notification.id,
+        recordId: String(recordId || (Math.round(timestamp) + "-" + notification.id)),
+        liveId: notification.id,
         appName: String(notification.appName || ""),
         appIcon: String(notification.appIcon || ""),
+        desktopEntry: String(notification.desktopEntry || ""),
+        image: String(notification.image || ""),
+        persistedAppIcon: "",
+        persistedImage: "",
         summary: plainBody(notification.summary),
         body: plainBody(notification.body),
         urgency: Number.isFinite(urgency) ? urgency : 1,
@@ -49,6 +54,48 @@ function snapshotOf(notification, timestamp) {
         transient: notification.transient === true,
         actions: actions,
         timestamp: timestamp,
+        live: true,
+    };
+}
+
+function durableEntry(snapshot) {
+    return {
+        recordId: snapshot.recordId,
+        appName: snapshot.appName,
+        desktopEntry: snapshot.desktopEntry,
+        appIcon: snapshot.persistedAppIcon || "",
+        image: snapshot.persistedImage || "",
+        summary: snapshot.summary,
+        body: snapshot.body,
+        urgency: snapshot.urgency,
+        timestamp: snapshot.timestamp,
+    };
+}
+
+function durableEntries(history) {
+    return history.filter(function(snapshot) {
+        return !snapshot.transient;
+    }).map(durableEntry);
+}
+
+function restoredSnapshot(entry) {
+    return {
+        recordId: entry.recordId,
+        liveId: -1,
+        appName: String(entry.appName || ""),
+        appIcon: String(entry.appIcon || ""),
+        desktopEntry: String(entry.desktopEntry || ""),
+        image: String(entry.image || ""),
+        persistedAppIcon: String(entry.appIcon || ""),
+        persistedImage: String(entry.image || ""),
+        summary: String(entry.summary || ""),
+        body: String(entry.body || ""),
+        urgency: Number(entry.urgency),
+        timeout: 0,
+        transient: false,
+        actions: [],
+        timestamp: Number(entry.timestamp),
+        live: false,
     };
 }
 
@@ -95,9 +142,12 @@ function popupTarget(focusedName, screenNames, outputs) {
 if (typeof module !== "undefined") {
     module.exports = {
         historyLimit,
+        durableEntry,
+        durableEntries,
         popupDuration,
         plainBody,
         popupTarget,
+        restoredSnapshot,
         snapshotOf,
         timeLabel,
         unreadCount,
