@@ -17,6 +17,27 @@ Mitishell is a personal Hyprland shell built with QuickShell, QML, and a small G
 
 Keep framework and I/O concerns at the edges. If logic is awkward to test, look for a cleaner boundary rather than mocking half of QuickShell.
 
+## Visual design
+
+Mitishell uses one fixed Cinder Grove visual language. Preserve the exact colors exposed by `Theme.qml` and the Adwaita Sans and Adwaita Mono families. Alpha variants of existing colors are allowed; do not add, remove, or change palette colors without an explicit request.
+
+Favor layered organic depth, purposeful hierarchy, and sparse focal accents. Use shared primitives and theme tokens before styling individual surfaces. Establish or revise those foundations first during a whole-shell design pass. Motion should feel restrained and tactile, and must continue to use `Motion.duration(...)` so reduced motion remains equivalent and usable.
+
+Each accent has one semantic owner:
+
+- Orange: shell identity and primary runtime state
+- Green: success and healthy or connected state
+- Red: destructive, failed, and critical state
+- Yellow: warning, stale, and pending state
+- Blue: focus, configuration, and technical detail
+- Purple: media
+- Cyan: connectivity
+- Pink: notifications and reminders
+
+Use every accent meaningfully at least once, but do not spread accents decoratively. Universal state semantics override a surface's category accent: failures stay red, warnings stay yellow, and keyboard focus stays blue.
+
+Visual and interaction changes may improve grouping, navigation, transitions, and feedback while preserving the planned feature set. Preserve keyboard access, visible focus, readability, reduced-motion parity, and multi-output behavior. Review representative flows across every surface family plus multi-output, reduced-motion, empty, unavailable, error, and content-overflow states.
+
 ## Sharp edges
 
 **Config drift:** the config contract exists in both Go and QML. Schema/default changes usually require `internal/config` validation/default/get/set updates plus matching defaults/properties in `shell/core/Config.qml`. Test invalid input as well as the happy path.
