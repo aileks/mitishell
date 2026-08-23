@@ -3,10 +3,8 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    // Accent colors map to categories: orange is the shell's identity and
-    // runtime controls, blue is configuration and technical detail (plus
-    // focus rings), red is destructive or failed, yellow is stale or
-    // warning. Green, purple, cyan, and pink are unassigned.
+    // Cinder Grove's palette is fixed. Surfaces derive depth through these
+    // roles and alpha variants instead of introducing more colors.
 
     readonly property color background: "#131210"
     readonly property color container: "#1B1916"
@@ -26,6 +24,16 @@ QtObject {
     readonly property color cyan: "#6F9B99"
     readonly property color pink: "#B67B86"
 
+    readonly property color layerBase: background
+    readonly property color layerRaised: container
+    readonly property color layerInset: surface
+    readonly property color borderSubtle: alpha(overlay, 0.48)
+    readonly property color borderStrong: alpha(textMuted, 0.58)
+    readonly property color scrim: alpha(background, 0.72)
+    readonly property color shadow: alpha(background, 0.78)
+    readonly property color hoverFill: alpha(overlay, 0.42)
+    readonly property color pressedFill: alpha(overlay, 0.68)
+
     readonly property int radiusSmall: 6
     readonly property int radiusMedium: 10
     readonly property int radiusLarge: 14
@@ -37,10 +45,24 @@ QtObject {
     readonly property int spaceLg: 16
     readonly property int spaceXl: 24
 
+    readonly property int controlHeightSm: 28
+    readonly property int controlHeight: 36
+    readonly property int controlHeightLg: 44
+    readonly property int iconSm: 16
+    readonly property int iconMd: 20
+    readonly property int iconLg: 28
+    readonly property int floatingOffset: 5
+
     readonly property string fontSans: "Adwaita Sans"
     readonly property string fontMono: "Adwaita Mono"
     readonly property int fontSizeCaption: 12
+    readonly property int fontSizeBodySmall: 13
     readonly property int fontSizeBody: 14
+    readonly property int fontSizeTitle: 16
     readonly property int fontSizeHeading: 18
     readonly property int fontSizeDisplay: 22
+
+    function alpha(colorValue, opacity) {
+        return Qt.rgba(colorValue.r, colorValue.g, colorValue.b, opacity);
+    }
 }
