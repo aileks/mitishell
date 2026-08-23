@@ -21,8 +21,8 @@ const (
 const (
 	apPrivacy  = 0x1
 	apPairWep  = 0x3
-	apKey8021x = 0x100
-	apKeyPSK   = 0x200
+	apKeyPSK   = 0x100
+	apKey8021x = 0x200
 	apKeySAE   = 0x400
 )
 
