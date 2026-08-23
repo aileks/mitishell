@@ -1,4 +1,5 @@
 AnchoredPopover 1.0 AnchoredPopover.qml
+ActionButton 1.0 ActionButton.qml
 AudioDeviceRow 1.0 AudioDeviceRow.qml
 AudioDeviceSections 1.0 AudioDeviceSections.qml
 AudioIsland 1.0 AudioIsland.qml
@@ -19,6 +20,7 @@ ControlIsland 1.0 ControlIsland.qml
 ControlMediaPage 1.0 ControlMediaPage.qml
 ControlNetworkPage 1.0 ControlNetworkPage.qml
 IconButton 1.0 IconButton.qml
+IconLabel 1.0 IconLabel.qml
 MediaIsland 1.0 MediaIsland.qml
 MediaPopover 1.0 MediaPopover.qml
 MetricCard 1.0 MetricCard.qml
@@ -35,7 +37,11 @@ SettingsHost 1.0 SettingsHost.qml
 SettingsNumberRow 1.0 SettingsNumberRow.qml
 SettingsOutputsRow 1.0 SettingsOutputsRow.qml
 SettingsPill 1.0 SettingsPill.qml
+SectionCard 1.0 SectionCard.qml
 SignalBars 1.0 SignalBars.qml
+StateMessage 1.0 StateMessage.qml
+SurfaceFrame 1.0 SurfaceFrame.qml
+SurfaceHeader 1.0 SurfaceHeader.qml
 SystemMetricsIsland 1.0 SystemMetricsIsland.qml
 SystemPopover 1.0 SystemPopover.qml
 ToggleRow 1.0 ToggleRow.qml

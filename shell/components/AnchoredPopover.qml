@@ -10,7 +10,7 @@ PopupWindow {
     property bool open: false
     property int contentWidth: 320
     property int contentHeight: 240
-    default property alias content: contentItem.data
+    default property alias content: card.content
 
     readonly property var anchorWindow: anchorItem.QsWindow.window
 
@@ -22,7 +22,7 @@ PopupWindow {
     onOpenChanged: {
         if (open) {
             Qt.callLater(function() {
-                contentItem.forceActiveFocus(Qt.TabFocusReason);
+                card.contentItem.forceActiveFocus(Qt.TabFocusReason);
             });
         }
     }
@@ -69,28 +69,20 @@ PopupWindow {
         }
     }
 
-    Rectangle {
+    SurfaceFrame {
         id: card
 
         anchors.fill: parent
-        radius: Theme.radiusLarge
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.overlay
+        floating: true
+        padding: Theme.spaceLg
         opacity: root.open ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation {
                 duration: Motion.duration(Motion.quick)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.easingStandard
             }
         }
 
-        Item {
-            id: contentItem
-
-            anchors.fill: parent
-            anchors.margins: Theme.spaceLg
-        }
     }
 }

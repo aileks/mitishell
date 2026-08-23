@@ -1,6 +1,5 @@
 import QtQuick
 import "../core"
-import "../lib/AudioModel.js" as AudioModel
 import "../lib/WeatherModel.js" as WeatherModel
 
 Flickable {
@@ -17,27 +16,22 @@ Flickable {
         width: root.width
         spacing: Theme.spaceMd
 
-        Text {
-            text: "Home"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeHeading
-            font.weight: Font.DemiBold
+        SurfaceHeader {
+            width: parent.width
+            title: "Home"
+            description: "At a glance"
+            accent: Theme.orange
         }
 
-        Rectangle {
+        SectionCard {
             width: parent.width
-            implicitHeight: quickContent.implicitHeight + Theme.spaceMd * 2
-            radius: Theme.radiusMedium
-            color: Theme.container
+            title: "Quick controls"
+            accent: Theme.orange
 
             Column {
                 id: quickContent
 
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Theme.spaceMd
+                width: parent.width
                 spacing: Theme.spaceSm
 
                 AudioSlider {
@@ -99,20 +93,16 @@ Flickable {
             }
         }
 
-        Rectangle {
+        SectionCard {
             width: parent.width
             visible: Media.meaningful
-            implicitHeight: mediaContent.implicitHeight + Theme.spaceMd * 2
-            radius: Theme.radiusMedium
-            color: Theme.container
+            title: "Now playing"
+            accent: Theme.purple
 
             Row {
                 id: mediaContent
 
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Theme.spaceMd
+                width: parent.width
                 spacing: Theme.spaceMd
 
                 IconButton {

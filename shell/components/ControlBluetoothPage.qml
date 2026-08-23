@@ -34,12 +34,11 @@ Flickable {
         width: root.width
         spacing: Theme.spaceMd
 
-        Text {
-            text: "Bluetooth"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeHeading
-            font.weight: Font.DemiBold
+        SurfaceHeader {
+            width: parent.width
+            title: "Bluetooth"
+            description: "Nearby and saved devices"
+            accent: Theme.cyan
         }
 
         Text {

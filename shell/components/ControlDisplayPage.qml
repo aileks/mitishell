@@ -15,12 +15,11 @@ Flickable {
         width: root.width
         spacing: Theme.spaceMd
 
-        Text {
-            text: "Display"
-            color: Theme.textBright
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeHeading
-            font.weight: Font.DemiBold
+        SurfaceHeader {
+            width: parent.width
+            title: "Display"
+            description: "Brightness across connected outputs"
+            accent: Theme.blue
         }
 
         Rectangle {
