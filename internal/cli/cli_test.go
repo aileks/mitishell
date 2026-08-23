@@ -12,6 +12,7 @@ import (
 
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -44,6 +45,107 @@ type displayServiceStub struct {
 	discover display.Result
 	setCalls []displaySetCall
 	set      display.Result
+}
+
+type notificationHistoryStub struct {
+	state    notifications.State
+	saved    notifications.State
+	cleared  bool
+	media    notifications.MediaImport
+	mediaURL string
+	err      error
+}
+
+func (stub *notificationHistoryStub) Load() (notifications.State, error) {
+	return stub.state, stub.err
+}
+
+func (stub *notificationHistoryStub) Save(state notifications.State) error {
+	stub.saved = state
+	return stub.err
+}
+
+func (stub *notificationHistoryStub) Clear() error {
+	stub.cleared = true
+	return stub.err
+}
+
+func (stub *notificationHistoryStub) ImportMedia(media notifications.MediaImport) (string, error) {
+	stub.media = media
+	return stub.mediaURL, stub.err
+}
+
+func TestInternalNotificationHistoryCommands(t *testing.T) {
+	state := notifications.State{
+		Version:    notifications.HistoryVersion,
+		LastSeenAt: 100,
+		Entries: []notifications.Entry{{
+			RecordID:  "100-1",
+			Urgency:   1,
+			Timestamp: 100,
+		}},
+	}
+	t.Run("load", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		stub := &notificationHistoryStub{state: state}
+		code := cli.Run([]string{"_notification-history-load"}, &stdout, &stderr,
+			cli.Dependencies{NotificationHistory: stub})
+		if code != 0 || !strings.Contains(stdout.String(), `"recordId":"100-1"`) {
+			t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+		}
+	})
+	t.Run("save", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		stub := &notificationHistoryStub{}
+		payload, err := json.Marshal(state)
+		if err != nil {
+			t.Fatal(err)
+		}
+		code := cli.Run([]string{"_notification-history-save"}, &stdout, &stderr,
+			cli.Dependencies{NotificationHistory: stub, Stdin: bytes.NewReader(payload)})
+		if code != 0 || stub.saved.LastSeenAt != 100 {
+			t.Fatalf("code=%d saved=%#v stderr=%q", code, stub.saved, stderr.String())
+		}
+	})
+	t.Run("clear", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		stub := &notificationHistoryStub{}
+		code := cli.Run([]string{"_notification-history-clear"}, &stdout, &stderr,
+			cli.Dependencies{NotificationHistory: stub})
+		if code != 0 || !stub.cleared {
+			t.Fatalf("code=%d cleared=%v stderr=%q", code, stub.cleared, stderr.String())
+		}
+	})
+	t.Run("import media", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		stub := &notificationHistoryStub{mediaURL: "file:///state/media.png"}
+		payload := `{"recordId":"100-1","role":"image","source":"/tmp/capture.png","temporary":true}`
+		code := cli.Run([]string{"_notification-history-import"}, &stdout, &stderr,
+			cli.Dependencies{NotificationHistory: stub, Stdin: strings.NewReader(payload)})
+		if code != 0 || !stub.media.Temporary || stub.media.Role != "image" {
+			t.Fatalf("code=%d media=%#v stderr=%q", code, stub.media, stderr.String())
+		}
+	})
+}
+
+func TestInternalNotificationHistorySaveRejectsUnknownFields(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	stub := &notificationHistoryStub{}
+	code := cli.Run([]string{"_notification-history-save"}, &stdout, &stderr,
+		cli.Dependencies{
+			NotificationHistory: stub,
+			Stdin: strings.NewReader(
+				`{"version":1,"lastSeenAt":0,"entries":[],"surprise":true}`,
+			),
+		})
+	if code != 2 {
+		t.Fatalf("code=%d stderr=%q", code, stderr.String())
+	}
 }
 
 func (stub *controlStub) Volume(action string) error {
