@@ -51,6 +51,23 @@ func TestShowOSDPassesEveryFieldPositionally(t *testing.T) {
 	}
 }
 
+func TestOpenRemindersAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "Reminder overlay opened"), "/tmp/mitishell-shell")
+	if err := client.OpenReminders(); err != nil {
+		t.Fatalf("OpenReminders() error = %v", err)
+	}
+}
+
+func TestReminderChangedPassesFeedbackPositionally(t *testing.T) {
+	client := ipc.NewClient(
+		fakeQSCheckingArg(t, "Reminder cancelled", "Reminder state refreshed"),
+		"/tmp/mitishell-shell",
+	)
+	if err := client.ReminderChanged("Reminder cancelled"); err != nil {
+		t.Fatalf("ReminderChanged() error = %v", err)
+	}
+}
+
 func TestOpenPowerMenuRejectsUnexpectedResponse(t *testing.T) {
 	client := ipc.NewClient(fakeQS(t, "unavailable"), "/tmp/mitishell-shell")
 	if err := client.OpenPowerMenu(); err == nil {

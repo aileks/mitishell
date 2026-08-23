@@ -113,6 +113,14 @@ func (client Client) ShowOSD(request osd.Request) error {
 	)
 }
 
+func (client Client) OpenReminders() error {
+	return client.action("reminders", "open", "Reminder overlay opened")
+}
+
+func (client Client) ReminderChanged(message string) error {
+	return client.action("reminders", "changed", "Reminder state refreshed", message)
+}
+
 func (client Client) action(target string, method string, acknowledgement string, args ...string) error {
 	response, err := client.Call(target, method, args...)
 	if err != nil {

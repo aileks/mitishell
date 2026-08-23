@@ -19,6 +19,7 @@ func sampleState() notifications.State {
 			Summary:   "New message",
 			Body:      "Hello",
 			Urgency:   1,
+			Reminder:  true,
 			Timestamp: 125,
 		}},
 	}
@@ -61,7 +62,7 @@ func TestHistoryRoundTripIsPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if loaded.LastSeenAt != 125 || len(loaded.Entries) != 1 || loaded.Entries[0].Summary != "New message" {
+	if loaded.LastSeenAt != 125 || len(loaded.Entries) != 1 || loaded.Entries[0].Summary != "New message" || !loaded.Entries[0].Reminder {
 		t.Fatalf("loaded = %#v", loaded)
 	}
 	info, err := os.Stat(path)

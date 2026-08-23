@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/power"
+	"github.com/aileks/mitishell/internal/reminders"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -84,6 +86,22 @@ func main() {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
 		os.Exit(1)
 	}
+	reminderDirectory, reminderDirectoryErr := reminders.RuntimeDirectory()
+	reminderRunner, reminderRunnerErr := reminders.NewCommandRunner()
+	executable, executableErr := os.Executable()
+	reminderService := reminders.Unavailable(errors.Join(
+		reminderDirectoryErr,
+		reminderRunnerErr,
+		executableErr,
+	))
+	if reminderDirectoryErr == nil && reminderRunnerErr == nil && executableErr == nil {
+		reminderService = reminders.NewService(
+			reminderRunner,
+			reminders.NewFileStore(reminderDirectory),
+			reminders.NewDBusNotifier(),
+			executable,
+		)
+	}
 	dependencies := cli.Dependencies{
 		ConfigPath:          configPath,
 		Shell:               shell,
@@ -98,6 +116,8 @@ func main() {
 		BluetoothService:    bluetooth.NewService(bluetooth.BlueZCaller{}),
 		NotificationHistory: notifications.NewFileHistory(notificationHistoryPath),
 		OSD:                 shell,
+		Reminders:           reminderService,
+		ReminderUI:          shell,
 		Stdin:               os.Stdin,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
