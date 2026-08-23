@@ -8,6 +8,8 @@ import (
 	"io"
 	"slices"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/config"
@@ -16,6 +18,7 @@ import (
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
+	"github.com/aileks/mitishell/internal/reminders"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -112,6 +115,20 @@ type OSDControl interface {
 	ShowOSD(osd.Request) error
 }
 
+type ReminderService interface {
+	Schedule(context.Context, int, string) (reminders.ActiveReminder, error)
+	List(context.Context) ([]reminders.ActiveReminder, error)
+	Cancel(context.Context, string) (reminders.Record, error)
+	Clear(context.Context) (int, error)
+	Fire(context.Context, string) error
+	Snapshot(context.Context) reminders.Snapshot
+}
+
+type ReminderUI interface {
+	OpenReminders() error
+	ReminderChanged(string) error
+}
+
 type Dependencies struct {
 	ConfigPath          string
 	Shell               Shell
@@ -126,10 +143,51 @@ type Dependencies struct {
 	BluetoothService    BluetoothService
 	NotificationHistory NotificationHistory
 	OSD                 OSDControl
+	Reminders           ReminderService
+	ReminderUI          ReminderUI
 	Stdin               io.Reader
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 2 && args[0] == "_reminder-fire" {
+		if dependencies.Reminders == nil {
+			fmt.Fprintln(stderr, "mitishell: reminders unavailable")
+			return 1
+		}
+		if err := dependencies.Reminders.Fire(context.Background(), args[1]); err != nil {
+			fmt.Fprintf(stderr, "mitishell: fire reminder: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_reminder-snapshot" {
+		snapshot := reminders.Snapshot{
+			Available: false,
+			Error:     "reminders unavailable",
+			Reminders: []reminders.ActiveReminder{},
+		}
+		if dependencies.Reminders != nil {
+			snapshot = dependencies.Reminders.Snapshot(context.Background())
+		}
+		if err := json.NewEncoder(stdout).Encode(snapshot); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode reminders: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_reminder-cancel" {
+		if dependencies.Reminders == nil {
+			fmt.Fprintln(stderr, "mitishell: reminders unavailable")
+			return 1
+		}
+		if _, err := dependencies.Reminders.Cancel(context.Background(), args[1]); err != nil {
+			fmt.Fprintf(stderr, "mitishell: cancel reminder: %v\n", err)
+			return 1
+		}
+		reminderChanged(dependencies, "Reminder cancelled")
+		fmt.Fprintln(stdout, "Reminder cancelled")
+		return 0
+	}
 	if len(args) == 1 && args[0] == "_notification-history-load" {
 		if dependencies.NotificationHistory == nil {
 			fmt.Fprintln(stderr, "mitishell: notification history unavailable")
@@ -375,6 +433,9 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "osd" {
 		return runOSD(args[1:], stdout, stderr, dependencies)
 	}
+	if len(args) > 0 && args[0] == "reminder" {
+		return runReminder(args[1:], stdout, stderr, dependencies)
+	}
 	if len(args) > 0 && (args[0] == "volume" || args[0] == "mic") {
 		return runAudioAction(args, stdout, stderr, dependencies)
 	}
@@ -439,6 +500,112 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 
 	fmt.Fprintln(stderr, "mitishell: usage: mitishell <command>")
 	return 2
+}
+
+func runReminder(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 0 {
+		if dependencies.ReminderUI == nil {
+			fmt.Fprintln(stderr, "mitishell: reminders unavailable")
+			return 1
+		}
+		if err := dependencies.ReminderUI.OpenReminders(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: reminders unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "Reminder overlay opened")
+		return 0
+	}
+	if dependencies.Reminders == nil {
+		fmt.Fprintln(stderr, "mitishell: reminders unavailable")
+		return 1
+	}
+	if len(args) == 1 && args[0] == "list" {
+		active, err := dependencies.Reminders.List(context.Background())
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: list reminders: %v\n", err)
+			return 1
+		}
+		if len(active) == 0 {
+			fmt.Fprintln(stdout, "No active reminders")
+			return 0
+		}
+		for _, reminder := range active {
+			fmt.Fprintf(
+				stdout,
+				"%s - %s remaining - %s\n",
+				reminder.Label,
+				formatRemaining(reminder.RemainingSeconds),
+				time.Unix(reminder.FireAt, 0).Local().Format("3:04 PM"),
+			)
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "clear" {
+		count, err := dependencies.Reminders.Clear(context.Background())
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: clear reminders: %v\n", err)
+			return 1
+		}
+		reminderChanged(dependencies, "All reminders cleared")
+		fmt.Fprintf(stdout, "Cleared %d reminders\n", count)
+		return 0
+	}
+	minutes, err := positiveMinutes(args[0])
+	if err != nil {
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell reminder <positive-whole-minutes> [message...]")
+		return 2
+	}
+	message := strings.Join(args[1:], " ")
+	active, err := dependencies.Reminders.Schedule(context.Background(), minutes, message)
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: schedule reminder: %v\n", err)
+		return 1
+	}
+	reminderChanged(dependencies, fmt.Sprintf("Reminder set for %d minutes", minutes))
+	fmt.Fprintf(
+		stdout,
+		"Reminder set for %d minutes at %s\n",
+		minutes,
+		time.Unix(active.FireAt, 0).Local().Format("3:04 PM"),
+	)
+	return 0
+}
+
+func positiveMinutes(raw string) (int, error) {
+	if raw == "" {
+		return 0, fmt.Errorf("minutes are required")
+	}
+	for _, character := range raw {
+		if character < '0' || character > '9' {
+			return 0, fmt.Errorf("minutes must be digits")
+		}
+	}
+	minutes, err := strconv.Atoi(raw)
+	if err != nil || minutes <= 0 {
+		return 0, fmt.Errorf("minutes must be positive")
+	}
+	return minutes, nil
+}
+
+func formatRemaining(seconds int64) string {
+	if seconds < 0 {
+		seconds = 0
+	}
+	minutes := seconds / 60
+	remainder := seconds % 60
+	if minutes > 0 && remainder > 0 {
+		return fmt.Sprintf("%dm %ds", minutes, remainder)
+	}
+	if minutes > 0 {
+		return fmt.Sprintf("%dm", minutes)
+	}
+	return fmt.Sprintf("%ds", remainder)
+}
+
+func reminderChanged(dependencies Dependencies, message string) {
+	if dependencies.ReminderUI != nil {
+		_ = dependencies.ReminderUI.ReminderChanged(message)
+	}
 }
 
 func runOSD(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {

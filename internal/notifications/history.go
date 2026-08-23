@@ -31,6 +31,7 @@ type Entry struct {
 	Summary      string `json:"summary"`
 	Body         string `json:"body"`
 	Urgency      int    `json:"urgency"`
+	Reminder     bool   `json:"reminder,omitempty"`
 	Timestamp    int64  `json:"timestamp"`
 }
 

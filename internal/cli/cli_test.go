@@ -15,6 +15,7 @@ import (
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
+	"github.com/aileks/mitishell/internal/reminders"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -40,6 +41,182 @@ type controlStub struct {
 type osdStub struct {
 	requests []osd.Request
 	err      error
+}
+
+type reminderServiceStub struct {
+	minutes     int
+	message     string
+	scheduled   reminders.ActiveReminder
+	active      []reminders.ActiveReminder
+	cancelledID string
+	clearCount  int
+	firedID     string
+	snapshot    reminders.Snapshot
+	err         error
+}
+
+func (stub *reminderServiceStub) Schedule(
+	_ context.Context,
+	minutes int,
+	message string,
+) (reminders.ActiveReminder, error) {
+	stub.minutes = minutes
+	stub.message = message
+	return stub.scheduled, stub.err
+}
+
+func (stub *reminderServiceStub) List(context.Context) ([]reminders.ActiveReminder, error) {
+	return stub.active, stub.err
+}
+
+func (stub *reminderServiceStub) Cancel(_ context.Context, id string) (reminders.Record, error) {
+	stub.cancelledID = id
+	return reminders.Record{ID: id}, stub.err
+}
+
+func (stub *reminderServiceStub) Clear(context.Context) (int, error) {
+	return stub.clearCount, stub.err
+}
+
+func (stub *reminderServiceStub) Fire(_ context.Context, id string) error {
+	stub.firedID = id
+	return stub.err
+}
+
+func (stub *reminderServiceStub) Snapshot(context.Context) reminders.Snapshot {
+	return stub.snapshot
+}
+
+type reminderUIStub struct {
+	opened   bool
+	messages []string
+	err      error
+}
+
+func (stub *reminderUIStub) OpenReminders() error {
+	stub.opened = true
+	return stub.err
+}
+
+func (stub *reminderUIStub) ReminderChanged(message string) error {
+	stub.messages = append(stub.messages, message)
+	return stub.err
+}
+
+func TestReminderOpensOverlayWithoutArguments(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	ui := &reminderUIStub{}
+	code := cli.Run([]string{"reminder"}, &stdout, &stderr, cli.Dependencies{ReminderUI: ui})
+	if code != 0 || !ui.opened || stdout.String() != "Reminder overlay opened\n" {
+		t.Fatalf("code=%d opened=%v stdout=%q stderr=%q", code, ui.opened, stdout.String(), stderr.String())
+	}
+}
+
+func TestReminderSchedulesWholeMinutesAndMessage(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	service := &reminderServiceStub{scheduled: reminders.ActiveReminder{FireAt: 1_800_000_300}}
+	ui := &reminderUIStub{}
+	code := cli.Run(
+		[]string{"reminder", "5", "Check", "the", "oven"},
+		&stdout,
+		&stderr,
+		cli.Dependencies{Reminders: service, ReminderUI: ui},
+	)
+	if code != 0 || service.minutes != 5 || service.message != "Check the oven" {
+		t.Fatalf("code=%d minutes=%d message=%q stderr=%q", code, service.minutes, service.message, stderr.String())
+	}
+	if len(ui.messages) != 1 || ui.messages[0] != "Reminder set for 5 minutes" {
+		t.Fatalf("feedback = %v", ui.messages)
+	}
+	if !strings.HasPrefix(stdout.String(), "Reminder set for 5 minutes at ") {
+		t.Fatalf("stdout = %q", stdout.String())
+	}
+}
+
+func TestReminderListPrintsLabelRemainingAndLocalTime(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	service := &reminderServiceStub{active: []reminders.ActiveReminder{{
+		Label: "Tea", FireAt: 1_800_000_300, RemainingSeconds: 242,
+	}}}
+	code := cli.Run([]string{"reminder", "list"}, &stdout, &stderr,
+		cli.Dependencies{Reminders: service})
+	if code != 0 || !strings.Contains(stdout.String(), "Tea - 4m 2s remaining - ") {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestReminderListPrintsExactEmptyState(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := cli.Run([]string{"reminder", "list"}, &stdout, &stderr,
+		cli.Dependencies{Reminders: &reminderServiceStub{}})
+	if code != 0 || stdout.String() != "No active reminders\n" {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestReminderClearCancelsPendingStateAndRefreshesShell(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	service := &reminderServiceStub{clearCount: 3}
+	ui := &reminderUIStub{}
+	code := cli.Run([]string{"reminder", "clear"}, &stdout, &stderr,
+		cli.Dependencies{Reminders: service, ReminderUI: ui})
+	if code != 0 || stdout.String() != "Cleared 3 reminders\n" ||
+		len(ui.messages) != 1 || ui.messages[0] != "All reminders cleared" {
+		t.Fatalf("code=%d stdout=%q feedback=%v stderr=%q", code, stdout.String(), ui.messages, stderr.String())
+	}
+}
+
+func TestReminderRejectsInvalidMinutes(t *testing.T) {
+	for _, raw := range []string{"0", "-1", "1.5", "+5", "five"} {
+		t.Run(raw, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			service := &reminderServiceStub{}
+			code := cli.Run([]string{"reminder", raw}, &stdout, &stderr,
+				cli.Dependencies{Reminders: service})
+			if code != 2 || service.minutes != 0 {
+				t.Fatalf("code=%d minutes=%d stderr=%q", code, service.minutes, stderr.String())
+			}
+		})
+	}
+}
+
+func TestInternalReminderCommandsUseTypedIDs(t *testing.T) {
+	service := &reminderServiceStub{snapshot: reminders.Snapshot{
+		Available: true,
+		Reminders: []reminders.ActiveReminder{{ID: "0123456789abcdef"}},
+	}}
+	ui := &reminderUIStub{}
+	for _, testCase := range []struct {
+		args []string
+		id   string
+	}{
+		{args: []string{"_reminder-fire", "0123456789abcdef"}, id: "fire"},
+		{args: []string{"_reminder-cancel", "0123456789abcdef"}, id: "cancel"},
+	} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run(testCase.args, &stdout, &stderr,
+			cli.Dependencies{Reminders: service, ReminderUI: ui})
+		if code != 0 {
+			t.Fatalf("%s code=%d stderr=%q", testCase.id, code, stderr.String())
+		}
+	}
+	if service.firedID != "0123456789abcdef" || service.cancelledID != "0123456789abcdef" {
+		t.Fatalf("fire=%q cancel=%q", service.firedID, service.cancelledID)
+	}
+	var snapshotOutput bytes.Buffer
+	var snapshotError bytes.Buffer
+	if code := cli.Run([]string{"_reminder-snapshot"}, &snapshotOutput, &snapshotError,
+		cli.Dependencies{Reminders: service}); code != 0 ||
+		!strings.Contains(snapshotOutput.String(), `"id":"0123456789abcdef"`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, snapshotOutput.String(), snapshotError.String())
+	}
 }
 
 func (stub *osdStub) ShowOSD(request osd.Request) error {

@@ -10,6 +10,7 @@ singleton Network 1.0 Network.qml
 singleton Notifications 1.0 Notifications.qml
 singleton Osd 1.0 Osd.qml
 singleton Power 1.0 Power.qml
+singleton Reminders 1.0 Reminders.qml
 singleton Settings 1.0 Settings.qml
 singleton SurfaceCoordinator 1.0 SurfaceCoordinator.qml
 singleton SystemMetrics 1.0 SystemMetrics.qml

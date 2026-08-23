@@ -35,6 +35,7 @@ test("snapshots copy drawable fields without the live object", () => {
         urgency: 1,
         expireTimeout: 0,
         transient: false,
+        hints: { "x-mitishell-reminder": true },
         actions: [{ identifier: "default", text: "" }, { identifier: "open", text: "Open" }],
     }, 1000);
 
@@ -47,6 +48,7 @@ test("snapshots copy drawable fields without the live object", () => {
     assert.equal(snapshot.summary, "Download finished");
     assert.equal(snapshot.timeout, 8000);
     assert.equal(snapshot.timestamp, 1000);
+    assert.equal(snapshot.reminder, true);
     assert.deepEqual(snapshot.actions, [
         { identifier: "default", text: "" },
         { identifier: "open", text: "Open" },
@@ -80,6 +82,7 @@ test("durable snapshots omit actions and restored records are history only", () 
         summary: "Saved",
         body: "photo.png",
         urgency: 1,
+        reminder: false,
         timestamp: 2000,
     });
     assert.equal(durable.actions, undefined);
@@ -90,6 +93,13 @@ test("durable snapshots omit actions and restored records are history only", () 
     assert.deepEqual(restored.actions, []);
     assert.equal(restored.appIcon, "file:///state/avatar.png");
     assert.equal(restored.timeout, 0);
+});
+
+test("explicit reminders bypass do not disturb without becoming critical", () => {
+    assert.equal(NotificationModel.popupAllowed(true, { urgency: 1, reminder: true }), true);
+    assert.equal(NotificationModel.popupAllowed(true, { urgency: 2, reminder: false }), true);
+    assert.equal(NotificationModel.popupAllowed(true, { urgency: 1, reminder: false }), false);
+    assert.equal(NotificationModel.popupAllowed(false, { urgency: 0, reminder: false }), true);
 });
 
 test("transient notifications are excluded from durable history", () => {
