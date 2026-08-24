@@ -16,6 +16,7 @@ import (
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/reminders"
+	"github.com/aileks/mitishell/internal/updates"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -91,6 +92,21 @@ type reminderUIStub struct {
 	opened   bool
 	messages []string
 	err      error
+}
+
+type updateServiceStub struct{ result updates.Result }
+
+func (stub updateServiceStub) Snapshot(context.Context) updates.Result { return stub.result }
+
+func TestUpdatesSnapshotEncodesServiceResult(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	want := updates.Result{Supported: true, System: updates.Source{Count: 3}}
+	code := cli.Run([]string{"_updates-snapshot"}, &stdout, &stderr,
+		cli.Dependencies{Updates: updateServiceStub{result: want}})
+	if code != 0 || !strings.Contains(stdout.String(), `"count":3`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
 }
 
 func (stub *reminderUIStub) OpenReminders() error {

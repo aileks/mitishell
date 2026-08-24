@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/aileks/mitishell/internal/config"
@@ -77,6 +78,7 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
 			MarginHorizontal: 10,
 			ShowMedia:        true,
 			SystemMetrics:    "combined",
+			Islands:          config.DefaultIslands(),
 		},
 		Clock: config.Clock{
 			Format:    "24h-seconds",
@@ -243,6 +245,54 @@ func TestSetFieldUpdatesOnlyKnownTypedSetting(t *testing.T) {
 	}
 	if updated.Bar.Height != original.Bar.Height {
 		t.Fatal("SetField() changed an unrelated setting")
+	}
+}
+
+func TestNormalizeIslandsDropsUnknownAndAppendsMissing(t *testing.T) {
+	got := config.NormalizeIslands([]string{"weather", "bogus", "clock", "weather"})
+
+	want := append(
+		[]string{"weather", "clock"},
+		config.DefaultIslands()[3:]...,
+	)
+	// DefaultIslands minus clock/weather, appended in default order.
+	want = []string{"weather", "clock", "system", "audio", "keyboardLayout",
+		"updates", "tray", "control", "notifications", "reminders", "power"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("NormalizeIslands() = %#v, want %#v", got, want)
+	}
+}
+
+func TestNormalizeIslandsEmptyBecomesDefault(t *testing.T) {
+	got := config.NormalizeIslands(nil)
+	if !reflect.DeepEqual(got, config.DefaultIslands()) {
+		t.Fatalf("NormalizeIslands(nil) = %#v", got)
+	}
+}
+
+func TestSetFieldNormalizesIslands(t *testing.T) {
+	updated, err := config.SetField(
+		config.Defaults(), "bar.islands", `["power","nope","clock"]`)
+	if err != nil {
+		t.Fatalf("SetField() error = %v", err)
+	}
+
+	first := updated.Bar.Islands[0]
+	second := updated.Bar.Islands[1]
+	if first != "power" || second != "clock" {
+		t.Fatalf("islands order = %#v", updated.Bar.Islands)
+	}
+	if len(updated.Bar.Islands) != len(config.DefaultIslands()) {
+		t.Fatalf("islands count = %d, want %d",
+			len(updated.Bar.Islands), len(config.DefaultIslands()))
+	}
+
+	encoded, err := config.GetField(updated, "bar.islands")
+	if err != nil {
+		t.Fatalf("GetField() error = %v", err)
+	}
+	if !strings.Contains(encoded, `"power"`) || !strings.Contains(encoded, `"clock"`) {
+		t.Fatalf("GetField() = %q", encoded)
 	}
 }
 

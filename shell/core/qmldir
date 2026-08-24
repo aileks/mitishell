@@ -5,6 +5,7 @@ singleton Config 1.0 Config.qml
 singleton Control 1.0 Control.qml
 singleton Display 1.0 Display.qml
 singleton Media 1.0 Media.qml
+singleton KeyboardLayout 1.0 KeyboardLayout.qml
 singleton Motion 1.0 Motion.qml
 singleton Network 1.0 Network.qml
 singleton Notifications 1.0 Notifications.qml
@@ -16,4 +17,5 @@ singleton SurfaceCoordinator 1.0 SurfaceCoordinator.qml
 singleton SystemMetrics 1.0 SystemMetrics.qml
 singleton Theme 1.0 Theme.qml
 singleton Tray 1.0 Tray.qml
+singleton Updates 1.0 Updates.qml
 singleton Weather 1.0 Weather.qml

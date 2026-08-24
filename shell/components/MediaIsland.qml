@@ -8,7 +8,7 @@ Item {
         && !Config.motion.reduced
         && metadataStrip.implicitWidth > metadataViewport.width
 
-    implicitWidth: 240
+    implicitWidth: 16 + Theme.spaceSm + metadataStrip.implicitWidth
     implicitHeight: 30
 
     function restartMarquee() {
@@ -27,7 +27,6 @@ Item {
 
     Row {
         anchors.fill: parent
-        anchors.margins: Theme.spaceXs
         spacing: Theme.spaceSm
 
         Image {

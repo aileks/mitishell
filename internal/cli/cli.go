@@ -19,6 +19,7 @@ import (
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/reminders"
+	"github.com/aileks/mitishell/internal/updates"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -129,6 +130,10 @@ type ReminderUI interface {
 	ReminderChanged(string) error
 }
 
+type UpdateService interface {
+	Snapshot(context.Context) updates.Result
+}
+
 type Dependencies struct {
 	ConfigPath          string
 	Shell               Shell
@@ -145,10 +150,22 @@ type Dependencies struct {
 	OSD                 OSDControl
 	Reminders           ReminderService
 	ReminderUI          ReminderUI
+	Updates             UpdateService
 	Stdin               io.Reader
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 1 && args[0] == "_updates-snapshot" {
+		result := updates.Result{}
+		if dependencies.Updates != nil {
+			result = dependencies.Updates.Snapshot(context.Background())
+		}
+		if err := json.NewEncoder(stdout).Encode(result); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode updates: %v\n", err)
+			return 1
+		}
+		return 0
+	}
 	if len(args) == 2 && args[0] == "_reminder-fire" {
 		if dependencies.Reminders == nil {
 			fmt.Fprintln(stderr, "mitishell: reminders unavailable")

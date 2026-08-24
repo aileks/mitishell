@@ -20,6 +20,7 @@ import (
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/reminders"
+	"github.com/aileks/mitishell/internal/updates"
 	"github.com/aileks/mitishell/internal/weather"
 )
 
@@ -118,6 +119,7 @@ func main() {
 		OSD:                 shell,
 		Reminders:           reminderService,
 		ReminderUI:          shell,
+		Updates:             updates.NewService(updates.SystemRunner{}),
 		Stdin:               os.Stdin,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
