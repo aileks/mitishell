@@ -1,7 +1,7 @@
 const resultLimit = 1000;
 const recentLimit = 24;
 const smileysCategory = "Smileys & Emotion";
-const skinTonePattern = /[🏻🏼🏽🏾🏿]/;
+const skinTonePattern = /[🏻🏼🏽🏾🏿]/u;
 
 const categories = [
     { key: "recent", label: "Recents", icon: "󰋚" },

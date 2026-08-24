@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const EmojiModel = require("../shell/lib/EmojiModel.js");
 
@@ -13,12 +15,28 @@ const catalog = [
 test("catalog parsing keeps valid base entries and drops skin tones", () => {
     const parsed = EmojiModel.parseCatalog(JSON.stringify([
         catalog[0],
+        { e: "🇺🇸", k: "flag: United States", c: "Flags" },
         { e: "👋🏽", k: "waving hand", c: "People & Body" },
         { e: "", k: "missing", c: "Symbols" },
         null,
     ]));
-    assert.deepEqual(parsed, [catalog[0]]);
+    assert.deepEqual(parsed, [
+        catalog[0],
+        { e: "🇺🇸", k: "flag: United States", c: "Flags" },
+    ]);
     assert.deepEqual(EmojiModel.parseCatalog("not json"), []);
+});
+
+test("bundled catalog preserves every base emoji and country flag", () => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../shell/assets/emoji/catalog.json"),
+        "utf8",
+    );
+    const parsed = EmojiModel.parseCatalog(source);
+
+    assert.equal(parsed.length, 1870);
+    assert.ok(parsed.filter((entry) => entry.c === "Flags").length >= 250);
+    assert.ok(parsed.some((entry) => entry.e === "🇺🇸"));
 });
 
 test("blank search filters the selected category", () => {

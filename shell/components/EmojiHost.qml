@@ -295,8 +295,7 @@ PanelWindow {
                                 anchors.centerIn: parent
                                 text: categoryButton.modelData.icon
                                 color: Theme.textBright
-                                font.family: categoryButton.index === 0
-                                    ? Theme.fontMono : Theme.fontSans
+                                font.family: "monospace"
                                 font.pixelSize: Theme.fontSizeDisplay
                             }
 
@@ -363,7 +362,7 @@ PanelWindow {
                             Text {
                                 anchors.centerIn: parent
                                 text: emojiCell.modelData.e
-                                font.family: Theme.fontSans
+                                font.family: "monospace"
                                 font.pixelSize: 28
                             }
 
