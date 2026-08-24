@@ -14,7 +14,9 @@ import (
 	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/network"
+	"github.com/aileks/mitishell/internal/nightlight"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
@@ -130,8 +132,23 @@ type ReminderUI interface {
 	ReminderChanged(string) error
 }
 
+type EmojiUI interface {
+	ToggleEmojiPicker() error
+}
+
+type EmojiRecents interface {
+	Load() (emoji.Recents, error)
+	Save(emoji.Recents) error
+	Clear() error
+}
+
 type UpdateService interface {
 	Snapshot(context.Context) updates.Result
+}
+
+type NightLightService interface {
+	Snapshot(context.Context) nightlight.Snapshot
+	Apply(context.Context, nightlight.Action) (nightlight.Snapshot, error)
 }
 
 type Dependencies struct {
@@ -150,11 +167,93 @@ type Dependencies struct {
 	OSD                 OSDControl
 	Reminders           ReminderService
 	ReminderUI          ReminderUI
+	EmojiUI             EmojiUI
+	EmojiRecents        EmojiRecents
 	Updates             UpdateService
+	NightLight          NightLightService
 	Stdin               io.Reader
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 1 && args[0] == "_night-light-snapshot" {
+		result := nightlight.Snapshot{Error: "hyprsunset unavailable"}
+		if dependencies.NightLight != nil {
+			result = dependencies.NightLight.Snapshot(context.Background())
+		}
+		if err := json.NewEncoder(stdout).Encode(result); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode night-light state: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_night-light-action" {
+		if dependencies.NightLight == nil {
+			fmt.Fprintln(stderr, "mitishell: night light unavailable")
+			return 1
+		}
+		action := nightlight.Action(args[1])
+		if !slices.Contains([]nightlight.Action{nightlight.On, nightlight.Off, nightlight.Toggle}, action) {
+			fmt.Fprintln(stderr, "mitishell: invalid night-light action")
+			return 2
+		}
+		result, err := dependencies.NightLight.Apply(context.Background(), action)
+		if encodeErr := json.NewEncoder(stdout).Encode(result); encodeErr != nil {
+			fmt.Fprintf(stderr, "mitishell: encode night-light state: %v\n", encodeErr)
+			return 1
+		}
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: night light unavailable: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_emoji-recents-load" {
+		if dependencies.EmojiRecents == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
+			return 1
+		}
+		state, err := dependencies.EmojiRecents.Load()
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: emoji recents unavailable: %v\n", err)
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode emoji recents: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_emoji-recents-save" {
+		if dependencies.EmojiRecents == nil || dependencies.Stdin == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
+			return 1
+		}
+		state := emoji.Recents{}
+		decoder := json.NewDecoder(dependencies.Stdin)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: decode emoji recents: %v\n", err)
+			return 2
+		}
+		if err := dependencies.EmojiRecents.Save(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: save emoji recents: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "emoji recents saved")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_emoji-recents-clear" {
+		if dependencies.EmojiRecents == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
+			return 1
+		}
+		if err := dependencies.EmojiRecents.Clear(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: clear emoji recents: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "emoji recents cleared")
+		return 0
+	}
 	if len(args) == 1 && args[0] == "_updates-snapshot" {
 		result := updates.Result{}
 		if dependencies.Updates != nil {
@@ -457,6 +556,21 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "reminder" {
 		return runReminder(args[1:], stdout, stderr, dependencies)
 	}
+	if len(args) > 0 && args[0] == "night-light" {
+		return runNightLight(args[1:], stdout, stderr, dependencies)
+	}
+	if len(args) == 1 && args[0] == "emoji" {
+		if dependencies.EmojiUI == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji picker unavailable")
+			return 1
+		}
+		if err := dependencies.EmojiUI.ToggleEmojiPicker(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: emoji picker unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "emoji picker toggled")
+		return 0
+	}
 	if len(args) > 0 && (args[0] == "volume" || args[0] == "mic") {
 		return runAudioAction(args, stdout, stderr, dependencies)
 	}
@@ -521,6 +635,67 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 
 	fmt.Fprintln(stderr, "mitishell: usage: mitishell <command>")
 	return 2
+}
+
+func runNightLight(
+	args []string,
+	stdout io.Writer,
+	stderr io.Writer,
+	dependencies Dependencies,
+) int {
+	if len(args) != 1 || !slices.Contains([]string{"on", "off", "toggle", "status"}, args[0]) {
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell night-light <on|off|toggle|status>")
+		return 2
+	}
+	if dependencies.NightLight == nil {
+		fmt.Fprintln(stderr, "mitishell: night light unavailable")
+		return 1
+	}
+
+	if args[0] == "status" {
+		result := dependencies.NightLight.Snapshot(context.Background())
+		if !result.Available {
+			fmt.Fprintf(stderr, "mitishell: night light unavailable: %s\n", result.Error)
+			return 1
+		}
+		fmt.Fprintln(stdout, nightLightStatus(result))
+		return 0
+	}
+
+	result, err := dependencies.NightLight.Apply(
+		context.Background(), nightlight.Action(args[0]))
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: night light unavailable: %v\n", err)
+		return 1
+	}
+	if dependencies.OSD != nil {
+		request, requestErr := osd.NewRequest(
+			"moon",
+			fmt.Sprintf(
+				"Night light %s · %d K",
+				nightLightState(result),
+				result.TemperatureKelvin,
+			),
+			nil,
+			osd.DefaultDurationMS,
+		)
+		if requestErr == nil {
+			_ = dependencies.OSD.ShowOSD(request)
+		}
+	}
+	fmt.Fprintf(stdout, "night light %s\n", nightLightState(result))
+	return 0
+}
+
+func nightLightStatus(result nightlight.Snapshot) string {
+	return fmt.Sprintf("%s %d K", nightLightState(result), result.TemperatureKelvin)
+}
+
+func nightLightState(result nightlight.Snapshot) string {
+	if result.Enabled {
+		return "on"
+	}
+	return "off"
 }
 
 func runReminder(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {

@@ -62,7 +62,7 @@ Flickable {
             }
         }
 
-        Text { visible: Weather.snapshot !== null; text: "Three days, every 3 hours"; color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption; font.weight: Font.DemiBold }
+        Text { visible: Weather.snapshot !== null; text: "Hourly"; color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption; font.weight: Font.DemiBold }
         Flickable {
             visible: Weather.snapshot !== null
             width: parent.width
@@ -95,7 +95,7 @@ Flickable {
             }
         }
 
-        Text { visible: Weather.snapshot !== null; text: "Three days"; color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption; font.weight: Font.DemiBold }
+        Text { visible: Weather.snapshot !== null; text: "Daily"; color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption; font.weight: Font.DemiBold }
         Column {
             visible: Weather.snapshot !== null
             width: parent.width
