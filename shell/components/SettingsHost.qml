@@ -289,7 +289,7 @@ PanelWindow {
                             width: parent.width
                             accent: Theme.blue
                             label: "Enabled"
-                            description: "Fetches forecasts from Open-Meteo using your rough location."
+                            description: "Fetches forecasts from wttr.in using automatic or manual location."
                             checked: Config.weather.enabled
                             onToggled: Settings.setField(
                                 "weather.enabled", checked ? "false" : "true")
@@ -305,6 +305,10 @@ PanelWindow {
                                 { value: "celsius", label: "Celsius" },
                                 { value: "fahrenheit", label: "Fahrenheit" },
                             ]
+                        }
+
+                        WeatherLocationEditor {
+                            width: parent.width
                         }
                     }
                 }

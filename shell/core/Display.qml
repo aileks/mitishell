@@ -212,7 +212,7 @@ QtObject {
     // settles instead of keeping stale entries or missing new monitors.
     property Connections screenConnections: Connections {
         target: Quickshell
-        function onScreensChanged() { churnTimer.restart(); }
+        function onScreensChanged() { root.churnTimer.restart(); }
     }
 
     Component.onCompleted: refresh()

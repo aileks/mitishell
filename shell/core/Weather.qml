@@ -15,10 +15,7 @@ QtObject {
         ? (Qt.locale().measurementSystem === Locale.ImperialUSSystem
             ? "fahrenheit" : "celsius")
         : Config.weather.units
-    // The island stays up in every enabled state except locating, which is
-    // a brief flicker; failure renders red instead of vanishing.
     readonly property bool visible: Config.weather.enabled
-        && (state === "ready" || state === "stale" || state === "unavailable")
 
     function refresh() {
         if (!Config.weather.enabled) {
@@ -83,7 +80,7 @@ QtObject {
     property Timer retryTimer: Timer {
         interval: 5 * 60 * 1000
         repeat: true
-        running: Config.weather.enabled && state === "unavailable"
+        running: Config.weather.enabled && root.state === "unavailable"
         onTriggered: root.refresh()
     }
 

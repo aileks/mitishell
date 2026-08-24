@@ -102,7 +102,7 @@ type Doctor interface {
 }
 
 type Weather interface {
-	Snapshot(context.Context, bool, weather.Units) weather.Result
+	Snapshot(context.Context, bool, string, weather.Units) weather.Result
 }
 
 type NotificationHistory interface {
@@ -300,6 +300,7 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		result := dependencies.Weather.Snapshot(
 			context.Background(),
 			resolved.Weather.Enabled,
+			resolved.Weather.Location,
 			units,
 		)
 		if err := json.NewEncoder(stdout).Encode(result); err != nil {
@@ -338,6 +339,9 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	}
 	if len(args) > 0 && args[0] == "config" {
 		return runConfig(args[1:], stdout, stderr, dependencies)
+	}
+	if len(args) > 0 && args[0] == "weather" {
+		return runWeatherAction(args, stdout, stderr, dependencies)
 	}
 	if len(args) == 1 && args[0] == "_power-capabilities" {
 		if dependencies.PowerService == nil {
@@ -731,6 +735,37 @@ func runConfig(args []string, stdout io.Writer, stderr io.Writer, dependencies D
 
 	fmt.Fprintln(stderr, "mitishell: usage: mitishell config <path|validate|get|set>")
 	return 2
+}
+
+func runWeatherAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) < 3 || args[1] != "location" || (args[2] == "auto" && len(args) != 3) {
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell weather location <place...|auto>")
+		return 2
+	}
+	location := strings.Join(args[2:], " ")
+	if location == "auto" {
+		location = ""
+	}
+	loaded, err := config.Load(dependencies.ConfigPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: read config: %v\n", err)
+		return 1
+	}
+	updated, err := config.SetField(loaded, "weather.location", location)
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: %v\n", err)
+		return 1
+	}
+	if err := config.Write(dependencies.ConfigPath, updated); err != nil {
+		fmt.Fprintf(stderr, "mitishell: write config: %v\n", err)
+		return 1
+	}
+	if updated.Weather.Location == "" {
+		fmt.Fprintln(stdout, "weather location set to auto")
+	} else {
+		fmt.Fprintf(stdout, "weather location set to %s\n", updated.Weather.Location)
+	}
+	return 0
 }
 
 func runControlAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {

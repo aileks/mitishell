@@ -20,11 +20,13 @@ Item {
         }
 
         Text {
+            anchors.verticalCenter: parent.verticalCenter
             text: WeatherModel.temperature(
                 Weather.snapshot !== null ? Weather.snapshot.current.temperature : Number.NaN,
             )
             color: Weather.state === "unavailable" ? Theme.red
-                : (Weather.state === "stale" ? Theme.yellow : Theme.text)
+                : (Weather.state === "stale" || Weather.state === "locating"
+                    ? Theme.yellow : Theme.text)
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
         }

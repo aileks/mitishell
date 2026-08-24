@@ -133,7 +133,7 @@ QtObject {
 
         onExited: function(exitCode) {
             if (exitCode !== 0) {
-                agentRestart.restart();
+                root.agentRestart.restart();
             }
         }
     }

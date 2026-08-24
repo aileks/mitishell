@@ -2,7 +2,7 @@ import QtQuick
 import "../core"
 import "../lib/WeatherModel.js" as WeatherModel
 
-Item {
+Flickable {
     id: root
 
     readonly property var current: Weather.snapshot !== null ? Weather.snapshot.current : ({
@@ -14,18 +14,32 @@ Item {
     })
     readonly property string speedUnit: Weather.snapshot !== null
         && Weather.snapshot.units === "fahrenheit" ? "mph" : "km/h"
+    readonly property string configuredLocation: Config.weather.location === ""
+        ? "Automatic location" : Config.weather.location
+    readonly property string resolvedLocation: Weather.snapshot !== null
+        && Weather.snapshot.resolvedLocation !== ""
+        ? Weather.snapshot.resolvedLocation : configuredLocation
+
+    implicitWidth: 348
+    implicitHeight: Math.min(640, content.implicitHeight)
+    contentWidth: width
+    contentHeight: content.implicitHeight
+    clip: true
+    boundsBehavior: Flickable.StopAtBounds
 
     Column {
-        anchors.fill: parent
+        id: content
+        width: root.width
         spacing: Theme.spaceMd
 
-        // Failure replaces the forecast with the reason; the island's red
-        // reading is the summary and this is the detail.
+        Text { text: "Weather"; color: Theme.textBright; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeHeading; font.weight: Font.DemiBold }
+        Text { width: parent.width; visible: Weather.snapshot !== null; text: root.resolvedLocation; elide: Text.ElideRight; color: Theme.cyan; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBodySmall }
+        Text { width: parent.width; visible: Weather.state === "locating"; text: Weather.snapshot === null ? "Fetching " + root.configuredLocation + "…" : "Refreshing " + root.configuredLocation + "…"; color: Theme.yellow; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBodySmall }
         Text {
             width: parent.width
             visible: Weather.state === "unavailable"
             wrapMode: Text.Wrap
-            text: "Weather unavailable: "
+            text: "Weather unavailable for " + root.configuredLocation + ": "
                 + (Weather.error !== "" ? Weather.error : "no data")
             color: Theme.red
             font.family: Theme.fontSans
@@ -36,170 +50,72 @@ Item {
             width: parent.width
             height: 66
             spacing: Theme.spaceMd
-            visible: Weather.state !== "unavailable"
-
-            WeatherIcon {
-                width: 54
-                height: 54
-                weatherCode: root.current.weatherCode
-            }
-
+            visible: Weather.snapshot !== null
+            WeatherIcon { width: 54; height: 54; weatherCode: root.current.weatherCode }
             Column {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 54 - parent.spacing
                 spacing: 2
-
-                Text {
-                    text: WeatherModel.temperature(root.current.temperature)
-                        + "  " + WeatherModel.condition(root.current.weatherCode).label
-                    color: Theme.textBright
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeDisplay
-                    font.weight: Font.DemiBold
-                }
-
-                Text {
-                    text: "Feels " + WeatherModel.temperature(root.current.apparent)
-                        + "  •  " + root.current.humidity + "% humidity"
-                    color: Theme.text
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeBody
-                }
-
-                Text {
-                    text: "Wind " + Math.round(root.current.windSpeed) + " " + root.speedUnit
-                    color: Theme.textMuted
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeBody
-                }
+                Text { text: WeatherModel.temperature(root.current.temperature) + "  " + WeatherModel.condition(root.current.weatherCode).label; color: Theme.textBright; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeDisplay; font.weight: Font.DemiBold }
+                Text { text: "Feels " + WeatherModel.temperature(root.current.apparent) + "  •  " + root.current.humidity + "% humidity"; color: Theme.text; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBody }
+                Text { text: "Wind " + Math.round(root.current.windSpeed) + " " + root.speedUnit; color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBody }
             }
         }
 
-        Text {
-            visible: Weather.state !== "unavailable"
-            text: "Next 12 hours"
-            color: Theme.textMuted
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeCaption
-            font.weight: Font.DemiBold
-        }
-
+        Text { visible: Weather.snapshot !== null; text: "Three days, every 3 hours"; color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption; font.weight: Font.DemiBold }
         Flickable {
-            visible: Weather.state !== "unavailable"
+            visible: Weather.snapshot !== null
             width: parent.width
             height: 72
             contentWidth: hourlyRow.implicitWidth
             contentHeight: height
             clip: true
-
+            boundsBehavior: Flickable.StopAtBounds
             Row {
                 id: hourlyRow
                 spacing: Theme.spaceSm
-
                 Repeater {
                     model: Weather.snapshot !== null ? Weather.snapshot.hourly : []
-
                     delegate: Rectangle {
+                        id: hourlyCard
                         required property var modelData
                         width: 54
                         height: 70
                         radius: Theme.radiusMedium
                         color: Theme.container
-
                         Column {
                             anchors.centerIn: parent
                             spacing: 3
-
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: WeatherModel.hour(modelData.time)
-                                color: Theme.textMuted
-                                font.family: Theme.fontMono
-                                font.pixelSize: Theme.fontSizeCaption
-                            }
-                            WeatherIcon {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: 20
-                                height: 20
-                                weatherCode: modelData.weatherCode
-                            }
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: WeatherModel.temperature(modelData.temperature)
-                                color: Theme.text
-                                font.family: Theme.fontMono
-                                font.pixelSize: Theme.fontSizeCaption
-                            }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: WeatherModel.hour(hourlyCard.modelData.time); color: Theme.textMuted; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
+                            WeatherIcon { anchors.horizontalCenter: parent.horizontalCenter; width: 20; height: 20; weatherCode: hourlyCard.modelData.weatherCode }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: WeatherModel.temperature(hourlyCard.modelData.temperature); color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
                         }
                     }
                 }
             }
         }
 
-        Text {
-            text: "Five days"
-            color: Theme.textMuted
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeCaption
-            font.weight: Font.DemiBold
-        }
-
+        Text { visible: Weather.snapshot !== null; text: "Three days"; color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption; font.weight: Font.DemiBold }
         Column {
+            visible: Weather.snapshot !== null
             width: parent.width
             spacing: Theme.spaceXs
-
             Repeater {
                 model: Weather.snapshot !== null ? Weather.snapshot.daily : []
-
                 delegate: Row {
+                    id: dailyRow
                     required property var modelData
                     width: parent.width
                     height: 30
                     spacing: Theme.spaceSm
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 70
-                        text: Qt.formatDate(new Date(modelData.date + "T12:00"), "ddd")
-                        color: Theme.text
-                        font.family: Theme.fontSans
-                        font.pixelSize: Theme.fontSizeBody
-                    }
-                    WeatherIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 20
-                        height: 20
-                        weatherCode: modelData.weatherCode
-                    }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 98
-                        horizontalAlignment: Text.AlignRight
-                        text: WeatherModel.temperature(modelData.maximum)
-                            + "  " + WeatherModel.temperature(modelData.minimum)
-                        color: Theme.text
-                        font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
+                    Text { anchors.verticalCenter: parent.verticalCenter; width: 70; text: Qt.formatDate(new Date(dailyRow.modelData.date + "T12:00"), "ddd"); color: Theme.text; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBody }
+                    WeatherIcon { anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; weatherCode: dailyRow.modelData.weatherCode }
+                    Text { anchors.verticalCenter: parent.verticalCenter; width: parent.width - 98; horizontalAlignment: Text.AlignRight; text: WeatherModel.temperature(dailyRow.modelData.maximum) + "  " + WeatherModel.temperature(dailyRow.modelData.minimum); color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
                 }
             }
         }
 
-        Text {
-            width: parent.width
-            visible: Weather.state === "stale"
-            text: "Last updated " + Weather.ageMinutes + " minutes ago"
-            color: Theme.yellow
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeCaption
-        }
-
-        Text {
-            text: "Weather data by Open-Meteo"
-            visible: Weather.state !== "unavailable"
-            color: Theme.textMuted
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeCaption
-        }
+        Text { width: parent.width; visible: Weather.state === "stale"; text: "Last updated " + Weather.ageMinutes + " minutes ago"; color: Theme.yellow; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption }
+        WeatherLocationEditor { width: parent.width }
     }
 }

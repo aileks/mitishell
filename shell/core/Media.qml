@@ -1,4 +1,5 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Services.Mpris
@@ -79,23 +80,25 @@ QtObject {
         model: Mpris.players
 
         delegate: QtObject {
+            id: activityWatcher
+
             required property var modelData
 
-            Component.onCompleted: root.noteActivity(modelData)
+            Component.onCompleted: root.noteActivity(activityWatcher.modelData)
 
             property Connections activityConnections: Connections {
-                target: modelData
+                target: activityWatcher.modelData
 
                 function onMetadataChanged() {
-                    root.noteActivity(modelData);
+                    root.noteActivity(activityWatcher.modelData);
                 }
 
                 function onPlaybackStateChanged() {
-                    root.noteActivity(modelData);
+                    root.noteActivity(activityWatcher.modelData);
                 }
 
                 function onPostTrackChanged() {
-                    root.noteActivity(modelData);
+                    root.noteActivity(activityWatcher.modelData);
                 }
             }
         }

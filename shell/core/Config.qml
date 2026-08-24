@@ -22,7 +22,8 @@ QtObject {
         },
         "weather": {
             "enabled": false,
-            "units": "auto"
+            "units": "auto",
+            "location": ""
         },
         "clock": {
             "format": "24h",
