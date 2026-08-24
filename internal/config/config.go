@@ -30,6 +30,48 @@ type Bar struct {
 	ShowWindowTitle  bool     `json:"showWindowTitle"`
 	ShowMedia        bool     `json:"showMedia"`
 	SystemMetrics    string   `json:"systemMetrics"`
+	Islands          []string `json:"islands"`
+}
+
+// DefaultIslands is the shipped right-island order.
+func DefaultIslands() []string {
+	return []string{
+		"system", "audio", "keyboardLayout", "updates", "clock", "tray",
+		"control", "notifications", "reminders", "weather", "power",
+	}
+}
+
+func knownIsland(id string) bool {
+	switch id {
+	case "system", "audio", "keyboardLayout", "updates", "clock", "tray",
+		"control", "notifications", "reminders", "weather", "power":
+		return true
+	}
+	return false
+}
+
+// NormalizeIslands keeps known ids in the given order, drops unknown and
+// duplicate ids, and appends any island missing from the list in default
+// order so a stale or hand-edited array still renders every island.
+func NormalizeIslands(islands []string) []string {
+	seen := make(map[string]struct{}, len(islands))
+	normalized := make([]string, 0, len(islands))
+	for _, id := range islands {
+		if !knownIsland(id) {
+			continue
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		normalized = append(normalized, id)
+	}
+	for _, id := range DefaultIslands() {
+		if _, exists := seen[id]; !exists {
+			normalized = append(normalized, id)
+		}
+	}
+	return normalized
 }
 
 type Weather struct {
@@ -63,12 +105,14 @@ func Defaults() Config {
 			ShowWindowTitle:  true,
 			ShowMedia:        true,
 			SystemMetrics:    "separate",
+			Islands:          DefaultIslands(),
 		},
 		Weather: Weather{
 			Units: "auto",
 		},
 		Clock: Clock{
-			Format: "auto",
+			Format:    "auto",
+			Timezones: []string{},
 		},
 		Calendar: Calendar{},
 		Motion: Motion{
@@ -110,6 +154,13 @@ func Load(path string) (Config, error) {
 	// empty format; treat that as "section absent" rather than invalid.
 	if result.Clock.Format == "" {
 		result.Clock = Defaults().Clock
+	}
+	// Islands normalize leniently: unknown ids drop, missing ids append
+	// in default order, so hand-edited arrays keep working.
+	if len(result.Bar.Islands) == 0 {
+		result.Bar.Islands = DefaultIslands()
+	} else {
+		result.Bar.Islands = NormalizeIslands(result.Bar.Islands)
 	}
 	if err := Validate(result); err != nil {
 		return Config{}, fmt.Errorf("validate config: %w", err)
@@ -234,6 +285,7 @@ func Write(path string, cfg Config) error {
 func SetField(cfg Config, key string, value string) (Config, error) {
 	result := cfg
 	result.Bar.Outputs = append([]string(nil), cfg.Bar.Outputs...)
+	result.Bar.Islands = append([]string(nil), cfg.Bar.Islands...)
 	result.Clock.Timezones = append([]string(nil), cfg.Clock.Timezones...)
 
 	switch key {
@@ -275,6 +327,12 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 		result.Bar.ShowMedia = parsed
 	case "bar.systemMetrics":
 		result.Bar.SystemMetrics = parseString(value)
+	case "bar.islands":
+		var islands []string
+		if err := json.Unmarshal([]byte(value), &islands); err != nil {
+			return cfg, fmt.Errorf("bar.islands must be a JSON string array: %w", err)
+		}
+		result.Bar.Islands = NormalizeIslands(islands)
 	case "weather.enabled":
 		parsed, err := strconv.ParseBool(value)
 		if err != nil {
@@ -344,6 +402,8 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Bar.ShowMedia
 	case "bar.systemMetrics":
 		value = cfg.Bar.SystemMetrics
+	case "bar.islands":
+		value = cfg.Bar.Islands
 	case "weather.enabled":
 		value = cfg.Weather.Enabled
 	case "weather.units":

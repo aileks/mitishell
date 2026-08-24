@@ -181,9 +181,15 @@ FocusScope {
         }
 
         Row {
+            id: calendarGridRow
+
+            width: parent.width
+            height: calendarColumn.implicitHeight
             spacing: Theme.spaceSm
 
             Column {
+                id: weekNumberColumn
+
                 visible: root.gutterWidth > 0
                 width: root.gutterWidth
                 spacing: 1
@@ -213,6 +219,9 @@ FocusScope {
             }
 
             Column {
+                id: calendarColumn
+
+                width: 286
                 spacing: Theme.spaceSm
 
                 Row {

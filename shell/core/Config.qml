@@ -17,7 +17,8 @@ QtObject {
             "marginHorizontal": 8,
             "showWindowTitle": true,
             "showMedia": true,
-            "systemMetrics": "separate"
+            "systemMetrics": "separate",
+            "islands": ["system", "audio", "keyboardLayout", "updates", "clock", "tray", "control", "notifications", "reminders", "weather", "power"]
         },
         "weather": {
             "enabled": false,

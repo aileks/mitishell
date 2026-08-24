@@ -23,6 +23,7 @@ IconButton 1.0 IconButton.qml
 IconLabel 1.0 IconLabel.qml
 MediaIsland 1.0 MediaIsland.qml
 MediaPopover 1.0 MediaPopover.qml
+KeyboardLayoutIsland 1.0 KeyboardLayoutIsland.qml
 MetricCard 1.0 MetricCard.qml
 NotificationCard 1.0 NotificationCard.qml
 NotificationIsland 1.0 NotificationIsland.qml
@@ -40,6 +41,7 @@ SettingsHost 1.0 SettingsHost.qml
 SettingsNumberRow 1.0 SettingsNumberRow.qml
 SettingsOutputsRow 1.0 SettingsOutputsRow.qml
 SettingsPill 1.0 SettingsPill.qml
+SettingsTimezonesRow 1.0 SettingsTimezonesRow.qml
 SectionCard 1.0 SectionCard.qml
 SignalBars 1.0 SignalBars.qml
 StateMessage 1.0 StateMessage.qml
@@ -50,6 +52,8 @@ SystemPopover 1.0 SystemPopover.qml
 ToggleRow 1.0 ToggleRow.qml
 TrayIsland 1.0 TrayIsland.qml
 TrayMenu 1.0 TrayMenu.qml
+UpdatesIsland 1.0 UpdatesIsland.qml
+UpdatesPopover 1.0 UpdatesPopover.qml
 WeatherIcon 1.0 WeatherIcon.qml
 WeatherIsland 1.0 WeatherIsland.qml
 WeatherPopover 1.0 WeatherPopover.qml

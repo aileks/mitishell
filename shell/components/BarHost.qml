@@ -85,16 +85,18 @@ PanelWindow {
         id: centerIsland
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: visible
-            ? Math.min(272, root.availableCenterWidth)
-            : 0
+        width: visible ? Math.min(
+            272,
+            root.availableCenterWidth,
+            mediaTrigger.implicitWidth + Theme.spaceLg * 2,
+        ) : 0
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.layerRaised
         border.width: 1
         border.color: Theme.alpha(Theme.purple, 0.42)
         visible: Config.bar.showMedia && Media.meaningful
-            && root.availableCenterWidth >= 72
+            && root.availableCenterWidth > 0
         clip: true
 
         Behavior on width {
@@ -109,11 +111,13 @@ PanelWindow {
 
             anchors.centerIn: parent
             width: Math.max(0, parent.width - Theme.spaceLg * 2)
+            implicitWidth: mediaContent.implicitWidth
             clip: true
             popoverKey: "media"
             screen: root.modelData
 
             MediaIsland {
+                id: mediaContent
                 width: mediaTrigger.width
             }
         }
@@ -176,6 +180,20 @@ PanelWindow {
                 screen: root.modelData
 
                 AudioIsland {}
+            }
+
+            KeyboardLayoutIsland {
+                visible: KeyboardLayout.available
+            }
+
+            BarPopoverTrigger {
+                id: updatesTrigger
+
+                visible: Updates.visible
+                popoverKey: "updates"
+                screen: root.modelData
+
+                UpdatesIsland { open: updatesTrigger.active }
             }
 
             Rectangle {
@@ -290,6 +308,18 @@ PanelWindow {
             AudioPopover {
                 id: audioPopover
 
+                anchors.fill: parent
+            }
+        }
+
+        AnchoredPopover {
+            anchorItem: updatesTrigger
+            open: updatesTrigger.active && Updates.visible
+            contentWidth: 392
+            contentHeight: Math.min(520, updatesPopover.implicitHeight + Theme.spaceLg * 2)
+
+            UpdatesPopover {
+                id: updatesPopover
                 anchors.fill: parent
             }
         }
