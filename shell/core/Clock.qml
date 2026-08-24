@@ -22,6 +22,12 @@ QtObject {
         return format.replace(/([:.])?s{1,2}/g, "").replace(/\s+/g, " ").trim();
     }
 
+    function cycleFormat() {
+        const formats = ["24h", "12h", "24h-seconds", "12h-seconds"];
+        const index = formats.indexOf(Config.clock.format);
+        Settings.setField("clock.format", formats[(index + 1) % formats.length]);
+    }
+
     property Timer tickTimer: Timer {
         interval: 1000
         repeat: true

@@ -58,6 +58,16 @@ func TestSnapshotTreatsCheckupdatesExitTwoAsEmpty(t *testing.T) {
 	}
 }
 
+func TestSnapshotTreatsHelperNoUpdatesAsEmpty(t *testing.T) {
+	result := updates.NewService(fakeRunner{
+		paths: map[string]bool{"checkupdates": true, "yay": true},
+		fail:  map[string]error{"yay": updates.ErrNoUpdates},
+	}).Snapshot(context.Background())
+	if result.Aur.Count != 0 || result.Aur.Error != "" {
+		t.Fatalf("aur = %#v", result.Aur)
+	}
+}
+
 func TestSnapshotPreservesSourceErrors(t *testing.T) {
 	result := updates.NewService(fakeRunner{
 		paths: map[string]bool{"checkupdates": true, "yay": true},

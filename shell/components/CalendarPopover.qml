@@ -398,7 +398,8 @@ FocusScope {
         }
 
         Column {
-            visible: Config.clock.timezones.length > 0
+            visible: Array.isArray(Config.clock.timezones)
+                && Config.clock.timezones.length > 0
             width: parent.width
             spacing: Theme.spaceXs
 
@@ -411,7 +412,8 @@ FocusScope {
             }
 
             Repeater {
-                model: Config.clock.timezones
+                model: Array.isArray(Config.clock.timezones)
+                    ? Config.clock.timezones : []
 
                 delegate: Row {
                     id: zoneRow

@@ -1,7 +1,7 @@
 GO ?= go
 GOFMT ?= gofmt
 NODE ?= node
-QMLLINT ?= qmllint
+QMLLINT ?= /usr/lib/qt6/bin/qmllint
 QUICKSHELL ?= quickshell
 QML_IMPORT_PATH ?= /usr/lib/qt6/qml
 XDG_DATA_HOME ?= $(HOME)/.local/share

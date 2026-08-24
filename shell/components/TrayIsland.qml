@@ -2,17 +2,19 @@ import QtQuick
 import Quickshell.Services.SystemTray
 import "../core"
 
-Row {
+FocusScope {
     id: root
 
     required property var screen
     property var activeItem: null
     property Item activeAnchor: root
+    property bool expanded: false
     readonly property bool menuOpen: SurfaceCoordinator.activeKey === "tray"
         && SurfaceCoordinator.originScreen === screen
 
-    spacing: Theme.spaceXs
-    height: 24
+    implicitWidth: trayRow.implicitWidth
+    implicitHeight: 24
+    activeFocusOnTab: true
 
     function showMenu(item, anchor) {
         if (!item.hasMenu) {
@@ -45,10 +47,53 @@ Row {
         activeAnchor = root;
     }
 
-    Repeater {
-        model: Tray.items
+    Row {
+        id: trayRow
+        anchors.centerIn: parent
+        spacing: Theme.spaceXs
 
-        delegate: FocusScope {
+        FocusScope {
+            width: 24
+            height: 24
+            activeFocusOnTab: true
+            Accessible.name: root.expanded ? "Collapse system tray" : "Expand system tray"
+            Accessible.role: Accessible.Button
+            Accessible.onPressAction: root.expanded = !root.expanded
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.radiusSmall
+                color: parent.activeFocus || chevronHover.hovered ? Theme.hoverFill : "transparent"
+                border.width: parent.activeFocus ? 2 : 0
+                border.color: Theme.blue
+                Text {
+                    anchors.centerIn: parent
+                    text: root.expanded ? "‹" : "›"
+                    color: Theme.textBright
+                    font.family: Theme.fontSans
+                    font.pixelSize: Theme.fontSizeTitle
+                }
+                HoverHandler { id: chevronHover }
+            }
+            TapHandler { onTapped: root.expanded = !root.expanded }
+            Keys.onReturnPressed: function(event) { root.expanded = !root.expanded; event.accepted = true; }
+            Keys.onSpacePressed: function(event) { root.expanded = !root.expanded; event.accepted = true; }
+        }
+
+        Item {
+            width: root.expanded ? trayIcons.implicitWidth : 0
+            height: 24
+            clip: true
+            Behavior on width { NumberAnimation { duration: Motion.duration(Motion.normal); easing.type: Motion.easingStandard } }
+
+            Row {
+                id: trayIcons
+                spacing: Theme.spaceXs
+
+                Repeater {
+                    model: Tray.items
+
+                    delegate: FocusScope {
             id: trayItem
 
             required property var modelData
@@ -165,6 +210,18 @@ Row {
                 trayItem.contextAction();
                 event.accepted = true;
             }
+                    }
+                }
+            }
+        }
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: root.expanded
+        onActivated: {
+            root.closeMenu();
+            root.expanded = false;
         }
     }
 

@@ -111,7 +111,7 @@ func Defaults() Config {
 			Units: "auto",
 		},
 		Clock: Clock{
-			Format:    "auto",
+			Format:    "24h",
 			Timezones: []string{},
 		},
 		Calendar: Calendar{},
@@ -154,6 +154,9 @@ func Load(path string) (Config, error) {
 	// empty format; treat that as "section absent" rather than invalid.
 	if result.Clock.Format == "" {
 		result.Clock = Defaults().Clock
+	}
+	if result.Clock.Timezones == nil {
+		result.Clock.Timezones = []string{}
 	}
 	// Islands normalize leniently: unknown ids drop, missing ids append
 	// in default order, so hand-edited arrays keep working.
