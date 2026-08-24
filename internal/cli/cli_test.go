@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/aileks/mitishell/internal/cli"
+	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
@@ -476,17 +477,20 @@ type doctorStub struct {
 }
 
 type weatherStub struct {
-	calls   int
-	enabled bool
+	calls    int
+	enabled  bool
+	location string
 }
 
 func (stub *weatherStub) Snapshot(
 	_ context.Context,
 	enabled bool,
+	location string,
 	_ weather.Units,
 ) weather.Result {
 	stub.calls++
 	stub.enabled = enabled
+	stub.location = location
 	state := weather.Ready
 	if !enabled {
 		state = weather.Disabled
@@ -852,6 +856,35 @@ func TestInternalWeatherSnapshotKeepsDefaultOptOutDisabled(t *testing.T) {
 	}
 	if result.State != weather.Disabled {
 		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestWeatherLocationPersistsManualAndAutomaticValues(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	dependencies := cli.Dependencies{ConfigPath: path, Shell: shellStub{}}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if code := cli.Run([]string{"weather", "location", " New", "York "}, &stdout, &stderr, dependencies); code != 0 {
+		t.Fatalf("manual exit=%d stderr=%q", code, stderr.String())
+	}
+	loaded, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Weather.Location != "New York" {
+		t.Fatalf("location = %q", loaded.Weather.Location)
+	}
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.Run([]string{"weather", "location", "auto"}, &stdout, &stderr, dependencies); code != 0 {
+		t.Fatalf("auto exit=%d stderr=%q", code, stderr.String())
+	}
+	loaded, err = config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Weather.Location != "" || stdout.String() != "weather location set to auto\n" {
+		t.Fatalf("location=%q stdout=%q", loaded.Weather.Location, stdout.String())
 	}
 }
 

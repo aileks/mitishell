@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import "../core"
 import "../lib/CalendarModel.js" as CalendarModel
@@ -63,9 +65,15 @@ FocusScope {
     }
 
     function focusCursor() {
+        const dates = CalendarModel.monthGrid(
+            displayedMonth.year,
+            displayedMonth.month,
+            Clock.locale.firstDayOfWeek,
+        );
         for (let index = 0; index < 42; index += 1) {
-            const item = dayRepeater.itemAt(index);
-            if (item !== null && CalendarModel.sameDate(item.modelData, cursorDate)) {
+            if (CalendarModel.sameDate(dates[index], cursorDate)) {
+                const item = dayRepeater.itemAt(index);
+                if (item === null) return;
                 item.forceActiveFocus(Qt.TabFocusReason);
                 return;
             }

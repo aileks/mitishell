@@ -57,6 +57,7 @@ UpdatesIsland 1.0 UpdatesIsland.qml
 UpdatesPopover 1.0 UpdatesPopover.qml
 WeatherIcon 1.0 WeatherIcon.qml
 WeatherIsland 1.0 WeatherIsland.qml
+WeatherLocationEditor 1.0 WeatherLocationEditor.qml
 WeatherPopover 1.0 WeatherPopover.qml
 WindowTitle 1.0 WindowTitle.qml
 WorkspaceStrip 1.0 WorkspaceStrip.qml

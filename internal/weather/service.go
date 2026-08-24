@@ -24,11 +24,6 @@ const (
 	Fahrenheit Units = "fahrenheit"
 )
 
-type Location struct {
-	Latitude  float64
-	Longitude float64
-}
-
 type Current struct {
 	Temperature float64 `json:"temperature"`
 	Apparent    float64 `json:"apparent"`
@@ -51,11 +46,13 @@ type Day struct {
 }
 
 type Snapshot struct {
-	UpdatedAt time.Time `json:"updatedAt"`
-	Units     Units     `json:"units"`
-	Current   Current   `json:"current"`
-	Hourly    []Hour    `json:"hourly"`
-	Daily     []Day     `json:"daily"`
+	UpdatedAt         time.Time `json:"updatedAt"`
+	Units             Units     `json:"units"`
+	RequestedLocation string    `json:"requestedLocation"`
+	ResolvedLocation  string    `json:"resolvedLocation"`
+	Current           Current   `json:"current"`
+	Hourly            []Hour    `json:"hourly"`
+	Daily             []Day     `json:"daily"`
 }
 
 type Result struct {
@@ -65,12 +62,8 @@ type Result struct {
 	Error      string   `json:"error,omitempty"`
 }
 
-type LocationProvider interface {
-	Locate(context.Context) (Location, error)
-}
-
 type ForecastProvider interface {
-	Fetch(context.Context, Location, Units) (Snapshot, error)
+	Fetch(context.Context, string, Units) (Snapshot, error)
 }
 
 type Cache interface {
@@ -79,60 +72,56 @@ type Cache interface {
 }
 
 type Service struct {
-	location LocationProvider
 	forecast ForecastProvider
 	cache    Cache
 	now      func() time.Time
 }
 
 func NewService(
-	location LocationProvider,
 	forecast ForecastProvider,
 	cache Cache,
 	now func() time.Time,
 ) Service {
-	return Service{location: location, forecast: forecast, cache: cache, now: now}
+	return Service{forecast: forecast, cache: cache, now: now}
 }
 
-func (service Service) Snapshot(ctx context.Context, enabled bool, units Units) Result {
+func (service Service) Snapshot(ctx context.Context, enabled bool, location string, units Units) Result {
 	if !enabled {
 		return Result{State: Disabled}
 	}
 
-	location, err := service.location.Locate(ctx)
+	snapshot, err := service.forecast.Fetch(ctx, location, units)
 	if err == nil {
-		var snapshot Snapshot
-		snapshot, err = service.forecast.Fetch(ctx, location, units)
-		if err == nil {
-			if snapshot.UpdatedAt.IsZero() {
-				snapshot.UpdatedAt = service.now()
-			}
-			snapshot.Units = units
-			result := Result{State: Ready, Snapshot: snapshot}
-			if saveErr := service.cache.Save(snapshot); saveErr != nil {
-				result.Error = fmt.Sprintf("cache weather: %v", saveErr)
-			}
-			return result
+		if snapshot.UpdatedAt.IsZero() {
+			snapshot.UpdatedAt = service.now()
 		}
+		snapshot.Units = units
+		snapshot.RequestedLocation = location
+		result := Result{State: Ready, Snapshot: snapshot}
+		if saveErr := service.cache.Save(snapshot); saveErr != nil {
+			result.Error = fmt.Sprintf("cache weather: %v", saveErr)
+		}
+		return result
 	}
 
-	failure := err
 	cached, cacheErr := service.cache.Load()
-	if cacheErr == nil {
+	if cacheErr == nil && cached.RequestedLocation == location && cached.Units == units {
 		age := service.now().Sub(cached.UpdatedAt)
 		if age >= 0 && age <= staleLimit {
 			return Result{
 				State:      Stale,
 				AgeMinutes: int(age.Round(time.Minute) / time.Minute),
 				Snapshot:   cached,
-				Error:      failure.Error(),
+				Error:      err.Error(),
 			}
 		}
 	}
 
-	message := failure.Error()
+	message := err.Error()
 	if cacheErr != nil {
 		message = fmt.Sprintf("%s; cached weather unavailable: %v", message, cacheErr)
+	} else if cached.RequestedLocation != location || cached.Units != units {
+		message = fmt.Sprintf("%s; cached weather belongs to another location or unit system", message)
 	}
 	return Result{State: Unavailable, Error: message}
 }

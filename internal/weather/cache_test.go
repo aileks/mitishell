@@ -14,10 +14,10 @@ func TestFileCachePersistsOnlyNormalizedSnapshot(t *testing.T) {
 	cache := weather.NewFileCache(path)
 	want := weather.Snapshot{
 		UpdatedAt: time.Date(2026, 8, 20, 19, 0, 0, 0, time.UTC),
-		Units:     weather.Celsius,
-		Current:   weather.Current{Temperature: 22.5, WeatherCode: 2},
-		Hourly:    []weather.Hour{{Time: "2026-08-20T19:00", Temperature: 22.5}},
-		Daily:     []weather.Day{{Date: "2026-08-20", Minimum: 17, Maximum: 25}},
+		Units:     weather.Celsius, RequestedLocation: "New York", ResolvedLocation: "Long Island City, New York",
+		Current: weather.Current{Temperature: 22.5, WeatherCode: 2},
+		Hourly:  []weather.Hour{{Time: "2026-08-20T19:00", Temperature: 22.5}},
+		Daily:   []weather.Day{{Date: "2026-08-20", Minimum: 17, Maximum: 25}},
 	}
 
 	if err := cache.Save(want); err != nil {
@@ -37,6 +37,21 @@ func TestFileCachePersistsOnlyNormalizedSnapshot(t *testing.T) {
 	}
 	if gotMode := info.Mode().Perm(); gotMode != 0o600 {
 		t.Fatalf("cache mode = %o, want 600", gotMode)
+	}
+}
+
+func TestFileCacheLoadsPreLocationAutomaticEntry(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "weather.json")
+	contents := `{"updatedAt":"2026-08-20T19:00:00Z","units":"celsius","current":{"temperature":22,"apparent":21,"humidity":50,"weatherCode":2,"windSpeed":4},"hourly":[],"daily":[]}`
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := weather.NewFileCache(path).Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.RequestedLocation != "" || snapshot.ResolvedLocation != "" {
+		t.Fatalf("snapshot = %#v", snapshot)
 	}
 }
 

@@ -8,7 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 const CurrentVersion = 1
@@ -75,8 +78,9 @@ func NormalizeIslands(islands []string) []string {
 }
 
 type Weather struct {
-	Enabled bool   `json:"enabled"`
-	Units   string `json:"units"`
+	Enabled  bool   `json:"enabled"`
+	Units    string `json:"units"`
+	Location string `json:"location"`
 }
 
 type Clock struct {
@@ -158,6 +162,7 @@ func Load(path string) (Config, error) {
 	if result.Clock.Timezones == nil {
 		result.Clock.Timezones = []string{}
 	}
+	result.Weather.Location = strings.TrimSpace(result.Weather.Location)
 	// Islands normalize leniently: unknown ids drop, missing ids append
 	// in default order, so hand-edited arrays keep working.
 	if len(result.Bar.Islands) == 0 {
@@ -214,6 +219,14 @@ func Validate(cfg Config) error {
 	case "auto", "celsius", "fahrenheit":
 	default:
 		return errors.New("weather.units must be auto, celsius, or fahrenheit")
+	}
+	if utf8.RuneCountInString(cfg.Weather.Location) > 80 {
+		return errors.New("weather.location must contain at most 80 characters")
+	}
+	for _, character := range cfg.Weather.Location {
+		if unicode.IsControl(character) {
+			return errors.New("weather.location must not contain control characters")
+		}
 	}
 	switch cfg.Clock.Format {
 	case "auto", "24h", "12h", "24h-seconds", "12h-seconds":
@@ -344,6 +357,8 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 		result.Weather.Enabled = parsed
 	case "weather.units":
 		result.Weather.Units = parseString(value)
+	case "weather.location":
+		result.Weather.Location = strings.TrimSpace(parseString(value))
 	case "clock.format":
 		result.Clock.Format = parseString(value)
 	case "clock.showDate":
@@ -411,6 +426,8 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Weather.Enabled
 	case "weather.units":
 		value = cfg.Weather.Units
+	case "weather.location":
+		value = cfg.Weather.Location
 	case "clock.format":
 		value = cfg.Clock.Format
 	case "clock.showDate":

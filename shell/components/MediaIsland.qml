@@ -60,6 +60,7 @@ Item {
                 onImplicitWidthChanged: root.restartMarquee()
 
                 Text {
+                    anchors.verticalCenter: parent.verticalCenter
                     text: Media.title
                     color: Media.available ? Theme.textBright : Theme.textMuted
                     font.family: Theme.fontSans
@@ -68,6 +69,7 @@ Item {
                 }
 
                 Text {
+                    anchors.verticalCenter: parent.verticalCenter
                     visible: Media.artist !== ""
                     text: "•"
                     color: Theme.orange
@@ -76,6 +78,7 @@ Item {
                 }
 
                 Text {
+                    anchors.verticalCenter: parent.verticalCenter
                     visible: Media.artist !== ""
                     text: Media.artist
                     color: Theme.textMuted

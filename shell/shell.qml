@@ -6,6 +6,8 @@ import "core"
 import "lib/AudioModel.js" as AudioModel
 
 ShellRoot {
+    id: root
+
     Variants {
         model: Quickshell.screens
 
@@ -80,7 +82,7 @@ ShellRoot {
         target: "reminders"
 
         function open(): string {
-            const screen = focusedScreen();
+            const screen = root.focusedScreen();
             if (screen === null) {
                 return "Reminder overlay unavailable";
             }
@@ -109,7 +111,7 @@ ShellRoot {
         target: "power"
 
         function open(): string {
-            const screen = focusedScreen();
+            const screen = root.focusedScreen();
             if (screen === null) {
                 return "power menu unavailable";
             }
@@ -122,7 +124,7 @@ ShellRoot {
         target: "settings"
 
         function open(): string {
-            const screen = focusedScreen();
+            const screen = root.focusedScreen();
             if (screen === null) {
                 return "settings unavailable";
             }
@@ -238,7 +240,7 @@ ShellRoot {
         target: "control"
 
         function toggle(page: string): string {
-            const target = focusedScreen();
+            const target = root.focusedScreen();
             if (target === null) {
                 return "control center unavailable";
             }

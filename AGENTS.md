@@ -48,7 +48,7 @@ Visual and interaction changes may improve grouping, navigation, transitions, an
 
 **Optional integrations:** missing external programs or services should make the related capability unavailable, not break the shell.
 
-**Weather privacy:** weather is opt-in will use `wttr.in` as the source with manual location setting. This is planned for a future release. Current implementation was tentative.
+**Weather privacy:** weather is opt-in and uses `wttr.in`. Automatic location lets the provider infer a rough location from the network request; manual location sends the configured place text instead. Cache reuse must match both the requested location and unit system.
 
 ## Verification
 

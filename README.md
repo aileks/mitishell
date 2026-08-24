@@ -19,6 +19,8 @@ Brightness control additionally needs `ddcutil` and read access to the monitors'
 
 Reminders additionally need a working user systemd session with `systemd-run` and `systemctl`. Missing reminder dependencies disable reminders without affecting the rest of the shell.
 
+The update widget needs `checkupdates` from `pacman-contrib`. AUR counts and upgrades additionally use `paru` or `yay`, preferring `paru`. Missing optional update tools hide or reduce the widget without affecting the shell. Launching an update also needs `xdg-terminal-exec`, `$TERMINAL`, foot, Alacritty, kitty, or Ghostty. Mitishell only shows the command and launches it after explicit activation.
+
 ## Development
 
 ```bash
@@ -39,11 +41,21 @@ bin/mitishell config path
 bin/mitishell config validate
 bin/mitishell config get bar.outputs
 bin/mitishell config set weather.enabled true
+bin/mitishell weather location "New York"
+bin/mitishell weather location auto
 bin/mitishell notifications dnd
 bin/mitishell power menu
 bin/mitishell settings
 bin/mitishell control
 ```
+
+`bar.islands` is the persisted right-island order. It accepts a JSON string array through `config set`; unknown and duplicate ids are removed and missing ids return in the default order. The clock defaults to 24-hour time. Right-click its bar label to cycle persisted 24-hour, 12-hour, and seconds variants. `clock.showDate`, `clock.timezones`, and `calendar.showWeekNumbers` control the remaining clock and calendar details.
+
+## Weather
+
+Weather is opt-in. When enabled, Mitishell sends either the configured place name or an automatic-location request to [wttr.in](https://wttr.in/) and caches the last successful three-day forecast. Automatic mode allows wttr.in to infer a rough location from the request's network address. A manual place avoids that inference request but still sends the place text to wttr.in.
+
+Set a place with `mitishell weather location <place...>`, clear it with `mitishell weather location auto`, or use the shared editor in the weather popover and settings window. `weather.location` stores the manual query, while an empty value means automatic detection. `weather.units` accepts `auto`, `celsius`, or `fahrenheit`. Cached data is reused only for the same query and unit system.
 
 ## Control center
 

@@ -64,10 +64,9 @@ func main() {
 		os.Exit(1)
 	}
 	weatherService := weather.NewService(
-		weather.NewGeoClue("mitishell", 12*time.Second),
-		weather.NewOpenMeteoClient(
+		weather.NewWttrClient(
 			&http.Client{Timeout: 15 * time.Second},
-			"https://api.open-meteo.com/v1/forecast",
+			"https://wttr.in",
 			time.Now,
 		),
 		weather.NewFileCache(filepath.Join(cacheDirectory, "mitishell", "weather.json")),

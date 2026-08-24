@@ -105,7 +105,7 @@ Item {
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
             BarPopoverTrigger { id: trigger; popoverKey: "weather"; screen: root.screen; WeatherIsland {} }
-            AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 380; contentHeight: 454; WeatherPopover { anchors.fill: parent } }
+            AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 380; contentHeight: Math.min(680, popover.implicitHeight + Theme.spaceLg * 2); WeatherPopover { id: popover; anchors.fill: parent } }
         }
     }
     Component { id: powerComponent; PowerIsland { screen: root.screen } }

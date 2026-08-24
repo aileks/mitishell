@@ -33,8 +33,8 @@ Item {
             color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption
         }
         Text {
-            visible: Updates.result !== null && Updates.result.aur.error
-            width: parent.width; wrapMode: Text.Wrap; text: Updates.result === null ? "" : Updates.result.aur.error
+            visible: Updates.result !== null && (Updates.result.aur.error || "") !== ""
+            width: parent.width; wrapMode: Text.Wrap; text: Updates.result === null ? "" : (Updates.result.aur.error || "")
             color: Theme.red; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption
         }
         Repeater {

@@ -53,6 +53,26 @@ func TestLoadNormalizesMissingClockTimezones(t *testing.T) {
 	}
 }
 
+func TestWeatherLocationNormalizesAndValidates(t *testing.T) {
+	cfg := config.Defaults()
+	updated, err := config.SetField(cfg, "weather.location", "  New York  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.Weather.Location != "New York" {
+		t.Fatalf("location = %q", updated.Weather.Location)
+	}
+	if got, err := config.GetField(updated, "weather.location"); err != nil || got != `"New York"` {
+		t.Fatalf("get = %q, %v", got, err)
+	}
+	if _, err := config.SetField(cfg, "weather.location", "bad\nplace"); err == nil {
+		t.Fatal("accepted control character")
+	}
+	if _, err := config.SetField(cfg, "weather.location", strings.Repeat("é", 81)); err == nil {
+		t.Fatal("accepted more than 80 Unicode code points")
+	}
+}
+
 func TestLoadReturnsValidatedConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	contents := `{
