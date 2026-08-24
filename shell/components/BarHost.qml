@@ -10,9 +10,16 @@ PanelWindow {
 
     required property var modelData
     property var localOrder: Config.bar.islands.slice()
-    property int dragFrom: -1
-    property int dragTo: -1
-    property real dragOffset: 0
+    property string dragSourceId: ""
+    property string dragTargetId: ""
+    property bool dragAfter: false
+    property point dragPointerGlobal: Qt.point(0, 0)
+    property point dragPressOffset: Qt.point(0, 0)
+    property size dragGhostSize: Qt.size(0, 0)
+    property url dragImageSource
+    property rect dragMarkerGlobalRect: Qt.rect(0, 0, 0, 0)
+    property bool dragDropValid: false
+    readonly property bool dragging: dragSourceId !== ""
     readonly property real availableCenterWidth: Math.max(0, 2 * Math.min(
         width / 2 - leftIsland.width - Theme.spaceLg,
         width / 2 - rightIsland.width - Theme.spaceLg,
@@ -31,27 +38,83 @@ PanelWindow {
         return BarModel.nextVisible(localOrder, index, islandVisible);
     }
 
-    function updateDragTarget() {
-        const dragged = rightRepeater.itemAt(dragFrom);
-        if (dragged === null) return;
-        const center = dragged.x + dragged.width / 2 + dragOffset;
-        let target = dragFrom;
-        for (let index = 0; index < localOrder.length; index += 1) {
-            const candidate = rightRepeater.itemAt(index);
-            if (candidate !== null && candidate.visible
-                    && center > candidate.x + candidate.width / 2) target = index;
-        }
-        dragTo = target;
+    function beginDrag(islandDelegate, pressScenePosition, scenePosition) {
+        const visual = islandDelegate.dragVisual;
+        if (visual === null) return;
+
+        dragSourceId = islandDelegate.modelData;
+        dragPressOffset = visual.mapFromItem(null, pressScenePosition);
+        dragGhostSize = Qt.size(Math.ceil(visual.width), Math.ceil(visual.height));
+        SurfaceCoordinator.close();
+        updateDrag(scenePosition);
+
+        const sourceId = dragSourceId;
+        visual.grabToImage(function(result) {
+            if (root.dragSourceId === sourceId) root.dragImageSource = result.url;
+        }, dragGhostSize);
     }
 
-    function finishDrag() {
-        if (dragFrom >= 0 && dragTo >= 0 && dragFrom !== dragTo) {
-            localOrder = BarModel.move(localOrder, dragFrom, dragTo);
-            Settings.setField("bar.islands", JSON.stringify(localOrder));
+    function updateDrag(scenePosition) {
+        if (!dragging) return;
+        dragPointerGlobal = contentItem.mapToGlobal(scenePosition.x, scenePosition.y);
+
+        const rowPosition = rightContent.mapFromItem(null, scenePosition);
+        if (rowPosition.x < 0 || rowPosition.x > rightContent.width
+                || rowPosition.y < 0 || rowPosition.y > rightContent.height) {
+            dragTargetId = "";
+            dragDropValid = false;
+            return;
         }
-        dragFrom = -1;
-        dragTo = -1;
-        dragOffset = 0;
+
+        let target = null;
+        let targetId = "";
+        let after = false;
+        for (let index = 0; index < localOrder.length; index += 1) {
+            const candidate = rightRepeater.itemAt(index);
+            if (candidate === null || !candidate.visible || candidate.width <= 0) continue;
+            target = candidate;
+            targetId = localOrder[index];
+            after = rowPosition.x >= candidate.x + candidate.width / 2;
+            if (!after) break;
+        }
+
+        if (target === null) {
+            dragTargetId = "";
+            dragDropValid = false;
+            return;
+        }
+
+        dragTargetId = targetId;
+        dragAfter = after;
+        const marker = target.mapToGlobal(after ? target.width : 0, 0);
+        dragMarkerGlobalRect = Qt.rect(marker.x, marker.y, 3, target.height);
+        dragDropValid = true;
+    }
+
+    function finishDrag(scenePosition) {
+        updateDrag(scenePosition);
+        if (dragDropValid) {
+            const moved = BarModel.moveAtDrop(
+                localOrder,
+                dragSourceId,
+                dragTargetId,
+                dragAfter,
+            );
+            if (JSON.stringify(moved) !== JSON.stringify(localOrder)) {
+                localOrder = moved;
+                Settings.setField("bar.islands", JSON.stringify(localOrder));
+            }
+        }
+        clearDrag();
+    }
+
+    function clearDrag() {
+        dragSourceId = "";
+        dragTargetId = "";
+        dragAfter = false;
+        dragDropValid = false;
+        dragImageSource = "";
+        dragGhostSize = Qt.size(0, 0);
     }
 
     function moveKeyboard(index, delta) {
@@ -80,6 +143,17 @@ PanelWindow {
 
     NotificationMediaCache {
         screen: root.modelData
+    }
+
+    BarDragGhost {
+        ghostScreen: root.modelData
+        active: root.dragging
+        imageSource: root.dragImageSource
+        pointerGlobal: root.dragPointerGlobal
+        pressOffset: root.dragPressOffset
+        ghostSize: root.dragGhostSize
+        markerGlobalRect: root.dragMarkerGlobalRect
+        markerVisible: root.dragDropValid
     }
 
     Rectangle {
@@ -212,26 +286,19 @@ PanelWindow {
                     id: islandDelegate
                     required property string modelData
                     required property int index
-                    property bool armed: false
-                    readonly property real siblingShift: {
-                        if (root.dragFrom < root.dragTo && index > root.dragFrom && index <= root.dragTo)
-                            return -(rightRepeater.itemAt(root.dragFrom)?.width || 0) - rightContent.spacing;
-                        if (root.dragFrom > root.dragTo && index >= root.dragTo && index < root.dragFrom)
-                            return (rightRepeater.itemAt(root.dragFrom)?.width || 0) + rightContent.spacing;
-                        return 0;
-                    }
+                    readonly property var dragVisual: island.dragVisual
 
                     width: island.implicitWidth
                     height: rightContent.height
-                    z: root.dragFrom === index ? 10 : 0
-                    scale: root.dragFrom === index ? 1.08 : 1
-                    Accessible.description: "Hold and drag, or press Control Shift Left or Right, to reorder"
+                    opacity: root.dragSourceId === modelData ? 0.24 : 1
+                    Accessible.description: "Drag to reorder, or press Control Shift Left or Right"
 
-                    transform: Translate {
-                        x: root.dragFrom === islandDelegate.index ? root.dragOffset : islandDelegate.siblingShift
-                        Behavior on x { NumberAnimation { duration: Motion.duration(Motion.quick); easing.type: Motion.easingStandard } }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Motion.duration(Motion.quick)
+                            easing.type: Motion.easingStandard
+                        }
                     }
-                    Behavior on scale { NumberAnimation { duration: Motion.duration(Motion.quick); easing.type: Motion.easingStandard } }
 
                     BarIsland {
                         id: island
@@ -244,32 +311,13 @@ PanelWindow {
                         )
                     }
 
-                    TapHandler {
-                        id: holdHandler
-                        longPressThreshold: 0.35
-                        onLongPressed: {
-                            islandDelegate.armed = true;
-                            root.dragFrom = islandDelegate.index;
-                            root.dragTo = islandDelegate.index;
+                    BarReorderGesture {
+                        onDragStarted: function(pressScenePosition, scenePosition) {
+                            root.beginDrag(islandDelegate, pressScenePosition, scenePosition);
                         }
-                        onPressedChanged: {
-                            if (!pressed && islandDelegate.armed) {
-                                islandDelegate.armed = false;
-                                root.finishDrag();
-                            }
-                        }
-                    }
-
-                    DragHandler {
-                        id: dragHandler
-                        enabled: islandDelegate.armed
-                        target: null
-                        xAxis.enabled: true
-                        yAxis.enabled: false
-                        onTranslationChanged: {
-                            root.dragOffset = activeTranslation.x;
-                            root.updateDragTarget();
-                        }
+                        onDragMoved: function(scenePosition) { root.updateDrag(scenePosition); }
+                        onDragFinished: function(scenePosition) { root.finishDrag(scenePosition); }
+                        onDragCanceled: root.clearDrag()
                     }
 
                     Keys.onPressed: function(event) {
@@ -296,7 +344,7 @@ PanelWindow {
 
     Connections {
         target: Config
-        function onBarChanged() { if (root.dragFrom < 0) root.localOrder = Config.bar.islands.slice(); }
+        function onBarChanged() { if (!root.dragging) root.localOrder = Config.bar.islands.slice(); }
     }
 
     Connections {

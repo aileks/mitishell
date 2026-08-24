@@ -9,6 +9,7 @@ Item {
     required property string islandId
     required property var screen
     property bool separatorAfter: false
+    readonly property var dragVisual: islandLoader.item
     readonly property bool available: islandId === "system" ? Config.bar.systemMetrics !== "hidden"
         : islandId === "keyboardLayout" ? KeyboardLayout.available
         : islandId === "updates" ? Updates.visible
