@@ -28,6 +28,9 @@ test("icon resolution follows aliases, local files, bundled icons, and themes", 
     assert.deepEqual(OsdModel.resolveIcon("settings", false), {
         kind: "bundled", value: "settings", fallback: "settings",
     });
+    assert.deepEqual(OsdModel.resolveIcon("moon", false), {
+        kind: "bundled", value: "moon", fallback: "moon",
+    });
     assert.deepEqual(OsdModel.resolveIcon("network-wireless", true), {
         kind: "theme", value: "network-wireless", fallback: "network-wireless",
     });

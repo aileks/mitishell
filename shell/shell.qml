@@ -44,6 +44,12 @@ ShellRoot {
         delegate: ReminderHost {}
     }
 
+    Variants {
+        model: Quickshell.screens
+
+        delegate: EmojiHost {}
+    }
+
     IpcHandler {
         target: "shell"
 
@@ -95,6 +101,19 @@ ShellRoot {
             Reminders.refresh();
             Osd.showReminder(message);
             return "Reminder state refreshed";
+        }
+    }
+
+    IpcHandler {
+        target: "emoji"
+
+        function toggle(): string {
+            const screen = root.focusedScreen();
+            if (screen === null) {
+                return "emoji picker unavailable";
+            }
+            SurfaceCoordinator.toggle("emoji", screen);
+            return "emoji picker toggled";
         }
     }
 

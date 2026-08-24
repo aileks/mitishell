@@ -22,6 +22,7 @@ ControlHost 1.0 ControlHost.qml
 ControlIsland 1.0 ControlIsland.qml
 ControlMediaPage 1.0 ControlMediaPage.qml
 ControlNetworkPage 1.0 ControlNetworkPage.qml
+EmojiHost 1.0 EmojiHost.qml
 IconButton 1.0 IconButton.qml
 IconLabel 1.0 IconLabel.qml
 MediaIsland 1.0 MediaIsland.qml

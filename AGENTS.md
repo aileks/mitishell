@@ -55,9 +55,9 @@ Visual and input work may improve groups, paths, motion, and feedback while keep
 1. Create a feature branch unless the user says to stay put. Keep quick fixes and docs passes on the current branch.
 2. Make small, focused commits as work moves on.
 3. Run `make test` after the work ends.
-4. Merge the branch into `dev`. Then do a quick code review without the code review skill.
-5. Check code, UX, UI, and all other key risks. Once they pass, merge `dev` into `main`.
-6. Add a tag when the release needs one. Use past releases as the form for its notes.
+4. Merge the branch into `dev` (fast-forward). Then do a quick code review without the code review skill.
+5. Check code, UX, UI, and all other key risks. Once they pass, merge `dev` into `main` as a merge commit.
+6. Add a tag when the release needs one. Give release notes based on the format of past release notes.
 
 ## Verification
 

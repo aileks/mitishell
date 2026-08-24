@@ -21,6 +21,8 @@ Reminders additionally need a working user systemd session with `systemd-run` an
 
 The update widget needs `checkupdates` from `pacman-contrib`. AUR counts and upgrades additionally use `paru` or `yay`, preferring `paru`. Missing optional update tools hide or reduce the widget without affecting the shell. Launching an update also needs `xdg-terminal-exec`, `$TERMINAL`, foot, Alacritty, kitty, or Ghostty. Mitishell only shows the command and launches it after explicit activation.
 
+Night-light controls need a user-managed `hyprsunset` process. Mitishell reads and switches its live identity state through `hyprctl`; it does not start, supervise, or configure the outside tool. The control stays hidden when `hyprsunset` is not running.
+
 ## Development
 
 ```bash
@@ -47,6 +49,8 @@ bin/mitishell notifications dnd
 bin/mitishell power menu
 bin/mitishell settings
 bin/mitishell control
+bin/mitishell emoji
+bin/mitishell night-light status
 ```
 
 `bar.islands` is the persisted right-island order. It accepts a JSON string array through `config set`; unknown and duplicate ids are removed and missing ids return in the default order. The clock defaults to 24-hour time. Right-click its bar label to cycle persisted 24-hour, 12-hour, and seconds variants. `clock.showDate`, `clock.timezones`, and `calendar.showWeekNumbers` control the remaining clock and calendar details.
@@ -109,6 +113,29 @@ mitishell osd --icon '󰔛' --message "Nerd Font glyph"
 ```
 
 At least one of `--icon`, `--message`, or `--progress` is required. Progress accepts 0 through 100, duration accepts 250 through 30000 milliseconds, and the default duration is 1200 milliseconds. Icons resolve through Mitishell aliases, readable local files, bundled icons, freedesktop theme icons, then Nerd Font glyphs or text. Remote image URLs are rejected.
+
+## Emoji picker
+
+`mitishell emoji` toggles a centered picker on the focused output. Type to search the complete bundled catalog, use the category row or arrow and page keys to move, and press Enter or select a cell to copy it. Escape clears an active search before closing the picker.
+
+The picker keeps the 24 most recently copied unique emojis and exposes a clear action in its Recents category. This state lives at `$XDG_STATE_HOME/mitishell/emoji-recents.json`, or `~/.local/state/mitishell/emoji-recents.json` when `XDG_STATE_HOME` is unset.
+
+```ini
+bind = SUPER, PERIOD, exec, mitishell emoji
+```
+
+## Night light
+
+Mitishell controls the identity state and reports the current color temperature of an already-running `hyprsunset`. The Control Center Home page shows the live state and polls only while the control center is open. Successful changes show a focused-output OSD.
+
+```bash
+mitishell night-light on
+mitishell night-light off
+mitishell night-light toggle
+mitishell night-light status
+```
+
+`status` prints `on <kelvin> K` or `off <kelvin> K`. Commands fail without starting anything when `hyprsunset` is absent or stopped.
 
 ## Reminders
 
