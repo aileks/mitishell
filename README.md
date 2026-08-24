@@ -1,9 +1,9 @@
 # Mitishell
 
-Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
-
 > [!WARNING]  
 > This project is under active development.
+
+Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShe
 - Qt 6 QML tooling
 - Node.js
 - GNU Make
-- A Nerd Font for shell and literal OSD glyphs
+- A Nerd Font for shell and OSD glyphs
 
 Brightness control additionally needs `ddcutil` and read access to the monitors' i2c buses (typically membership in the `i2c` group). Wi-Fi needs NetworkManager and Bluetooth needs BlueZ running; when either is missing the related page reports unavailable and the rest of the shell is unaffected.
 
@@ -77,7 +77,7 @@ bindl = SUPER, C, exec, mitishell settings
 
 Mitishell runs its own notification server, so no external daemon is needed. The bar's bell island opens a popover with recent history, actions, and the do-not-disturb switch; toast cards stack under the same island, pause while that output is fullscreen or the session is locked, and land in history. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
 
-The newest 50 non-transient notifications persist across reloads and restarts. State lives at `$XDG_STATE_HOME/mitishell/notifications/history.json`, or `~/.local/state/mitishell/notifications/history.json` when `XDG_STATE_HOME` is unset. Captured avatars and content images live in the sibling `media` directory. Restored notifications are history-only and do not retain live actions.
+The newest 50 non-transient notifications persist across reloads and restarts. State lives at `$XDG_STATE_HOME/mitishell/notifications/history.json`, or `~/.local/state/mitishell/notifications/history.json` when `XDG_STATE_HOME` is unset. Captured avatars and content images live in the sibling `media` directory. Restored notifications are history-only and don't retain live actions.
 
 The power menu is a centered overlay with lock, logout, suspend, hibernate, reboot, and shutdown. Choosing an action morphs it into a confirmation. Suspend and hibernate appear only when logind supports them, and locking goes through the session's lock signal so your idle daemon decides what locks the screen.
 
@@ -105,10 +105,10 @@ Show a focused-output OSD from scripts with any combination of icon, message, an
 ```bash
 mitishell osd --icon info --message "Build finished"
 mitishell osd --message "Syncing" --progress 65 --duration 2000
-mitishell osd --icon '󰔛' --message "Literal Nerd Font glyph"
+mitishell osd --icon '󰔛' --message "Nerd Font glyph"
 ```
 
-At least one of `--icon`, `--message`, or `--progress` is required. Progress accepts 0 through 100, duration accepts 250 through 30000 milliseconds, and the default duration is 1200 milliseconds. Icons resolve through Mitishell aliases, readable local files, bundled icons, freedesktop theme icons, then literal Nerd Font glyphs or text. Remote image URLs are rejected.
+At least one of `--icon`, `--message`, or `--progress` is required. Progress accepts 0 through 100, duration accepts 250 through 30000 milliseconds, and the default duration is 1200 milliseconds. Icons resolve through Mitishell aliases, readable local files, bundled icons, freedesktop theme icons, then Nerd Font glyphs or text. Remote image URLs are rejected.
 
 ## Reminders
 
@@ -123,7 +123,7 @@ mitishell reminder clear
 
 Messages are optional. An omitted message becomes `Your N minutes are up`. Active reminders appear beside the notification control and remain individually cancellable in the overlay. Scheduling and cancellation use a pink OSD instead of adding history entries.
 
-Timers are transient user-systemd units. Their private metadata lives under `$XDG_RUNTIME_DIR/mitishell/reminders`, so active and pending reminders end with the login session and do not survive logout or reboot. Fired reminders become normal-urgency Mitishell notifications, bypass do-not-disturb, and remain in notification history. If the notification server is absent when a timer fires, Mitishell retains that delivery until it returns during the same login.
+Timers are transient user-systemd units. Their private metadata lives under `$XDG_RUNTIME_DIR/mitishell/reminders`, so active and pending reminders end with the login session and don't survive logout or reboot. Fired reminders become normal-urgency Mitishell notifications, bypass do-not-disturb, and remain in notification history. If the notification server is absent when a timer fires, Mitishell retains that delivery until it returns during the same login.
 
 ## Source installation
 

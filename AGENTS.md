@@ -1,59 +1,68 @@
 # Mitishell
 
-Mitishell is a personal Hyprland shell built with QuickShell, QML, and a small Go companion binary. It targets Arch Linux and one coherent desktop experience. Do not turn it into a general shell framework.
+Mitishell gives Hyprland a shell built with QuickShell, QML, and a small Go tool. It runs on Arch Linux and aims for one clear desktop flow. Keep that focus. Don't turn it into a shell framework for all needs.
 
 ## Read before changing behavior
 
-- Read `ROADMAP.md` before adding a feature or expanding scope. Planned releases are vertical slices and the explicit non-goals are intentional. If a change completes or materially changes a roadmap item, update the roadmap with it.
-- Read `README.md` before changing installation, configuration, external integrations, or weather behavior. Those are user-facing contracts.
-- Prefer the smallest coherent change. Do not add machinery for hypothetical future use, and do not mix unrelated cleanup into feature or bug-fix work.
+- Read `ROADMAP.md` before adding a feature or more scope. Each planned tag ships one useful slice. The non-goals set firm limits. Update the roadmap when a change ends or alters an item.
+- Read `README.md` before changing install steps, settings, outside links, or weather. Those facts form user-facing contracts.
+- Prefer the smallest sound change. Avoid tools for future use. Keep stray cleanup out of feature and bug-fix work.
 
 ## Architecture
 
-- `internal/` owns Go behavior: CLI, strict config validation/persistence, QuickShell IPC, and weather/network boundaries.
-- `shell/core/` owns long-lived QML services and shared runtime state. Do not make individual components grow duplicate process, watcher, or service logic.
-- `shell/lib/` is pure JavaScript. Put deterministic UI-facing transforms here when they can be tested without QML or I/O.
-- `shell/components/` is presentation. Reuse neighboring patterns plus `Theme.qml`, `Motion.qml`, and shared components before inventing new ones. Motion must go through `Motion.duration(...)` so reduced motion still works.
+- `internal/` owns Go work. This covers the CLI, strict config checks and files, QuickShell IPC, and weather or network edges.
+- `shell/core/` owns long-lived QML services and shared state. Keep repeat process, watch, and service code out of single parts.
+- `shell/lib/` holds pure JavaScript. Put stable UI maps here when tests can run without QML or I/O.
+- `shell/components/` draws the UI. Reuse nearby forms, `Theme.qml`, `Motion.qml`, and shared parts before adding more. Route all motion through `Motion.duration(...)`. This keeps reduced motion in sync.
 
-Keep framework and I/O concerns at the edges. If logic is awkward to test, look for a cleaner boundary rather than mocking half of QuickShell.
+Keep framework and I/O work at the edges. If tests feel hard, seek a clean seam instead of mocking half of QuickShell.
 
 ## Visual design
 
-Mitishell uses one fixed Cinder Grove visual language. Preserve the exact colors exposed by `Theme.qml` and the Adwaita Sans and Adwaita Mono families. Alpha variants of existing colors are allowed; do not add, remove, or change palette colors without an explicit request.
+Mitishell uses one fixed Cinder Grove look. Keep the exact colors from `Theme.qml`. Keep the Adwaita Sans and Adwaita Mono fonts. You may use alpha forms of these colors. Change the set only when the user asks.
 
-Favor layered organic depth, purposeful hierarchy, and sparse focal accents. Use shared primitives and theme tokens before styling individual surfaces. Establish or revise those foundations first during a whole-shell design pass. Motion should feel restrained and tactile, and must continue to use `Motion.duration(...)` so reduced motion remains equivalent and usable.
+Favor soft depth, clear rank, and sparse focal accents. Use shared parts and theme tokens before you style one view. In a full shell design pass, fix those bases first. Motion should feel calm and firm. Keep using `Motion.duration(...)` so reduced motion has the same flow.
 
 Each accent has one semantic owner:
 
-- Orange: shell identity and primary runtime state
-- Green: success and healthy or connected state
-- Red: destructive, failed, and critical state
+- Orange: shell brand and main run state
+- Green: success and good or linked state
+- Red: harm, error, and dire state
 - Yellow: warning, stale, and pending state
-- Blue: focus, configuration, and technical detail
+- Blue: focus, config, and tech detail
 - Purple: media
 - Cyan: connectivity
-- Pink: notifications and reminders
+- Pink: notes and reminders
 
-Use every accent meaningfully at least once, but do not spread accents decoratively. Universal state semantics override a surface's category accent: failures stay red, warnings stay yellow, and keyboard focus stays blue.
+Give each accent at least one clear use. Avoid accents used just for looks. Shared state rules override a view accent. Errors stay red, warnings stay yellow, and key focus stays blue.
 
-Visual and interaction changes may improve grouping, navigation, transitions, and feedback while preserving the planned feature set. Preserve keyboard access, visible focus, readability, reduced-motion parity, and multi-output behavior. Review representative flows across every surface family plus multi-output, reduced-motion, empty, unavailable, error, and content-overflow states.
+Visual and input work may improve groups, paths, motion, and feedback while keeping the planned set. Preserve key access, seen focus, clear text, reduced-motion parity, and many-screen use. Review key flows for each view group. Check many screens, reduced motion, blank, lost, error, and overflow states.
 
 ## Sharp edges
 
-**Config drift:** the config contract exists in both Go and QML. Schema/default changes usually require `internal/config` validation/default/get/set updates plus matching defaults/properties in `shell/core/Config.qml`. Test invalid input as well as the happy path.
+**Config drift:** Go and QML share the config rules. Schema or base value changes need matched work in `internal/config` and `shell/core/Config.qml`. Test bad input and the happy path.
 
-**Multi-output behavior:** `shell/shell.qml` creates a `BarHost` per QuickShell screen. Bar, workspace, popover, and geometry work must not assume one monitor or one global surface.
+**Multi-output behavior:** `shell/shell.qml` makes one `BarHost` per QuickShell screen. Bar, workspace, popover, and layout work must support many screens and views.
 
-**Session ownership:** Mitishell does not manage Hyprland config or autostart. Install/uninstall should touch Mitishell program files, not user config, cache, or session policy.
+**Session ownership:** Mitishell doesn't own Hyprland config or autostart. Install and uninstall steps should touch app files only. Leave user config, cache, and session rules alone.
 
-**Optional integrations:** missing external programs or services should make the related capability unavailable, not break the shell.
+**Extra tools:** when an outside app or service goes missing, hide its feature without harm to the shell.
 
-**Weather privacy:** weather is opt-in and uses `wttr.in`. Automatic location lets the provider infer a rough location from the network request; manual location sends the configured place text instead. Cache reuse must match both the requested location and unit system.
+**Weather privacy:** users must turn on weather, which uses `wttr.in`. Auto mode lets the host infer a rough place from the request. Manual mode sends the saved place text. Reuse cache data only when the place and unit type match.
+
+## Git flow
+
+1. Create a feature branch unless the user says to stay put. Keep quick fixes and docs passes on the current branch.
+2. Make small, focused commits as work moves on.
+3. Run `make test` after the work ends.
+4. Merge the branch into `dev`. Then do a quick code review without the code review skill.
+5. Check code, UX, UI, and all other key risks. Once they pass, merge `dev` into `main`.
+6. Add a tag when the release needs one. Use past releases as the form for its notes.
 
 ## Verification
 
-While iterating, run the narrowest useful test: `go test ./internal/<package>` for Go or `node --test tests/<model>.test.js` for pure JS.
+As you work, run the smallest useful test. Use `go test ./internal/<package>` for Go. Use `node --test tests/<model>.test.js` for pure JS.
 
-Before handing off a completed change, run `make check`. It runs the Go suite and race detector, Node model tests, formatting checks, `go vet`, `qmllint`, and whitespace validation.
+Before handoff, run `make check`. It runs the Go suite and race check. It also runs Node model tests, format checks, `go vet`, `qmllint`, and space checks.
 
-For QML/visual work, run `make run` when QuickShell is available and exercise the actual affected surface. Lint is not visual verification. Behavior changes should get a focused regression test when there is a Go or pure-JS seam.
+For QML or visual work, run `make run` when QuickShell works. Try the changed view. Lint can't check what you see. Add a focused test for a change in use when Go or pure JS gives a clean seam.
