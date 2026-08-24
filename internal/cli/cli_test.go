@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
+	"github.com/aileks/mitishell/internal/nightlight"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
@@ -171,6 +173,135 @@ func TestInternalEmojiRecentCommands(t *testing.T) {
 type updateServiceStub struct{ result updates.Result }
 
 func (stub updateServiceStub) Snapshot(context.Context) updates.Result { return stub.result }
+
+type nightLightServiceStub struct {
+	snapshot nightlight.Snapshot
+	actions  []nightlight.Action
+	err      error
+}
+
+func (stub *nightLightServiceStub) Snapshot(context.Context) nightlight.Snapshot {
+	return stub.snapshot
+}
+
+func (stub *nightLightServiceStub) Apply(
+	_ context.Context,
+	action nightlight.Action,
+) (nightlight.Snapshot, error) {
+	stub.actions = append(stub.actions, action)
+	return stub.snapshot, stub.err
+}
+
+func TestNightLightStatusPrintsStablePlainState(t *testing.T) {
+	for name, snapshot := range map[string]nightlight.Snapshot{
+		"on":  {Available: true, Enabled: true, TemperatureKelvin: 4500},
+		"off": {Available: true, Enabled: false, TemperatureKelvin: 6000},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			service := &nightLightServiceStub{snapshot: snapshot}
+			osdControl := &osdStub{}
+			code := cli.Run([]string{"night-light", "status"}, &stdout, &stderr,
+				cli.Dependencies{NightLight: service, OSD: osdControl})
+			want := name + " " + strconv.Itoa(snapshot.TemperatureKelvin) + " K\n"
+			if code != 0 || stdout.String() != want || len(osdControl.requests) != 0 {
+				t.Fatalf("code=%d stdout=%q osd=%v stderr=%q", code, stdout.String(), osdControl.requests, stderr.String())
+			}
+		})
+	}
+}
+
+func TestNightLightMutationsApplyAndShowOSD(t *testing.T) {
+	for _, action := range []string{"on", "off", "toggle"} {
+		t.Run(action, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			enabled := action != "off"
+			service := &nightLightServiceStub{snapshot: nightlight.Snapshot{
+				Available: true, Enabled: enabled, TemperatureKelvin: 4200,
+			}}
+			osdControl := &osdStub{}
+			code := cli.Run([]string{"night-light", action}, &stdout, &stderr,
+				cli.Dependencies{NightLight: service, OSD: osdControl})
+			if code != 0 || len(service.actions) != 1 || string(service.actions[0]) != action {
+				t.Fatalf("code=%d actions=%v stderr=%q", code, service.actions, stderr.String())
+			}
+			wantState := "off"
+			if enabled {
+				wantState = "on"
+			}
+			if len(osdControl.requests) != 1 || osdControl.requests[0].Icon != "moon" ||
+				osdControl.requests[0].Message != "Night light "+wantState+" · 4200 K" {
+				t.Fatalf("OSD requests = %#v", osdControl.requests)
+			}
+		})
+	}
+}
+
+func TestNightLightReportsUnavailableAndRejectsBadUsage(t *testing.T) {
+	t.Run("unavailable", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		service := &nightLightServiceStub{snapshot: nightlight.Snapshot{
+			Error: "hyprsunset unavailable: socket missing",
+		}}
+		code := cli.Run([]string{"night-light", "status"}, &stdout, &stderr,
+			cli.Dependencies{NightLight: service})
+		if code != 1 || !strings.Contains(stderr.String(), "socket missing") {
+			t.Fatalf("code=%d stderr=%q", code, stderr.String())
+		}
+	})
+	for _, args := range [][]string{{"night-light"}, {"night-light", "warm"}, {"night-light", "on", "now"}} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run(args, &stdout, &stderr, cli.Dependencies{})
+		if code != 2 || !strings.Contains(stderr.String(), "<on|off|toggle|status>") {
+			t.Fatalf("args=%v code=%d stderr=%q", args, code, stderr.String())
+		}
+	}
+}
+
+func TestInternalNightLightCommandsEncodeState(t *testing.T) {
+	snapshot := nightlight.Snapshot{
+		Available: true, Enabled: true, TemperatureKelvin: 3900,
+	}
+	service := &nightLightServiceStub{snapshot: snapshot}
+	for _, args := range [][]string{
+		{"_night-light-snapshot"},
+		{"_night-light-action", "toggle"},
+	} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run(args, &stdout, &stderr, cli.Dependencies{NightLight: service})
+		if code != 0 || !strings.Contains(stdout.String(), `"temperatureKelvin":3900`) {
+			t.Fatalf("args=%v code=%d stdout=%q stderr=%q", args, code, stdout.String(), stderr.String())
+		}
+	}
+}
+
+func TestNightLightActionFailureDoesNotShowOSD(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	service := &nightLightServiceStub{err: errors.New("hyprsunset stopped")}
+	osdControl := &osdStub{}
+	code := cli.Run([]string{"night-light", "toggle"}, &stdout, &stderr,
+		cli.Dependencies{NightLight: service, OSD: osdControl})
+	if code != 1 || len(osdControl.requests) != 0 || !strings.Contains(stderr.String(), "hyprsunset stopped") {
+		t.Fatalf("code=%d osd=%v stderr=%q", code, osdControl.requests, stderr.String())
+	}
+}
+
+func TestInternalNightLightActionRejectsUnknownVerb(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	service := &nightLightServiceStub{}
+	code := cli.Run([]string{"_night-light-action", "warm"}, &stdout, &stderr,
+		cli.Dependencies{NightLight: service})
+	if code != 2 || len(service.actions) != 0 {
+		t.Fatalf("code=%d actions=%v stderr=%q", code, service.actions, stderr.String())
+	}
+}
 
 func TestUpdatesSnapshotEncodesServiceResult(t *testing.T) {
 	var stdout bytes.Buffer

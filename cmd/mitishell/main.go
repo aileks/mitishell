@@ -18,6 +18,7 @@ import (
 	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/ipc"
 	"github.com/aileks/mitishell/internal/network"
+	"github.com/aileks/mitishell/internal/nightlight"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/reminders"
@@ -127,6 +128,7 @@ func main() {
 		EmojiUI:             shell,
 		EmojiRecents:        emoji.NewFileRecents(emojiRecentsPath),
 		Updates:             updates.NewService(updates.SystemRunner{}),
+		NightLight:          nightlight.NewService(nightlight.SystemRunner{}),
 		Stdin:               os.Stdin,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))

@@ -90,6 +90,16 @@ Flickable {
                     checked: Notifications.doNotDisturb
                     onToggled: Notifications.toggleDoNotDisturb()
                 }
+
+                ToggleRow {
+                    width: parent.width
+                    visible: NightLight.available
+                    label: "Night light"
+                    description: NightLight.description
+                    checked: NightLight.enabled
+                    enabled: !NightLight.busy
+                    onToggled: NightLight.toggle()
+                }
             }
         }
 

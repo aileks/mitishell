@@ -9,6 +9,7 @@ singleton Media 1.0 Media.qml
 singleton KeyboardLayout 1.0 KeyboardLayout.qml
 singleton Motion 1.0 Motion.qml
 singleton Network 1.0 Network.qml
+singleton NightLight 1.0 NightLight.qml
 singleton Notifications 1.0 Notifications.qml
 singleton Osd 1.0 Osd.qml
 singleton Power 1.0 Power.qml
