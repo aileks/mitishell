@@ -49,6 +49,9 @@ func (SystemRunner) Output(ctx context.Context, name string, args ...string) (st
 		if name == "checkupdates" && exitError.ExitCode() == 2 && len(output) == 0 {
 			return "", ErrNoUpdates
 		}
+		if (name == "paru" || name == "yay") && exitError.ExitCode() == 1 && len(output) == 0 {
+			return "", ErrNoUpdates
+		}
 		if len(output) > 0 {
 			return string(output), nil
 		}
@@ -86,7 +89,7 @@ func (service Service) Snapshot(ctx context.Context) Result {
 		}
 		result.Helper = helper
 		output, outputErr := service.runner.Output(ctx, helper, "-Qua")
-		if outputErr != nil {
+		if outputErr != nil && !errors.Is(outputErr, ErrNoUpdates) {
 			result.Aur.Error = outputErr.Error()
 		} else {
 			result.Aur = packageSource(output)

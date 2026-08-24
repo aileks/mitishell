@@ -2,6 +2,7 @@ import QtQuick
 import "../core"
 
 Row {
+    Accessible.description: "Right click to change time format"
     spacing: Theme.spaceSm
 
     Text {
@@ -19,5 +20,10 @@ Row {
         color: Theme.textMuted
         font.family: Theme.fontMono
         font.pixelSize: Theme.fontSizeCaption
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: Clock.cycleFormat()
     }
 }

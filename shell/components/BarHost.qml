@@ -1,15 +1,63 @@
 import QtQuick
 import Quickshell
 import "../core"
+import "../lib/BarModel.js" as BarModel
 
 PanelWindow {
     id: root
 
     required property var modelData
+    property var localOrder: Config.bar.islands.slice()
+    property int dragFrom: -1
+    property int dragTo: -1
+    property real dragOffset: 0
     readonly property real availableCenterWidth: Math.max(0, 2 * Math.min(
         width / 2 - leftIsland.width - Theme.spaceLg,
         width / 2 - rightIsland.width - Theme.spaceLg,
     ))
+
+    function islandVisible(id) {
+        return id === "system" ? Config.bar.systemMetrics !== "hidden"
+            : id === "keyboardLayout" ? KeyboardLayout.available
+            : id === "updates" ? Updates.visible
+            : id === "tray" ? Tray.available
+            : id === "reminders" ? Reminders.count > 0
+            : id === "weather" ? Weather.visible : true;
+    }
+
+    function nextVisible(index) {
+        return BarModel.nextVisible(localOrder, index, islandVisible);
+    }
+
+    function updateDragTarget() {
+        const dragged = rightRepeater.itemAt(dragFrom);
+        if (dragged === null) return;
+        const center = dragged.x + dragged.width / 2 + dragOffset;
+        let target = dragFrom;
+        for (let index = 0; index < localOrder.length; index += 1) {
+            const candidate = rightRepeater.itemAt(index);
+            if (candidate !== null && candidate.visible
+                    && center > candidate.x + candidate.width / 2) target = index;
+        }
+        dragTo = target;
+    }
+
+    function finishDrag() {
+        if (dragFrom >= 0 && dragTo >= 0 && dragFrom !== dragTo) {
+            localOrder = BarModel.move(localOrder, dragFrom, dragTo);
+            Settings.setField("bar.islands", JSON.stringify(localOrder));
+        }
+        dragFrom = -1;
+        dragTo = -1;
+        dragOffset = 0;
+    }
+
+    function moveKeyboard(index, delta) {
+        const moved = BarModel.moveVisible(localOrder, index, delta, islandVisible);
+        if (JSON.stringify(moved) === JSON.stringify(localOrder)) return;
+        localOrder = moved;
+        Settings.setField("bar.islands", JSON.stringify(localOrder));
+    }
 
     screen: modelData
     visible: Config.outputEnabled(modelData.name)
@@ -151,131 +199,86 @@ PanelWindow {
             id: rightContent
 
             anchors.centerIn: parent
+            height: parent.height
             spacing: Theme.spaceMd
 
-            BarPopoverTrigger {
-                id: systemTrigger
+            Repeater {
+                id: rightRepeater
+                model: root.localOrder
 
-                visible: Config.bar.systemMetrics !== "hidden"
-                popoverKey: "system"
-                screen: root.modelData
+                delegate: Item {
+                    id: islandDelegate
+                    required property string modelData
+                    required property int index
+                    property bool armed: false
+                    readonly property real siblingShift: {
+                        if (root.dragFrom < root.dragTo && index > root.dragFrom && index <= root.dragTo)
+                            return -(rightRepeater.itemAt(root.dragFrom)?.width || 0) - rightContent.spacing;
+                        if (root.dragFrom > root.dragTo && index >= root.dragTo && index < root.dragFrom)
+                            return (rightRepeater.itemAt(root.dragFrom)?.width || 0) + rightContent.spacing;
+                        return 0;
+                    }
 
-                SystemMetricsIsland {
-                    mode: Config.bar.systemMetrics
+                    width: island.implicitWidth
+                    height: rightContent.height
+                    z: root.dragFrom === index ? 10 : 0
+                    scale: root.dragFrom === index ? 1.08 : 1
+                    Accessible.description: "Hold and drag, or press Control Shift Left or Right, to reorder"
+
+                    transform: Translate {
+                        x: root.dragFrom === islandDelegate.index ? root.dragOffset : islandDelegate.siblingShift
+                        Behavior on x { NumberAnimation { duration: Motion.duration(Motion.quick); easing.type: Motion.easingStandard } }
+                    }
+                    Behavior on scale { NumberAnimation { duration: Motion.duration(Motion.quick); easing.type: Motion.easingStandard } }
+
+                    BarIsland {
+                        id: island
+                        anchors.centerIn: parent
+                        islandId: islandDelegate.modelData
+                        screen: root.modelData
+                        separatorAfter: BarModel.separatorAfter(
+                            islandDelegate.modelData,
+                            root.nextVisible(islandDelegate.index),
+                        )
+                    }
+
+                    TapHandler {
+                        id: holdHandler
+                        longPressThreshold: 0.35
+                        onLongPressed: {
+                            islandDelegate.armed = true;
+                            root.dragFrom = islandDelegate.index;
+                            root.dragTo = islandDelegate.index;
+                        }
+                        onPressedChanged: {
+                            if (!pressed && islandDelegate.armed) {
+                                islandDelegate.armed = false;
+                                root.finishDrag();
+                            }
+                        }
+                    }
+
+                    DragHandler {
+                        id: dragHandler
+                        enabled: islandDelegate.armed
+                        target: null
+                        xAxis.enabled: true
+                        yAxis.enabled: false
+                        onTranslationChanged: {
+                            root.dragOffset = activeTranslation.x;
+                            root.updateDragTarget();
+                        }
+                    }
+
+                    Keys.onPressed: function(event) {
+                        if ((event.modifiers & Qt.ControlModifier)
+                                && (event.modifiers & Qt.ShiftModifier)
+                                && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
+                            root.moveKeyboard(islandDelegate.index, event.key === Qt.Key_Left ? -1 : 1);
+                            event.accepted = true;
+                        }
+                    }
                 }
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 1
-                height: 16
-                visible: Config.bar.systemMetrics !== "hidden"
-                color: Theme.overlay
-            }
-
-            BarPopoverTrigger {
-                id: audioTrigger
-
-                popoverKey: "audio"
-                screen: root.modelData
-
-                AudioIsland {}
-            }
-
-            KeyboardLayoutIsland {
-                visible: KeyboardLayout.available
-            }
-
-            BarPopoverTrigger {
-                id: updatesTrigger
-
-                visible: Updates.visible
-                popoverKey: "updates"
-                screen: root.modelData
-
-                UpdatesIsland { open: updatesTrigger.active }
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 1
-                height: 16
-                color: Theme.overlay
-            }
-
-            BarPopoverTrigger {
-                id: clockTrigger
-
-                popoverKey: "calendar"
-                screen: root.modelData
-
-                ClockIsland {}
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 1
-                height: 16
-                visible: Tray.available
-                color: Theme.overlay
-            }
-
-            TrayIsland {
-                visible: Tray.available
-                screen: root.modelData
-            }
-
-            ControlIsland {
-                screen: root.modelData
-            }
-
-            BarPopoverTrigger {
-                id: notificationsTrigger
-
-                popoverKey: "notifications"
-                screen: root.modelData
-
-                NotificationIsland {
-                    open: notificationsTrigger.active
-                }
-            }
-
-            BarPopoverTrigger {
-                id: remindersTrigger
-
-                visible: Reminders.count > 0
-                popoverKey: "reminders"
-                screen: root.modelData
-                Accessible.name: Reminders.count === 1
-                    ? "1 active reminder"
-                    : Reminders.count + " active reminders"
-                Accessible.role: Accessible.Button
-
-                ReminderIsland {
-                    open: remindersTrigger.active
-                }
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 1
-                height: 16
-                visible: Weather.visible
-                color: Theme.overlay
-            }
-
-            BarPopoverTrigger {
-                id: weatherTrigger
-
-                visible: Weather.visible
-                popoverKey: "weather"
-                screen: root.modelData
-
-                WeatherIsland {}
-            }
-
-            PowerIsland {
-                screen: root.modelData
             }
 
             Rectangle {
@@ -287,80 +290,19 @@ PanelWindow {
                 color: Theme.red
             }
         }
+    }
 
-        AnchoredPopover {
-            anchorItem: systemTrigger
-            open: systemTrigger.active && Config.bar.systemMetrics !== "hidden"
-            contentWidth: 420
-            contentHeight: SystemMetrics.temperatureC !== null ? 330 : 260
+    Connections {
+        target: Config
+        function onBarChanged() { if (root.dragFrom < 0) root.localOrder = Config.bar.islands.slice(); }
+    }
 
-            SystemPopover {
-                anchors.fill: parent
-            }
-        }
-
-        AnchoredPopover {
-            anchorItem: audioTrigger
-            open: audioTrigger.active
-            contentWidth: 420
-            contentHeight: audioPopover.implicitHeight + Theme.spaceLg * 2
-
-            AudioPopover {
-                id: audioPopover
-
-                anchors.fill: parent
-            }
-        }
-
-        AnchoredPopover {
-            anchorItem: updatesTrigger
-            open: updatesTrigger.active && Updates.visible
-            contentWidth: 392
-            contentHeight: Math.min(520, updatesPopover.implicitHeight + Theme.spaceLg * 2)
-
-            UpdatesPopover {
-                id: updatesPopover
-                anchors.fill: parent
-            }
-        }
-
-        AnchoredPopover {
-            anchorItem: clockTrigger
-            open: clockTrigger.active
-            contentWidth: calendarPopover.implicitWidth
-            contentHeight: calendarPopover.implicitHeight + Theme.spaceLg * 2
-
-            CalendarPopover {
-                id: calendarPopover
-
-                anchors.fill: parent
-            }
-        }
-
-        AnchoredPopover {
-            anchorItem: notificationsTrigger
-            open: notificationsTrigger.active
-            contentWidth: 380
-            contentHeight: 460
-
-            NotificationsPopover {
-                anchors.fill: parent
-            }
-        }
-
-        NotificationPopups {
-            anchorItem: notificationsTrigger
-        }
-
-        AnchoredPopover {
-            anchorItem: weatherTrigger
-            open: weatherTrigger.active && Weather.visible
-            contentWidth: 380
-            contentHeight: 454
-
-            WeatherPopover {
-                anchors.fill: parent
-            }
+    Connections {
+        target: Settings
+        function onFieldErrorsChanged() {
+            if (Settings.fieldErrors["bar.islands"] !== undefined)
+                root.localOrder = Config.bar.islands.slice();
         }
     }
+
 }

@@ -8,6 +8,7 @@ AudioSection 1.0 AudioSection.qml
 AudioSlider 1.0 AudioSlider.qml
 AudioStreamRow 1.0 AudioStreamRow.qml
 BarHost 1.0 BarHost.qml
+BarIsland 1.0 BarIsland.qml
 BarPopoverTrigger 1.0 BarPopoverTrigger.qml
 CalendarPopover 1.0 CalendarPopover.qml
 ClockIsland 1.0 ClockIsland.qml

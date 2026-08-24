@@ -30,6 +30,29 @@ func TestMissingConfigUsesDefaultsWithoutCreatingFile(t *testing.T) {
 	}
 }
 
+func TestLoadNormalizesMissingClockTimezones(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	contents := `{
+  "version": 1,
+  "bar": {"outputs":["*"],"height":36,"marginTop":6,"marginHorizontal":8,"showWindowTitle":true,"showMedia":true,"systemMetrics":"separate"},
+  "clock": {"format":"24h","showDate":false},
+  "weather": {"enabled":false,"units":"auto"},
+  "calendar": {"showWeekNumbers":false},
+  "motion": {"enabled":true,"reduced":false}
+}`
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := config.Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if got.Clock.Timezones == nil || len(got.Clock.Timezones) != 0 {
+		t.Fatalf("timezones = %#v, want empty array", got.Clock.Timezones)
+	}
+}
+
 func TestLoadReturnsValidatedConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	contents := `{

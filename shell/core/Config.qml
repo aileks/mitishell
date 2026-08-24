@@ -25,7 +25,7 @@ QtObject {
             "units": "auto"
         },
         "clock": {
-            "format": "auto",
+            "format": "24h",
             "showDate": false,
             "timezones": []
         },
