@@ -13,6 +13,7 @@ import (
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
@@ -93,6 +94,78 @@ type reminderUIStub struct {
 	opened   bool
 	messages []string
 	err      error
+}
+
+type emojiUIStub struct {
+	toggled bool
+	err     error
+}
+
+func (stub *emojiUIStub) ToggleEmojiPicker() error {
+	stub.toggled = true
+	return stub.err
+}
+
+type emojiRecentsStub struct {
+	state   emoji.Recents
+	saved   emoji.Recents
+	cleared bool
+	err     error
+}
+
+func (stub *emojiRecentsStub) Load() (emoji.Recents, error) { return stub.state, stub.err }
+func (stub *emojiRecentsStub) Save(state emoji.Recents) error {
+	stub.saved = state
+	return stub.err
+}
+func (stub *emojiRecentsStub) Clear() error {
+	stub.cleared = true
+	return stub.err
+}
+
+func TestEmojiCommandTogglesPicker(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	ui := &emojiUIStub{}
+	code := cli.Run([]string{"emoji"}, &stdout, &stderr, cli.Dependencies{EmojiUI: ui})
+	if code != 0 || !ui.toggled || stdout.String() != "emoji picker toggled\n" {
+		t.Fatalf("code=%d toggled=%v stdout=%q stderr=%q", code, ui.toggled, stdout.String(), stderr.String())
+	}
+}
+
+func TestInternalEmojiRecentCommands(t *testing.T) {
+	stub := &emojiRecentsStub{state: emoji.Recents{
+		Version: emoji.RecentsVersion,
+		Entries: []string{"😀"},
+	}}
+	t.Run("load", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_emoji-recents-load"}, &stdout, &stderr,
+			cli.Dependencies{EmojiRecents: stub})
+		if code != 0 || !strings.Contains(stdout.String(), `"entries":["😀"]`) {
+			t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+		}
+	})
+	t.Run("save", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		input := strings.NewReader(`{"version":1,"entries":["🎉"]}`)
+		code := cli.Run([]string{"_emoji-recents-save"}, &stdout, &stderr,
+			cli.Dependencies{EmojiRecents: stub, Stdin: input})
+		if code != 0 || len(stub.saved.Entries) != 1 || stub.saved.Entries[0] != "🎉" {
+			t.Fatalf("code=%d saved=%#v stderr=%q", code, stub.saved, stderr.String())
+		}
+	})
+	t.Run("clear", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_emoji-recents-clear"}, &stdout, &stderr,
+			cli.Dependencies{EmojiRecents: stub})
+		if code != 0 || !stub.cleared {
+			t.Fatalf("code=%d cleared=%v stderr=%q", code, stub.cleared, stderr.String())
+		}
+	})
 }
 
 type updateServiceStub struct{ result updates.Result }

@@ -15,6 +15,7 @@ import (
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/ipc"
 	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/notifications"
@@ -86,6 +87,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
 		os.Exit(1)
 	}
+	emojiRecentsPath, err := emoji.RecentsPath()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
+		os.Exit(1)
+	}
 	reminderDirectory, reminderDirectoryErr := reminders.RuntimeDirectory()
 	reminderRunner, reminderRunnerErr := reminders.NewCommandRunner()
 	executable, executableErr := os.Executable()
@@ -118,6 +124,8 @@ func main() {
 		OSD:                 shell,
 		Reminders:           reminderService,
 		ReminderUI:          shell,
+		EmojiUI:             shell,
+		EmojiRecents:        emoji.NewFileRecents(emojiRecentsPath),
 		Updates:             updates.NewService(updates.SystemRunner{}),
 		Stdin:               os.Stdin,
 	}

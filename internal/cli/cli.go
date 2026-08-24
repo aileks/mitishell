@@ -14,6 +14,7 @@ import (
 	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
+	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
@@ -130,6 +131,16 @@ type ReminderUI interface {
 	ReminderChanged(string) error
 }
 
+type EmojiUI interface {
+	ToggleEmojiPicker() error
+}
+
+type EmojiRecents interface {
+	Load() (emoji.Recents, error)
+	Save(emoji.Recents) error
+	Clear() error
+}
+
 type UpdateService interface {
 	Snapshot(context.Context) updates.Result
 }
@@ -150,11 +161,60 @@ type Dependencies struct {
 	OSD                 OSDControl
 	Reminders           ReminderService
 	ReminderUI          ReminderUI
+	EmojiUI             EmojiUI
+	EmojiRecents        EmojiRecents
 	Updates             UpdateService
 	Stdin               io.Reader
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 1 && args[0] == "_emoji-recents-load" {
+		if dependencies.EmojiRecents == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
+			return 1
+		}
+		state, err := dependencies.EmojiRecents.Load()
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: emoji recents unavailable: %v\n", err)
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode emoji recents: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_emoji-recents-save" {
+		if dependencies.EmojiRecents == nil || dependencies.Stdin == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
+			return 1
+		}
+		state := emoji.Recents{}
+		decoder := json.NewDecoder(dependencies.Stdin)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: decode emoji recents: %v\n", err)
+			return 2
+		}
+		if err := dependencies.EmojiRecents.Save(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: save emoji recents: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "emoji recents saved")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_emoji-recents-clear" {
+		if dependencies.EmojiRecents == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
+			return 1
+		}
+		if err := dependencies.EmojiRecents.Clear(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: clear emoji recents: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "emoji recents cleared")
+		return 0
+	}
 	if len(args) == 1 && args[0] == "_updates-snapshot" {
 		result := updates.Result{}
 		if dependencies.Updates != nil {
@@ -456,6 +516,18 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	}
 	if len(args) > 0 && args[0] == "reminder" {
 		return runReminder(args[1:], stdout, stderr, dependencies)
+	}
+	if len(args) == 1 && args[0] == "emoji" {
+		if dependencies.EmojiUI == nil {
+			fmt.Fprintln(stderr, "mitishell: emoji picker unavailable")
+			return 1
+		}
+		if err := dependencies.EmojiUI.ToggleEmojiPicker(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: emoji picker unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "emoji picker toggled")
+		return 0
 	}
 	if len(args) > 0 && (args[0] == "volume" || args[0] == "mic") {
 		return runAudioAction(args, stdout, stderr, dependencies)

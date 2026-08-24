@@ -4,6 +4,7 @@ singleton Clock 1.0 Clock.qml
 singleton Config 1.0 Config.qml
 singleton Control 1.0 Control.qml
 singleton Display 1.0 Display.qml
+singleton Emoji 1.0 Emoji.qml
 singleton Media 1.0 Media.qml
 singleton KeyboardLayout 1.0 KeyboardLayout.qml
 singleton Motion 1.0 Motion.qml

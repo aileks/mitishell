@@ -58,6 +58,13 @@ func TestOpenRemindersAcceptsAcknowledgement(t *testing.T) {
 	}
 }
 
+func TestToggleEmojiPickerAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "emoji picker toggled"), "/tmp/mitishell-shell")
+	if err := client.ToggleEmojiPicker(); err != nil {
+		t.Fatalf("ToggleEmojiPicker() error = %v", err)
+	}
+}
+
 func TestReminderChangedPassesFeedbackPositionally(t *testing.T) {
 	client := ipc.NewClient(
 		fakeQSCheckingArg(t, "Reminder cancelled", "Reminder state refreshed"),

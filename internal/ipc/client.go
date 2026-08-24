@@ -61,6 +61,10 @@ func (client Client) OpenSettings() error {
 	return client.action("settings", "open", "settings opened")
 }
 
+func (client Client) ToggleEmojiPicker() error {
+	return client.action("emoji", "toggle", "emoji picker toggled")
+}
+
 // Volume applies an output volume step action: up, down, or mute.
 func (client Client) Volume(action string) error {
 	return client.action("audio", "volume", "volume updated", action)
