@@ -28,6 +28,7 @@ func (doctor systemDoctor) Checks() []cli.Check {
 		commandCheck("hyprctl", true),
 		commandCheck("missioncenter", false),
 		commandCheck("ddcutil", false),
+		commandCheck("hyprsunset", false),
 		commandCheck("nmcli", false),
 		commandCheck("bluetoothctl", false),
 		fontCheck("Adwaita Sans"),

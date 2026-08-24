@@ -116,6 +116,20 @@ QtObject {
         });
     }
 
+    function showNightLight(enabled, temperatureKelvin) {
+        showState({
+            kind: "night-light",
+            icon: "moon",
+            message: "Night light " + (enabled ? "on" : "off")
+                + " · " + temperatureKelvin + " K",
+            hasProgress: false,
+            progress: 0,
+            label: "",
+            durationMS: 1200,
+            accent: Theme.orange,
+        });
+    }
+
     function showReminder(message) {
         showState({
             kind: "reminder",

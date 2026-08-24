@@ -3,6 +3,7 @@ const bundledIcons = [
     "bell-off",
     "mic",
     "mic-off",
+    "moon",
     "play",
     "power",
     "settings",
