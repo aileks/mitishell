@@ -8,6 +8,16 @@ function move(order, from, to) {
     return result;
 }
 
+function moveAtDrop(order, sourceId, targetId, after) {
+    if (sourceId === targetId || !order.includes(sourceId) || !order.includes(targetId))
+        return order.slice();
+
+    const result = order.filter(id => id !== sourceId);
+    const targetIndex = result.indexOf(targetId);
+    result.splice(targetIndex + (after ? 1 : 0), 0, sourceId);
+    return result;
+}
+
 function nextVisible(order, index, visible) {
     for (let next = index + 1; next < order.length; next += 1) {
         if (visible(order[next])) return order[next];
@@ -43,6 +53,7 @@ function render(order, visible) {
 
 if (typeof module !== "undefined") module.exports = {
     move,
+    moveAtDrop,
     moveVisible,
     nextVisible,
     render,

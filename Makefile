@@ -2,6 +2,7 @@ GO ?= go
 GOFMT ?= gofmt
 NODE ?= node
 QMLLINT ?= /usr/lib/qt6/bin/qmllint
+QMLTESTRUNNER ?= /usr/lib/qt6/bin/qmltestrunner
 QUICKSHELL ?= quickshell
 QML_IMPORT_PATH ?= /usr/lib/qt6/qml
 XDG_DATA_HOME ?= $(HOME)/.local/share
@@ -19,6 +20,8 @@ test:
 	$(GO) test ./...
 	$(GO) test -race ./...
 	$(NODE) --test tests/*.test.js
+	QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+		$(QMLTESTRUNNER) -import shell -input tests/qml
 
 check: test
 	test -z "$$(find . -name '*.go' -not -path './vendor/*' -print0 | xargs -0 $(GOFMT) -l)"
