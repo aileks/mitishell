@@ -26,6 +26,7 @@ func (doctor systemDoctor) Checks() []cli.Check {
 		commandCheck("quickshell", true),
 		commandCheck("qs", true),
 		commandCheck("hyprctl", true),
+		commandCheck("hyprshutdown", true),
 		commandCheck("missioncenter", false),
 		commandCheck("ddcutil", false),
 		commandCheck("hyprsunset", false),

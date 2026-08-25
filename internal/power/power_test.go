@@ -3,6 +3,8 @@ package power_test
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/aileks/mitishell/internal/power"
@@ -98,6 +100,20 @@ func TestRunDispatchesEachAction(t *testing.T) {
 		if len(stub.calls) != 1 || stub.calls[0] != want {
 			t.Fatalf("Run(%s) calls = %v, want [%s]", action, stub.calls, want)
 		}
+	}
+}
+
+func TestRunLogsOutWithHyprshutdown(t *testing.T) {
+	binDirectory := t.TempDir()
+	hyprshutdown := filepath.Join(binDirectory, "hyprshutdown")
+	if err := os.WriteFile(hyprshutdown, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", binDirectory)
+
+	service := power.NewService(&callerStub{})
+	if err := service.Run(context.Background(), power.Logout); err != nil {
+		t.Fatalf("Run(logout) error = %v", err)
 	}
 }
 

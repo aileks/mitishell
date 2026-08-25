@@ -8,6 +8,7 @@ Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShe
 ## Requirements
 
 - Hyprland
+- hyprshutdown
 - QuickShell 0.3.0
 - Go 1.26 or newer
 - Qt 6 QML tooling

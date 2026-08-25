@@ -7,8 +7,7 @@ import (
 )
 
 // Session power over logind. Capability queries and the logind actions run
-// over the system bus; logging out is a Hyprland dispatch since the
-// compositor owns the session.
+// over the system bus; hyprshutdown owns graceful session exit.
 
 const (
 	login1Name      = "org.freedesktop.login1"
@@ -93,14 +92,14 @@ func available(reply string) bool {
 }
 
 func logout() error {
-	command := exec.Command("hyprctl", "dispatch", "exit")
+	command := exec.Command("hyprshutdown")
 	output, err := command.CombinedOutput()
 	if err != nil {
 		message := string(output)
 		if message == "" {
 			message = err.Error()
 		}
-		return fmt.Errorf("hyprctl dispatch exit: %s", message)
+		return fmt.Errorf("hyprshutdown: %s", message)
 	}
 	return nil
 }
