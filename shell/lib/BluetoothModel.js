@@ -27,6 +27,11 @@ function deviceActions(device) {
     return actions;
 }
 
+// UI copy says "forget" while BlueZ's private action uses "remove".
+function actionVerb(action) {
+    return action === "forget" ? "remove" : action;
+}
+
 function pairPromptLabel(request) {
     switch (request.kind) {
     case "confirm":
@@ -61,6 +66,7 @@ if (typeof module !== "undefined") {
     module.exports = {
         deviceStatus,
         deviceActions,
+        actionVerb,
         pairPromptLabel,
         requestIsDisplayOnly,
         requestWantsText,

@@ -63,6 +63,7 @@ type PowerService interface {
 // NetworkService joins and forgets Wi-Fi networks and snapshots status.
 type NetworkService interface {
 	Snapshot(ctx context.Context) network.Snapshot
+	SetWifiEnabled(ctx context.Context, enabled bool) error
 	Connect(ctx context.Context, ssid string, password string, hidden bool) error
 	Forget(ctx context.Context, ssid string) error
 }
@@ -70,7 +71,6 @@ type NetworkService interface {
 // BluetoothService drives BlueZ devices and reports adapter status.
 type BluetoothService interface {
 	Snapshot(ctx context.Context) bluetooth.Snapshot
-	SetDiscovering(ctx context.Context, discovering bool) error
 	Pair(ctx context.Context, address string) error
 	Connect(ctx context.Context, address string) error
 	Disconnect(ctx context.Context, address string) error
@@ -503,6 +503,24 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		fmt.Fprintln(stdout, "network connection requested")
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_network-wifi" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		enabled := args[1] == "on"
+		if !enabled && args[1] != "off" {
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell _network-wifi <on|off>")
+			return 2
+		}
+		if err := dependencies.NetworkService.SetWifiEnabled(
+			context.Background(), enabled); err != nil {
+			fmt.Fprintf(stderr, "mitishell: network unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "Wi-Fi state updated")
 		return 0
 	}
 	if len(args) == 2 && args[0] == "_network-forget" {
@@ -949,9 +967,9 @@ func runControlAction(args []string, stdout io.Writer, stderr io.Writer, depende
 		page = args[1]
 	}
 	valid := slices.Contains(
-		[]string{"home", "audio", "media", "display", "network", "bluetooth"}, page)
+		[]string{"home", "audio", "display", "network", "bluetooth", "settings"}, page)
 	if len(args) > 2 || !valid {
-		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|media|display|network|bluetooth>")
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|display|network|bluetooth|settings>")
 		return 2
 	}
 	if dependencies.ControlCenter == nil {
@@ -1045,10 +1063,6 @@ func runBluetoothAction(args []string, stdout io.Writer, stderr io.Writer, depen
 	var err error
 	ctx := context.Background()
 	switch verb {
-	case "discover-on":
-		err = dependencies.BluetoothService.SetDiscovering(ctx, true)
-	case "discover-off":
-		err = dependencies.BluetoothService.SetDiscovering(ctx, false)
 	case "pair":
 		err = dependencies.BluetoothService.Pair(ctx, address)
 	case "connect":

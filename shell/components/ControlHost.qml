@@ -6,7 +6,9 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../core"
 
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     required property var modelData
@@ -54,9 +56,22 @@ PanelWindow {
 
     onOpenChanged: {
         if (open) {
-            Qt.callLater(function() {
-                root.focusRailButton(0);
-            });
+            focusSelectedPage();
+        }
+    }
+
+    function focusSelectedPage() {
+        Qt.callLater(function() {
+            root.focusRailButton(Control.pages.indexOf(Control.page));
+        });
+    }
+
+    Connections {
+        target: Control
+        function onPageChanged() {
+            if (root.open) {
+                root.focusSelectedPage();
+            }
         }
     }
 
@@ -133,10 +148,10 @@ PanelWindow {
                     model: [
                         { key: "home", label: "Home", icon: "../assets/icons/home.svg", accent: Theme.orange },
                         { key: "audio", label: "Audio", icon: "../assets/icons/volume-2.svg", accent: Theme.orange },
-                        { key: "media", label: "Media", icon: "../assets/icons/play.svg", accent: Theme.purple },
                         { key: "display", label: "Display", icon: "../assets/icons/sun.svg", accent: Theme.blue },
                         { key: "network", label: "Network", icon: "../assets/icons/wifi.svg", accent: Theme.cyan },
                         { key: "bluetooth", label: "Bluetooth", icon: "../assets/icons/bluetooth.svg", accent: Theme.cyan },
+                        { key: "settings", label: "Settings", icon: "../assets/icons/settings.svg", accent: Theme.blue },
                     ]
 
                     delegate: Rectangle {
@@ -153,11 +168,16 @@ PanelWindow {
                             : (activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised)
                         border.width: activeFocus ? 2 : 1
                         border.color: activeFocus ? Theme.blue
-                            : (Control.page === modelData.key ? modelData.accent : Theme.borderSubtle)
+                            : (Control.page === modelData.key ? modelData.accent : Theme.borderStrong)
                         activeFocusOnTab: true
                         Accessible.name: modelData.label
                         Accessible.role: Accessible.Button
-                        Accessible.onPressAction: Control.selectPage(modelData.key)
+                        Accessible.onPressAction: selectPage()
+
+                        function selectPage() {
+                            forceActiveFocus(Qt.MouseFocusReason);
+                            Control.selectPage(modelData.key);
+                        }
 
                         Image {
                             anchors.centerIn: parent
@@ -170,18 +190,19 @@ PanelWindow {
 
                         HoverHandler {
                             id: hover
+                            cursorShape: Qt.PointingHandCursor
                         }
 
                         TapHandler {
-                            onTapped: Control.selectPage(railButton.modelData.key)
+                            onTapped: railButton.selectPage()
                         }
 
                         Keys.onReturnPressed: function(event) {
-                            Control.selectPage(railButton.modelData.key);
+                            railButton.selectPage();
                             event.accepted = true;
                         }
                         Keys.onSpacePressed: function(event) {
-                            Control.selectPage(railButton.modelData.key);
+                            railButton.selectPage();
                             event.accepted = true;
                         }
                         Keys.onDownPressed: function(event) {
@@ -202,10 +223,10 @@ PanelWindow {
                 width: parent.width - rail.width - parent.spacing
                 height: parent.height
                 sourceComponent: Control.page === "audio" ? audioPage
-                    : Control.page === "media" ? mediaPage
                     : Control.page === "display" ? displayPage
                     : Control.page === "network" ? networkPage
                     : Control.page === "bluetooth" ? bluetoothPage
+                    : Control.page === "settings" ? settingsPage
                     : homePage
 
                 Behavior on opacity {
@@ -232,14 +253,6 @@ PanelWindow {
                 }
 
                 Component {
-                    id: mediaPage
-
-                    ControlMediaPage {
-                        anchors.fill: parent
-                    }
-                }
-
-                Component {
                     id: displayPage
 
                     ControlDisplayPage {
@@ -259,6 +272,15 @@ PanelWindow {
                     id: bluetoothPage
 
                     ControlBluetoothPage {
+                        anchors.fill: parent
+                        active: root.open
+                    }
+                }
+
+                Component {
+                    id: settingsPage
+
+                    SettingsPage {
                         anchors.fill: parent
                     }
                 }

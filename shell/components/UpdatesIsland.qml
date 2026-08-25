@@ -34,6 +34,6 @@ Item {
         color: parent.open || hover.hovered ? Theme.hoverFill : "transparent"
         border.width: parent.open ? 1 : 0
         border.color: Theme.yellow
-        HoverHandler { id: hover }
+        HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     }
 }

@@ -5,7 +5,9 @@ import Quickshell
 import Quickshell.Wayland
 import "../core"
 
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     required property var ghostScreen

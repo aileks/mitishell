@@ -94,14 +94,14 @@ FocusScope {
             property: "x"
             to: 0
             duration: Motion.duration(Motion.normal)
-            easing.type: Easing.OutCubic
+            easing.type: Motion.easingStandard
         }
         NumberAnimation {
             target: monthGrid
             property: "opacity"
             to: 1
             duration: Motion.duration(Motion.normal)
-            easing.type: Easing.OutCubic
+            easing.type: Motion.easingStandard
         }
     }
 
@@ -132,7 +132,7 @@ FocusScope {
                     font.family: Theme.fontSans
                     font.pixelSize: 20
                 }
-                HoverHandler { id: previousHover }
+                HoverHandler { id: previousHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: root.showMonth(-1) }
                 Keys.onReturnPressed: function(event) {
                     root.showMonth(-1);
@@ -175,7 +175,7 @@ FocusScope {
                     font.family: Theme.fontSans
                     font.pixelSize: 20
                 }
-                HoverHandler { id: nextHover }
+                HoverHandler { id: nextHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: root.showMonth(1) }
                 Keys.onReturnPressed: function(event) {
                     root.showMonth(1);
@@ -318,7 +318,7 @@ FocusScope {
                                 font.weight: dayCell.today ? Font.DemiBold : Font.Normal
                             }
 
-                            HoverHandler { id: dayHover }
+                            HoverHandler { id: dayHover; cursorShape: Qt.PointingHandCursor }
                             TapHandler { onTapped: dayCell.activate() }
 
                             Keys.onLeftPressed: function(event) {
@@ -383,7 +383,7 @@ FocusScope {
                 font.pixelSize: Theme.fontSizeBody
                 font.weight: Font.DemiBold
             }
-            HoverHandler { id: todayHover }
+            HoverHandler { id: todayHover; cursorShape: Qt.PointingHandCursor }
             TapHandler { onTapped: root.returnToday() }
             Keys.onReturnPressed: function(event) {
                 root.returnToday();

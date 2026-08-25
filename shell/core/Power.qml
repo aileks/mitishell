@@ -39,7 +39,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.error = capabilityErrors.text.trim() || "power capabilities unavailable";
                 return;
@@ -63,7 +65,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.error = runErrors.text.trim() || "power action failed";
             }

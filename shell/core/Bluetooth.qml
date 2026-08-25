@@ -17,6 +17,9 @@ QtObject {
 
     readonly property var adapter: snapshot !== null ? snapshot.adapter : null
     readonly property var devices: snapshot !== null ? snapshot.devices : []
+    readonly property bool scanning: scanProcess.running
+
+    property bool stoppingScan: false
 
     function refresh() {
         if (!snapshotProcess.running) {
@@ -31,7 +34,16 @@ QtObject {
     }
 
     function setDiscovering(discovering) {
-        action(discovering ? "discover-on" : "discover-off", "-");
+        if (discovering === scanProcess.running) {
+            return;
+        }
+        error = "";
+        stoppingScan = !discovering;
+        scanProcess.running = discovering;
+        if (discovering) {
+            stoppingScan = false;
+            refresh();
+        }
     }
 
     function handlePairRequest(payload) {
@@ -73,7 +85,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             try {
                 const parsed = JSON.parse(snapshotOutput.text);
                 if (parsed.error !== undefined && parsed.error !== "") {
@@ -100,10 +114,32 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.error = actionErrors.text.trim() || "bluetooth action failed";
             }
+            root.refresh();
+        }
+    }
+
+    property Process scanProcess: Process {
+        id: scanProcess
+
+        command: [Config.binary, "_bluetooth-scan"]
+        stderr: StdioCollector {
+            id: scanErrors
+            waitForEnd: true
+        }
+
+        // qmllint disable signal-handler-parameters
+        onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
+            if (!root.stoppingScan && exitCode !== 0) {
+                root.error = scanErrors.text.trim() || "Bluetooth scan failed";
+            }
+            root.stoppingScan = false;
             root.refresh();
         }
     }
@@ -116,7 +152,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.error = respondErrors.text.trim() || "pairing response failed";
             }
@@ -131,7 +169,9 @@ QtObject {
         command: [Config.binary, "_bluetooth-agent"]
         running: true
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.agentRestart.restart();
             }

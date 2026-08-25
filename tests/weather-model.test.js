@@ -19,3 +19,26 @@ test("weather values use compact normalized labels", () => {
     assert.equal(WeatherModel.hour("2026-08-20T09:00"), "09:00");
     assert.equal(WeatherModel.hour("malformed"), "--:--");
 });
+
+test("automatic units follow the locale when measurement metadata is generic", () => {
+    assert.equal(
+        WeatherModel.unitsForLocale("auto", "en_US", "metric"),
+        "fahrenheit",
+    );
+    assert.equal(
+        WeatherModel.unitsForLocale("auto", "de_DE", "metric"),
+        "celsius",
+    );
+    assert.equal(
+        WeatherModel.unitsForLocale("celsius", "en_US", "imperial-us"),
+        "celsius",
+    );
+    assert.equal(
+        WeatherModel.unitsForLocale("auto", "C", "metric", "en_US.UTF-8"),
+        "fahrenheit",
+    );
+    assert.equal(
+        WeatherModel.unitsForLocale("auto", "C", "metric", "de_DE.UTF-8"),
+        "celsius",
+    );
+});

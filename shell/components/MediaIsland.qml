@@ -72,7 +72,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: Media.artist !== ""
                     text: "•"
-                    color: Theme.orange
+                    color: Theme.purple
                     font.family: Theme.fontSans
                     font.pixelSize: Theme.fontSizeCaption
                 }
@@ -95,22 +95,22 @@ Item {
         loops: Animation.Infinite
 
         PauseAnimation {
-            duration: 1200
+            duration: Motion.duration(1200)
         }
 
         NumberAnimation {
             target: metadataStrip
             property: "x"
             to: metadataViewport.width - metadataStrip.implicitWidth
-            duration: Math.max(
+            duration: Motion.duration(Math.max(
                 1200,
                 (metadataStrip.implicitWidth - metadataViewport.width) * 32,
-            )
+            ))
             easing.type: Easing.Linear
         }
 
         PauseAnimation {
-            duration: 900
+            duration: Motion.duration(900)
         }
 
         NumberAnimation {
@@ -118,7 +118,7 @@ Item {
             property: "x"
             to: 0
             duration: Motion.duration(Motion.normal)
-            easing.type: Easing.OutCubic
+            easing.type: Motion.easingStandard
         }
     }
 }

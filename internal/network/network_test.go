@@ -11,11 +11,22 @@ import (
 )
 
 type callerStub struct {
-	devices []network.Device
-	saved   []network.Saved
-	connect []map[string]map[string]dbus.Variant
-	forgot  []string
-	err     error
+	devices          []network.Device
+	saved            []network.Saved
+	connect          []map[string]map[string]dbus.Variant
+	forgot           []string
+	err              error
+	wirelessDisabled bool
+	wirelessChanges  []bool
+}
+
+func (stub *callerStub) WirelessEnabled(context.Context) (bool, error) {
+	return !stub.wirelessDisabled, stub.err
+}
+
+func (stub *callerStub) SetWirelessEnabled(_ context.Context, enabled bool) error {
+	stub.wirelessChanges = append(stub.wirelessChanges, enabled)
+	return stub.err
 }
 
 func (stub *callerStub) Devices(context.Context) ([]network.Device, error) {
@@ -95,6 +106,23 @@ func TestSnapshotMapsDeviceStates(t *testing.T) {
 		if snapshot.Wifi.State != want {
 			t.Fatalf("state %d mapped to %q, want %q", state, snapshot.Wifi.State, want)
 		}
+	}
+}
+
+func TestWifiPowerStateAndChangesUseNetworkManager(t *testing.T) {
+	stub := &callerStub{
+		wirelessDisabled: true,
+		devices:          []network.Device{{Type: network.DeviceWifi, State: 20}},
+	}
+	service := network.NewService(stub)
+	if snapshot := service.Snapshot(context.Background()); snapshot.Wifi.Enabled {
+		t.Fatalf("Wi-Fi enabled in snapshot: %#v", snapshot.Wifi)
+	}
+	if err := service.SetWifiEnabled(context.Background(), true); err != nil {
+		t.Fatal(err)
+	}
+	if len(stub.wirelessChanges) != 1 || !stub.wirelessChanges[0] {
+		t.Fatalf("wireless changes = %v", stub.wirelessChanges)
 	}
 }
 

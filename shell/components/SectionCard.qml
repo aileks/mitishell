@@ -25,17 +25,24 @@ Rectangle {
         anchors.margins: root.padding
         spacing: Theme.spaceSm
 
-        Item {
+        Row {
             visible: root.title !== ""
             width: parent.width
-            implicitHeight: sectionTitle.implicitHeight
+            spacing: Theme.spaceSm
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 3
+                height: sectionTitle.implicitHeight
+                radius: Theme.radiusPill
+                color: root.accent.a > 0 ? root.accent : Theme.textMuted
+            }
 
             Text {
                 id: sectionTitle
 
-                anchors.left: parent.left
                 text: root.title
-                color: root.accent.a > 0 ? root.accent : Theme.textMuted
+                color: Theme.textBright
                 font.family: Theme.fontSans
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Font.DemiBold

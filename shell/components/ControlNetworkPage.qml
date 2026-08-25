@@ -8,6 +8,17 @@ import "../lib/NetworkModel.js" as NetworkModel
 Flickable {
     id: root
 
+    readonly property bool ethernetAvailable: Network.ethernet !== null
+        && Network.ethernet.available
+    readonly property string ethernetState: ethernetAvailable
+        ? Network.ethernet.state : "unavailable"
+    readonly property bool wifiAvailable: Network.wifi !== null && Network.wifi.available
+    readonly property bool wifiEnabled: wifiAvailable && Network.wifi.enabled
+    readonly property string wifiState: wifiAvailable
+        ? Network.wifi.state : "unavailable"
+    readonly property var wifiStations: wifiAvailable ? Network.wifi.stations : []
+    readonly property var savedWifi: wifiAvailable ? Network.wifi.saved : []
+
     contentWidth: width
     contentHeight: content.implicitHeight
     clip: true
@@ -37,23 +48,18 @@ Flickable {
         SurfaceHeader {
             width: parent.width
             title: "Network"
-            description: "Wi-Fi and Ethernet"
             accent: Theme.cyan
         }
 
-        Text {
+        InlineStatus {
             width: parent.width
             visible: Network.error !== ""
-            text: Network.error
-            wrapMode: Text.Wrap
-            color: Theme.red
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
+            message: Network.error
         }
 
         Rectangle {
             width: parent.width
-            visible: Network.ethernet !== null && Network.ethernet.available
+            visible: root.ethernetAvailable
             implicitHeight: ethernetContent.implicitHeight + Theme.spaceMd * 2
             radius: Theme.radiusMedium
             color: Theme.container
@@ -76,10 +82,10 @@ Flickable {
                 }
 
                 Text {
-                    text: Network.ethernet.state === "connected"
+                    text: root.ethernetState === "connected"
                         ? "Connected" : "Cable unplugged"
-                    color: Network.ethernet.state === "connected"
-                        ? Theme.textBright : Theme.textMuted
+                    color: root.ethernetState === "connected"
+                        ? Theme.green : Theme.textMuted
                     font.family: Theme.fontSans
                     font.pixelSize: Theme.fontSizeBody
                 }
@@ -88,7 +94,7 @@ Flickable {
 
         Rectangle {
             width: parent.width
-            visible: Network.wifi !== null && Network.wifi.available
+            visible: root.wifiAvailable
             implicitHeight: wifiContent.implicitHeight + Theme.spaceMd * 2
             radius: Theme.radiusMedium
             color: Theme.container
@@ -102,31 +108,21 @@ Flickable {
                 anchors.margins: Theme.spaceMd
                 spacing: Theme.spaceSm
 
-                Row {
+                ToggleRow {
                     width: parent.width
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Wi-Fi"
-                        color: Theme.textMuted
-                        font.family: Theme.fontSans
-                        font.pixelSize: Theme.fontSizeCaption
-                        font.weight: Font.DemiBold
-                    }
-
-                    Text {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: NetworkModel.stateLabel(Network.wifi.state)
-                        color: Theme.text
-                        font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
+                    accent: Theme.cyan
+                    label: "Wi-Fi"
+                    description: Network.wifiBusy
+                        ? "Changing Wi-Fi state"
+                        : NetworkModel.stateLabel(root.wifiState)
+                    checked: root.wifiEnabled
+                    enabled: !Network.wifiBusy
+                    onToggled: Network.setWifiEnabled(!root.wifiEnabled)
                 }
 
                 Text {
                     width: parent.width
-                    visible: Network.wifi.stations.length === 0
+                    visible: root.wifiEnabled && root.wifiStations.length === 0
                     text: "No networks in range"
                     color: Theme.textMuted
                     font.family: Theme.fontSans
@@ -134,8 +130,9 @@ Flickable {
                 }
 
                 Repeater {
+                    visible: root.wifiEnabled
                     model: NetworkModel.listableStations(
-                        Network.wifi.stations, Network.wifi.saved)
+                        root.wifiStations, root.savedWifi)
 
                     delegate: Column {
                         id: stationEntry
@@ -186,7 +183,7 @@ Flickable {
                                     elide: Text.ElideRight
                                     width: parent.width - bars.width - Theme.spaceSm
                                     color: stationEntry.modelData.inUse
-                                        ? Theme.textBright : Theme.text
+                                        ? Theme.green : Theme.text
                                     font.family: Theme.fontSans
                                     font.pixelSize: Theme.fontSizeBody
                                 }
@@ -234,7 +231,7 @@ Flickable {
                                     radius: Theme.radiusPill
                                     color: forgetHover.hovered ? Theme.overlay : "transparent"
                                     border.width: 1
-                                    border.color: Theme.overlay
+                                    border.color: Theme.borderStrong
 
                                     Text {
                                         id: forgetLabel
@@ -248,6 +245,7 @@ Flickable {
 
                                     HoverHandler {
                                         id: forgetHover
+                                        cursorShape: Qt.PointingHandCursor
                                     }
 
                                     TapHandler {
@@ -258,6 +256,7 @@ Flickable {
 
                             HoverHandler {
                                 id: stationHover
+                                cursorShape: Qt.PointingHandCursor
                             }
 
                             TapHandler {
@@ -305,7 +304,7 @@ Flickable {
                                     color: Theme.background
                                     border.width: passwordField.activeFocus ? 2 : 1
                                     border.color: passwordField.activeFocus
-                                        ? Theme.blue : Theme.overlay
+                                        ? Theme.blue : Theme.borderStrong
                                 }
 
                                 onAccepted: joinRow.submit()
@@ -333,6 +332,7 @@ Flickable {
 
                                     HoverHandler {
                                         id: joinHover
+                                        cursorShape: Qt.PointingHandCursor
                                     }
 
                                     TapHandler {
@@ -353,7 +353,7 @@ Flickable {
         // Hidden networks join by name.
         Rectangle {
             width: parent.width
-            visible: Network.wifi !== null && Network.wifi.available
+            visible: root.wifiAvailable && root.wifiEnabled
             implicitHeight: hiddenContent.implicitHeight + Theme.spaceMd * 2
             radius: Theme.radiusMedium
             color: Theme.container
@@ -388,7 +388,7 @@ Flickable {
                         radius: Theme.radiusSmall
                         color: Theme.background
                         border.width: hiddenName.activeFocus ? 2 : 1
-                        border.color: hiddenName.activeFocus ? Theme.blue : Theme.overlay
+                        border.color: hiddenName.activeFocus ? Theme.blue : Theme.borderStrong
                     }
                 }
 
@@ -406,7 +406,7 @@ Flickable {
                         radius: Theme.radiusSmall
                         color: Theme.background
                         border.width: hiddenPassword.activeFocus ? 2 : 1
-                        border.color: hiddenPassword.activeFocus ? Theme.blue : Theme.overlay
+                        border.color: hiddenPassword.activeFocus ? Theme.blue : Theme.borderStrong
                     }
 
                     onAccepted: {

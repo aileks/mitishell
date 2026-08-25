@@ -75,7 +75,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             try {
                 const parsed = JSON.parse(output.text);
                 if (exitCode === 0 || !root.loaded) {

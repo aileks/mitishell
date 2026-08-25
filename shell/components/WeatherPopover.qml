@@ -35,15 +35,11 @@ Flickable {
         Text { text: "Weather"; color: Theme.textBright; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeHeading; font.weight: Font.DemiBold }
         Text { width: parent.width; visible: Weather.snapshot !== null; text: root.resolvedLocation; elide: Text.ElideRight; color: Theme.cyan; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBodySmall }
         Text { width: parent.width; visible: Weather.state === "locating"; text: Weather.snapshot === null ? "Fetching " + root.configuredLocation + "…" : "Refreshing " + root.configuredLocation + "…"; color: Theme.yellow; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBodySmall }
-        Text {
+        InlineStatus {
             width: parent.width
             visible: Weather.state === "unavailable"
-            wrapMode: Text.Wrap
-            text: "Weather unavailable for " + root.configuredLocation + ": "
+            message: "Weather unavailable for " + root.configuredLocation + ": "
                 + (Weather.error !== "" ? Weather.error : "no data")
-            color: Theme.red
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
         }
 
         Row {

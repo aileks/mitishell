@@ -28,7 +28,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             if (exitCode === 0) {
                 root.clearError(root.writeKey);
             } else {

@@ -1,20 +1,19 @@
 import QtQuick
 import "../core"
 
-Item {
+Column {
     id: root
 
     property string title: ""
     property string description: ""
     property color accent: Theme.orange
 
-    implicitHeight: heading.implicitHeight + (description !== "" ? subheading.implicitHeight + Theme.spaceXs : 0)
+    spacing: Theme.spaceXs
 
     Text {
         id: heading
 
-        anchors.left: parent.left
-        anchors.right: parent.right
+        width: parent.width
         text: root.title
         color: Theme.textBright
         font.family: Theme.fontSans
@@ -23,14 +22,18 @@ Item {
         elide: Text.ElideRight
     }
 
+    Rectangle {
+        width: Theme.spaceXl
+        height: 3
+        radius: Theme.radiusPill
+        color: root.accent
+    }
+
     Text {
         id: subheading
 
         visible: root.description !== ""
-        anchors.left: heading.left
-        anchors.right: parent.right
-        anchors.top: heading.bottom
-        anchors.topMargin: Theme.spaceXs
+        width: parent.width
         text: root.description
         color: Theme.textMuted
         font.family: Theme.fontSans

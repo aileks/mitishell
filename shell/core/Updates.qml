@@ -32,7 +32,9 @@ QtObject {
         command: [Config.binary, "_updates-snapshot"]
         stdout: StdioCollector { id: snapshotOutput; waitForEnd: true }
         stderr: StdioCollector { id: snapshotErrors; waitForEnd: true }
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             try {
                 root.result = JSON.parse(snapshotOutput.text);
                 root.error = root.result.system.error || "";

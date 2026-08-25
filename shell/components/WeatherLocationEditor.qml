@@ -41,7 +41,7 @@ Column {
         radius: Theme.radiusSmall
         color: Theme.layerInset
         border.width: locationInput.activeFocus ? 2 : 1
-        border.color: locationInput.activeFocus ? Theme.blue : Theme.borderSubtle
+        border.color: locationInput.activeFocus ? Theme.blue : Theme.borderStrong
 
         TextInput {
             id: locationInput
@@ -78,14 +78,11 @@ Column {
         ActionButton { label: "Auto"; enabled: root.draft !== "" || Config.weather.location !== ""; onActivated: root.automatic() }
     }
 
-    Text {
+    InlineStatus {
         width: parent.width
         visible: root.error !== ""
-        text: root.error
-        wrapMode: Text.Wrap
-        color: Theme.red
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeCaption
+        message: root.error
+        textSize: Theme.fontSizeCaption
     }
 
     Connections {

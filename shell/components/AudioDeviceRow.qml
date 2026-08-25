@@ -10,9 +10,9 @@ Rectangle {
     signal chosen
 
     implicitWidth: 344
-    implicitHeight: 40
+    implicitHeight: Theme.controlHeightLg
     radius: Theme.radiusMedium
-    color: selected ? Theme.orange : (activeFocus || hover.hovered ? Theme.overlay : "transparent")
+    color: selected ? Theme.green : (activeFocus || hover.hovered ? Theme.overlay : "transparent")
     border.width: activeFocus ? 2 : 0
     border.color: Theme.blue
     activeFocusOnTab: true
@@ -48,6 +48,7 @@ Rectangle {
 
     HoverHandler {
         id: hover
+        cursorShape: Qt.PointingHandCursor
     }
 
     TapHandler {

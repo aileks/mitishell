@@ -8,17 +8,21 @@ import "../lib/BluetoothModel.js" as BluetoothModel
 Flickable {
     id: root
 
+    required property bool active
+
     contentWidth: width
     contentHeight: content.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
 
-    onVisibleChanged: {
-        if (visible) {
+    onActiveChanged: {
+        if (active) {
             Bluetooth.refresh();
+            Bluetooth.setDiscovering(true);
             pollTimer.restart();
         } else {
             pollTimer.stop();
+            Bluetooth.setDiscovering(false);
         }
     }
 
@@ -37,18 +41,13 @@ Flickable {
         SurfaceHeader {
             width: parent.width
             title: "Bluetooth"
-            description: "Nearby and saved devices"
             accent: Theme.cyan
         }
 
-        Text {
+        InlineStatus {
             width: parent.width
             visible: Bluetooth.error !== ""
-            text: Bluetooth.error
-            wrapMode: Text.Wrap
-            color: Theme.red
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
+            message: Bluetooth.error
         }
 
         // Active pairing prompt.
@@ -96,7 +95,7 @@ Flickable {
                         radius: Theme.radiusSmall
                         color: Theme.background
                         border.width: pairEntry.activeFocus ? 2 : 1
-                        border.color: pairEntry.activeFocus ? Theme.blue : Theme.overlay
+                        border.color: pairEntry.activeFocus ? Theme.blue : Theme.borderStrong
                     }
 
                     onAccepted: Bluetooth.respond(pairEntry.text)
@@ -107,63 +106,23 @@ Flickable {
                         && !BluetoothModel.requestIsDisplayOnly(Bluetooth.pairRequest)
                     spacing: Theme.spaceSm
 
-                    Rectangle {
-                        width: confirmLabel.implicitWidth + Theme.spaceLg * 2
-                        height: 30
-                        radius: Theme.radiusPill
-                        color: pairConfirmHover.hovered ? Theme.overlay : Theme.orange
-
-                        Text {
-                            id: confirmLabel
-
-                            anchors.centerIn: parent
-                            text: "Confirm"
-                            color: Theme.background
-                            font.family: Theme.fontSans
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: Font.DemiBold
-                        }
-
-                        HoverHandler {
-                            id: pairConfirmHover
-                        }
-
-                        TapHandler {
-                            onTapped: {
-                                if (BluetoothModel.requestWantsText(Bluetooth.pairRequest)) {
-                                    Bluetooth.respond(pairEntry.text);
-                                } else {
-                                    Bluetooth.respond("true");
-                                }
+                    ActionButton {
+                        label: "Confirm"
+                        accent: Theme.orange
+                        onActivated: {
+                            if (BluetoothModel.requestWantsText(Bluetooth.pairRequest)) {
+                                Bluetooth.respond(pairEntry.text);
+                            } else {
+                                Bluetooth.respond("true");
                             }
                         }
                     }
 
-                    Rectangle {
-                        width: denyLabel.implicitWidth + Theme.spaceLg * 2
-                        height: 30
-                        radius: Theme.radiusPill
-                        color: pairDenyHover.hovered ? Theme.overlay : Theme.container
-                        border.width: 1
-                        border.color: Theme.overlay
-
-                        Text {
-                            id: denyLabel
-
-                            anchors.centerIn: parent
-                            text: "Deny"
-                            color: Theme.text
-                            font.family: Theme.fontSans
-                            font.pixelSize: Theme.fontSizeCaption
-                        }
-
-                        HoverHandler {
-                            id: pairDenyHover
-                        }
-
-                        TapHandler {
-                            onTapped: Bluetooth.respond("false")
-                        }
+                    ActionButton {
+                        label: "Deny"
+                        accent: Theme.red
+                        destructive: true
+                        onActivated: Bluetooth.respond("false")
                     }
                 }
             }
@@ -215,9 +174,8 @@ Flickable {
                 ToggleRow {
                     width: parent.width
                     label: "Scan for devices"
-                    checked: Bluetooth.adapter !== null && Bluetooth.adapter.discovering
-                    onToggled: Bluetooth.setDiscovering(
-                        !(Bluetooth.adapter !== null && Bluetooth.adapter.discovering))
+                    checked: Bluetooth.scanning
+                    onToggled: Bluetooth.setDiscovering(!Bluetooth.scanning)
                 }
             }
         }
@@ -243,10 +201,7 @@ Flickable {
                 width: parent.width
                 implicitHeight: deviceContent.implicitHeight + Theme.spaceSm * 2
                 radius: Theme.radiusMedium
-                color: activeFocus || hover.hovered ? Theme.overlay : Theme.container
-                border.width: activeFocus ? 2 : 0
-                border.color: Theme.blue
-                activeFocusOnTab: true
+                color: Theme.container
                 Accessible.name: deviceEntry.modelData.name
 
                 Column {
@@ -272,7 +227,7 @@ Flickable {
                             elide: Text.ElideRight
                             width: parent.width - deviceStatus.width - Theme.spaceSm
                             color: deviceEntry.modelData.connected
-                                ? Theme.textBright : Theme.text
+                                ? Theme.green : Theme.text
                             font.family: Theme.fontSans
                             font.pixelSize: Theme.fontSizeBody
                             font.weight: deviceEntry.modelData.connected ? Font.DemiBold : Font.Normal
@@ -292,7 +247,7 @@ Flickable {
                                 return parts.join(" · ");
                             }
                             color: deviceEntry.modelData.connected
-                                ? Theme.textBright : Theme.textMuted
+                                ? Theme.green : Theme.textMuted
                             font.family: Theme.fontMono
                             font.pixelSize: Theme.fontSizeCaption
                         }
@@ -315,7 +270,7 @@ Flickable {
                                 color: actionHover.hovered || activeFocus
                                     ? Theme.overlay : "transparent"
                                 border.width: activeFocus ? 2 : 1
-                                border.color: activeFocus ? Theme.blue : Theme.overlay
+                                border.color: activeFocus ? Theme.blue : Theme.borderStrong
                                 activeFocusOnTab: true
                                 Accessible.name: deviceAction.modelData
                                     + " " + deviceEntry.modelData.name
@@ -324,7 +279,8 @@ Flickable {
 
                                 function activated() {
                                     Bluetooth.action(
-                                        deviceAction.modelData, deviceEntry.modelData.address);
+                                        BluetoothModel.actionVerb(deviceAction.modelData),
+                                        deviceEntry.modelData.address);
                                 }
 
                                 Text {
@@ -339,6 +295,7 @@ Flickable {
 
                                 HoverHandler {
                                     id: actionHover
+                                    cursorShape: Qt.PointingHandCursor
                                 }
 
                                 TapHandler {
@@ -358,9 +315,6 @@ Flickable {
                     }
                 }
 
-                HoverHandler {
-                    id: hover
-                }
             }
         }
     }

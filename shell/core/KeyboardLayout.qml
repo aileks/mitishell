@@ -43,7 +43,9 @@ QtObject {
         id: layoutProbe
         command: ["hyprctl", "-j", "getoption", "input:kb_layout"]
         stdout: StdioCollector { id: layoutOutput; waitForEnd: true }
+        // qmllint disable signal-handler-parameters
         onExited: {
+            // qmllint enable signal-handler-parameters
             root.layouts = LayoutModel.layoutsFromOption(layoutOutput.text);
             root.resolveCode();
         }
@@ -53,7 +55,9 @@ QtObject {
         id: deviceProbe
         command: ["hyprctl", "-j", "devices"]
         stdout: StdioCollector { id: deviceOutput; waitForEnd: true }
+        // qmllint disable signal-handler-parameters
         onExited: {
+            // qmllint enable signal-handler-parameters
             root.activeDescription = LayoutModel.activeKeymap(deviceOutput.text);
             root.resolveCode();
         }
@@ -62,7 +66,9 @@ QtObject {
     property Process cycleLayoutProcess: Process {
         id: cycleProcess
         command: ["hyprctl", "switchxkblayout", "current", "next"]
+        // qmllint disable signal-handler-parameters
         onExited: root.refresh()
+        // qmllint enable signal-handler-parameters
     }
 
     property Connections hyprlandEvents: Connections {

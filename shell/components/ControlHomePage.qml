@@ -19,7 +19,6 @@ Flickable {
         SurfaceHeader {
             width: parent.width
             title: "Home"
-            description: "At a glance"
             accent: Theme.orange
         }
 
@@ -110,8 +109,6 @@ Flickable {
             accent: Theme.purple
 
             Row {
-                id: mediaContent
-
                 width: parent.width
                 spacing: Theme.spaceMd
 
@@ -141,7 +138,7 @@ Flickable {
 
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - 3 * 36 - 3 * Theme.spaceMd
+                    width: parent.width - 3 * Theme.controlHeight - 3 * Theme.spaceMd
                     spacing: Theme.spaceXs
 
                     Text {
@@ -167,73 +164,78 @@ Flickable {
         }
 
         Row {
+            id: metricsRow
+
+            readonly property int cardCount: Weather.visible ? 3 : 2
+            readonly property real cardWidth: (width - spacing * (cardCount - 1)) / cardCount
+
             width: parent.width
             spacing: Theme.spaceMd
 
             Rectangle {
-                width: Weather.visible
-                    ? parent.width - 2 * 148 - 2 * parent.spacing
-                    : 0
+                width: metricsRow.cardWidth
                 height: 64
                 visible: Weather.visible
                 radius: Theme.radiusMedium
-                color: Theme.container
+                color: Theme.layerRaised
+                border.width: 1
+                border.color: Weather.state === "unavailable" ? Theme.red
+                    : (Weather.state === "stale" || Weather.state === "locating"
+                        ? Theme.yellow : Theme.alpha(Theme.cyan, 0.68))
 
-                Row {
-                    anchors.centerIn: parent
-                    spacing: Theme.spaceSm
-
-                    WeatherIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 20
-                        height: 20
-                        weatherCode: Weather.snapshot !== null
-                            ? Weather.snapshot.current.weatherCode : -1
-                    }
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: Theme.spaceMd
+                    spacing: Theme.spaceXs
 
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: WeatherModel.temperature(
-                            Weather.snapshot !== null
-                                ? Weather.snapshot.current.temperature
-                                : Number.NaN,
-                        )
-                        color: Weather.state === "unavailable" ? Theme.red
-                            : (Weather.state === "stale" ? Theme.yellow : Theme.text)
-                        font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeBody
+                        text: "Weather"
+                        color: Theme.textMuted
+                        font.family: Theme.fontSans
+                        font.pixelSize: Theme.fontSizeCaption
+                        font.weight: Font.DemiBold
+                    }
+
+                    Row {
+                        spacing: Theme.spaceSm
+
+                        WeatherIcon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Theme.iconSm
+                            height: Theme.iconSm
+                            weatherCode: Weather.snapshot !== null
+                                ? Weather.snapshot.current.weatherCode : -1
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: WeatherModel.temperature(
+                                Weather.snapshot !== null
+                                    ? Weather.snapshot.current.temperature
+                                    : Number.NaN,
+                            )
+                            color: Weather.state === "stale" ? Theme.yellow : Theme.textBright
+                            font.family: Theme.fontMono
+                            font.pixelSize: Theme.fontSizeBody
+                        }
                     }
                 }
             }
 
             MetricCard {
+                width: metricsRow.cardWidth
                 label: "CPU"
                 value: SystemMetrics.loaded
                     ? SystemMetrics.cpuPercent + "%" : "--"
             }
 
             MetricCard {
+                width: metricsRow.cardWidth
                 label: "Memory"
                 value: SystemMetrics.loaded
                     ? SystemMetrics.memoryPercent + "%" : "--"
             }
         }
 
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Theme.spaceXl
-
-            IconButton {
-                iconSource: "../assets/icons/settings.svg"
-                accessibleName: "Open settings"
-                onClicked: SurfaceCoordinator.toggle("settings", SurfaceCoordinator.originScreen)
-            }
-
-            IconButton {
-                iconSource: "../assets/icons/power.svg"
-                accessibleName: "Open power menu"
-                onClicked: SurfaceCoordinator.toggle("power", SurfaceCoordinator.originScreen)
-            }
-        }
     }
 }

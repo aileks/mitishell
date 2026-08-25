@@ -9,23 +9,17 @@ import (
 )
 
 type callerStub struct {
-	adapter     bluetooth.Adapter
-	devices     []bluetooth.Device
-	discovering []bool
-	paired      []string
-	connected   []string
-	trusted     [][2]any
-	removed     []string
-	err         error
+	adapter   bluetooth.Adapter
+	devices   []bluetooth.Device
+	paired    []string
+	connected []string
+	trusted   [][2]any
+	removed   []string
+	err       error
 }
 
 func (stub *callerStub) Snapshot(context.Context) (bluetooth.Adapter, []bluetooth.Device, error) {
 	return stub.adapter, stub.devices, stub.err
-}
-
-func (stub *callerStub) SetDiscovering(_ context.Context, discovering bool) error {
-	stub.discovering = append(stub.discovering, discovering)
-	return stub.err
 }
 
 func (stub *callerStub) Pair(_ context.Context, address string) error {
@@ -107,20 +101,5 @@ func TestActionsValidateAddresses(t *testing.T) {
 	}
 	if len(stub.paired) != 1 || len(stub.trusted) != 1 {
 		t.Fatalf("stubs = %#v %#v", stub.paired, stub.trusted)
-	}
-}
-
-func TestSetDiscoveringTogglesScans(t *testing.T) {
-	stub := &callerStub{}
-	service := bluetooth.NewService(stub)
-
-	if err := service.SetDiscovering(context.Background(), true); err != nil {
-		t.Fatalf("SetDiscovering(true) error = %v", err)
-	}
-	if err := service.SetDiscovering(context.Background(), false); err != nil {
-		t.Fatalf("SetDiscovering(false) error = %v", err)
-	}
-	if len(stub.discovering) != 2 || !stub.discovering[0] || stub.discovering[1] {
-		t.Fatalf("discovering = %v", stub.discovering)
 	}
 }

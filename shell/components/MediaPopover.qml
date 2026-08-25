@@ -101,7 +101,7 @@ Item {
                     width: parent.width * root.progress
                     height: parent.height
                     radius: parent.radius
-                    color: Theme.orange
+                    color: Theme.purple
                 }
             }
 
@@ -190,7 +190,7 @@ Item {
                         width: playerLabel.implicitWidth + Theme.spaceLg * 2
                         height: 32
                         radius: Theme.radiusPill
-                        color: selected ? Theme.orange : Theme.container
+                        color: selected ? Theme.purple : Theme.container
                         border.width: activeFocus ? 2 : 0
                         border.color: Theme.blue
                         activeFocusOnTab: true
@@ -204,6 +204,10 @@ Item {
                             color: playerChoice.selected ? Theme.background : Theme.text
                             font.family: Theme.fontSans
                             font.pixelSize: Theme.fontSizeBody
+                        }
+
+                        HoverHandler {
+                            cursorShape: Qt.PointingHandCursor
                         }
 
                         TapHandler {

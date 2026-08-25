@@ -29,6 +29,20 @@ function hour(value) {
     return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(text) ? text.slice(11) : "--:--";
 }
 
+function localeRegion(localeName) {
+    const baseName = String(localeName || "").split(/[.@]/)[0];
+    return baseName.split(/[-_]/)[1] || "";
+}
+
+function unitsForLocale(configuredUnits, localeName, measurementSystem, fallbackLocale) {
+    if (configuredUnits !== "auto") {
+        return configuredUnits;
+    }
+    const region = localeRegion(localeName) || localeRegion(fallbackLocale);
+    return measurementSystem === "imperial-us" || region.toUpperCase() === "US"
+        ? "fahrenheit" : "celsius";
+}
+
 if (typeof module !== "undefined") {
-    module.exports = { condition, temperature, hour };
+    module.exports = { condition, temperature, hour, unitsForLocale };
 }

@@ -35,15 +35,17 @@ PopupWindow {
 
     // The stack grows and shrinks as cards expire; keep the anchor pinned
     // to the island instead of letting the compositor re-slide it.
-    onImplicitHeightChanged: anchor.updateAnchor()
+    // qmllint disable unresolved-type
+    onImplicitHeightChanged: root.anchor.updateAnchor()
+    // qmllint enable unresolved-type
 
     anchor {
-        id: popupAnchor
-
         window: root.anchorWindow
+        // qmllint disable missing-type
         adjustment: PopupAdjustment.Slide
         edges: Edges.Top | Edges.Left
         gravity: Edges.Bottom | Edges.Right
+        // qmllint enable missing-type
         rect.width: 1
         rect.height: 1
 
@@ -59,11 +61,13 @@ PopupWindow {
                 localX,
                 localY,
             );
-            popupAnchor.rect.x = Math.round(Math.max(
+            // qmllint disable unresolved-type
+            root.anchor.rect.x = Math.round(Math.max(
                 Theme.spaceSm,
                 Math.min(point.x, root.anchorWindow.width - root.implicitWidth - Theme.spaceSm),
             ));
-            popupAnchor.rect.y = Math.round(point.y);
+            root.anchor.rect.y = Math.round(point.y);
+            // qmllint enable unresolved-type
         }
     }
 

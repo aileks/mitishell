@@ -1418,6 +1418,7 @@ func TestControlActionTogglesWithPage(t *testing.T) {
 		{name: "defaults to home", args: []string{"control"}, page: "home"},
 		{name: "opens audio page", args: []string{"control", "audio"}, page: "audio"},
 		{name: "opens display page", args: []string{"control", "display"}, page: "display"},
+		{name: "opens settings page", args: []string{"control", "settings"}, page: "settings"},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {

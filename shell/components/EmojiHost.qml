@@ -7,7 +7,9 @@ import Quickshell.Wayland
 import "../core"
 import "../lib/EmojiModel.js" as EmojiModel
 
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     required property var modelData
@@ -299,7 +301,7 @@ PanelWindow {
                                 font.pixelSize: Theme.fontSizeDisplay
                             }
 
-                            HoverHandler { id: hover }
+                            HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
                             TapHandler {
                                 onTapped: root.selectCategory(categoryButton.modelData.key)
                             }

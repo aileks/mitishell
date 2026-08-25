@@ -12,6 +12,10 @@ Controls.Slider {
     // Orange for runtime controls, blue for configuration.
     property color accent: Theme.orange
 
+    HoverHandler {
+        cursorShape: Qt.PointingHandCursor
+    }
+
     background: Rectangle {
         x: root.leftPadding
         y: root.topPadding + root.availableHeight / 2 - height / 2

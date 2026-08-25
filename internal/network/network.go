@@ -49,6 +49,8 @@ type Saved struct {
 
 // Caller is the NetworkManager boundary.
 type Caller interface {
+	WirelessEnabled(ctx context.Context) (bool, error)
+	SetWirelessEnabled(ctx context.Context, enabled bool) error
 	Devices(ctx context.Context) ([]Device, error)
 	Saved(ctx context.Context) ([]Saved, error)
 	Connect(ctx context.Context, settings map[string]map[string]dbus.Variant) error
@@ -65,6 +67,7 @@ type Station struct {
 
 type Wifi struct {
 	Available bool      `json:"available"`
+	Enabled   bool      `json:"enabled"`
 	State     string    `json:"state"`
 	Stations  []Station `json:"stations"`
 	Saved     []Saved   `json:"saved"`
@@ -91,6 +94,10 @@ func NewService(caller Caller) Service {
 }
 
 func (service Service) Snapshot(ctx context.Context) Snapshot {
+	enabled, enabledErr := service.caller.WirelessEnabled(ctx)
+	if enabledErr != nil {
+		return Snapshot{Error: fmt.Sprintf("read Wi-Fi state: %v", enabledErr)}
+	}
 	devices, err := service.caller.Devices(ctx)
 	if err != nil {
 		return Snapshot{Error: fmt.Sprintf("read devices: %v", err)}
@@ -106,6 +113,7 @@ func (service Service) Snapshot(ctx context.Context) Snapshot {
 		case DeviceWifi:
 			snapshot.Wifi = Wifi{
 				Available: true,
+				Enabled:   enabled,
 				State:     deviceState(device.State),
 				Stations:  stations(device, saved),
 				Saved:     saved,
@@ -119,6 +127,10 @@ func (service Service) Snapshot(ctx context.Context) Snapshot {
 		}
 	}
 	return snapshot
+}
+
+func (service Service) SetWifiEnabled(ctx context.Context, enabled bool) error {
+	return service.caller.SetWirelessEnabled(ctx, enabled)
 }
 
 func (service Service) Connect(ctx context.Context, ssid string, password string, hidden bool) error {

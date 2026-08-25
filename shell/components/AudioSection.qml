@@ -57,13 +57,37 @@ Rectangle {
         }
 
         Flickable {
+            id: deviceList
+
             width: parent.width
-            height: Math.min(deviceRows.implicitHeight, 84)
+            height: Math.min(
+                deviceRows.implicitHeight,
+                Theme.controlHeightLg * 3 + Theme.spaceXs * 2,
+            )
             visible: root.devices.length > 0
             contentWidth: width
             contentHeight: deviceRows.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+
+            WheelHandler {
+                blocking: false
+                onWheel: function(event) {
+                    const delta = event.pixelDelta.y !== 0
+                        ? event.pixelDelta.y : event.angleDelta.y / 2;
+                    const nextContentY = Math.max(
+                        0,
+                        Math.min(
+                            deviceList.contentHeight - deviceList.height,
+                            deviceList.contentY - delta,
+                        ),
+                    );
+                    event.accepted = nextContentY !== deviceList.contentY;
+                    if (event.accepted) {
+                        deviceList.contentY = nextContentY;
+                    }
+                }
+            }
 
             Column {
                 id: deviceRows

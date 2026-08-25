@@ -41,6 +41,7 @@ FocusScope {
 
         HoverHandler {
             id: hover
+            cursorShape: Qt.PointingHandCursor
         }
     }
 

@@ -178,7 +178,7 @@ SurfaceFrame {
                     }
                 }
 
-                HoverHandler { id: dismissHover }
+                HoverHandler { id: dismissHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { id: dismissTap; onTapped: root.dismissed(false) }
                 Keys.onReturnPressed: function(event) {
                     root.dismissed(false);
@@ -246,5 +246,10 @@ SurfaceFrame {
         enabled: !root.historyMode
         acceptedButtons: Qt.LeftButton
         onTapped: root.dismissed(false)
+    }
+
+    HoverHandler {
+        enabled: !root.historyMode
+        cursorShape: Qt.PointingHandCursor
     }
 }

@@ -14,11 +14,19 @@ Column {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         text: root.title
-        color: root.accent
+        color: Theme.textBright
         font.family: Theme.fontSans
         font.pixelSize: Theme.fontSizeTitle
         font.weight: Font.DemiBold
         wrapMode: Text.Wrap
+    }
+
+    Rectangle {
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Theme.spaceXl
+        height: 3
+        radius: Theme.radiusPill
+        color: root.accent
     }
 
     Text {

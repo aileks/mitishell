@@ -59,11 +59,11 @@ bin/mitishell night-light status
 
 Weather is opt-in. When enabled, Mitishell sends either the configured place name or an automatic-location request to [wttr.in](https://wttr.in/) and caches the last successful three-day forecast. Automatic mode allows wttr.in to infer a rough location from the request's network address. A manual place avoids that inference request but still sends the place text to wttr.in.
 
-Set a place with `mitishell weather location <place...>`, clear it with `mitishell weather location auto`, or use the shared editor in the weather popover and settings window. `weather.location` stores the manual query, while an empty value means automatic detection. `weather.units` accepts `auto`, `celsius`, or `fahrenheit`. Cached data is reused only for the same query and unit system.
+Set a place with `mitishell weather location <place...>`, clear it with `mitishell weather location auto`, or use the shared editor in the weather popover and Settings page. `weather.location` stores the manual query, while an empty value means automatic detection. `weather.units` accepts `auto`, `celsius`, or `fahrenheit`. Auto follows the locale's measurement region. Cached data is reused only for the same query and unit system.
 
 ## Control center
 
-`mitishell control` toggles the control center on the focused output. It has Home, Audio, Media, Display, Network, and Bluetooth pages; pass a page to land somewhere specific, for example `mitishell control audio`. The bar's control island opens it too. `mitishell network` and `mitishell bluetooth` are page shortcuts.
+`mitishell control` toggles the control center on the focused output. It has Home, Audio, Display, Network, Bluetooth, and Settings pages; pass a page to land somewhere specific, for example `mitishell control audio`. Home keeps a compact now-playing card when media is active. The bar's control island opens it too. `mitishell network` and `mitishell bluetooth` are page shortcuts.
 
 ```ini
 bindl = SUPER, D, exec, mitishell control
@@ -71,7 +71,7 @@ bindl = SUPER, D, exec, mitishell control
 
 ## Settings
 
-`mitishell settings` opens a centered settings window, also reachable from the control center's Home page. It exposes bar layout, islands, weather, and motion fields. Every change saves immediately through the same validation as `mitishell config set`, applies live, and reports validation errors inline.
+`mitishell settings` opens the control center's Settings page on the focused output. It exposes bar layout, islands, weather, and motion fields. Every change saves immediately through the same validation as `mitishell config set`, applies live, and reports validation errors inline.
 
 ```ini
 bindl = SUPER, C, exec, mitishell settings
@@ -85,7 +85,7 @@ The newest 50 non-transient notifications persist across reloads and restarts. S
 
 The power menu is a centered overlay with lock, logout, suspend, hibernate, reboot, and shutdown. Choosing an action morphs it into a confirmation. Suspend and hibernate appear only when logind supports them, and locking goes through the session's lock signal so your idle daemon decides what locks the screen.
 
-The Network page lists Wi-Fi stations with signal and security, joins secured and hidden networks inline, and shows Ethernet state; it drives NetworkManager. The Bluetooth page pairs and manages devices through BlueZ, including passkey confirmation and battery readouts for devices that report them. Enterprise Wi-Fi sign-in stays out of scope.
+The Network page toggles Wi-Fi, lists stations with signal and security, joins secured and hidden networks inline, and shows Ethernet state; it drives NetworkManager. The Bluetooth page scans while open and pairs and manages devices through BlueZ, including passkey confirmation and battery readouts for devices that report them. Enterprise Wi-Fi sign-in stays out of scope.
 
 ## Volume, microphone, and brightness
 

@@ -5,7 +5,9 @@ import Quickshell
 import "../core"
 import "../lib/BarModel.js" as BarModel
 
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     required property var modelData
@@ -125,7 +127,7 @@ PanelWindow {
     }
 
     screen: modelData
-    visible: Config.outputEnabled(modelData.name)
+    visible: modelData !== null && Config.outputEnabled(modelData.name)
     color: "transparent"
     implicitHeight: Config.bar.height
     exclusiveZone: visible ? implicitHeight + Config.bar.marginTop : 0
@@ -135,11 +137,13 @@ PanelWindow {
         left: true
         right: true
     }
-    margins {
-        top: Config.bar.marginTop
-        left: Config.bar.marginHorizontal
-        right: Config.bar.marginHorizontal
-    }
+    // QuickShell's generated PanelWindow metadata does not resolve the
+    // margins group even though the runtime API exposes it.
+    // qmllint disable unqualified unresolved-type
+    margins.top: Config.bar.marginTop
+    margins.left: Config.bar.marginHorizontal
+    margins.right: Config.bar.marginHorizontal
+    // qmllint enable unqualified unresolved-type
 
     NotificationMediaCache {
         screen: root.modelData

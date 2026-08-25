@@ -27,7 +27,7 @@ FocusScope {
         color: press.pressed ? Theme.pressedFill
             : (root.activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised)
         border.width: root.activeFocus ? 2 : 1
-        border.color: root.activeFocus ? Theme.blue : Theme.borderSubtle
+        border.color: root.activeFocus ? Theme.blue : Theme.borderStrong
         opacity: root.enabled ? 1 : 0.35
 
         Image {
@@ -41,6 +41,7 @@ FocusScope {
 
         HoverHandler {
             id: hover
+            cursorShape: Qt.PointingHandCursor
         }
     }
 

@@ -18,7 +18,6 @@ Flickable {
         SurfaceHeader {
             width: parent.width
             title: "Audio"
-            description: "Devices and application streams"
             accent: Theme.orange
         }
 
