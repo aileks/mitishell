@@ -142,7 +142,7 @@ ShellRoot {
                 return "settings unavailable";
             }
             Control.selectPage("settings");
-            SurfaceCoordinator.toggle("control", screen);
+            SurfaceCoordinator.open("control", screen);
             return "settings opened";
         }
     }

@@ -8,14 +8,17 @@ import "../lib/BluetoothModel.js" as BluetoothModel
 Flickable {
     id: root
 
+    required property bool active
+
     contentWidth: width
     contentHeight: content.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
 
-    onVisibleChanged: {
-        if (visible) {
+    onActiveChanged: {
+        if (active) {
             Bluetooth.refresh();
+            Bluetooth.setDiscovering(true);
             pollTimer.restart();
         } else {
             pollTimer.stop();
@@ -103,65 +106,23 @@ Flickable {
                         && !BluetoothModel.requestIsDisplayOnly(Bluetooth.pairRequest)
                     spacing: Theme.spaceSm
 
-                    Rectangle {
-                        width: confirmLabel.implicitWidth + Theme.spaceLg * 2
-                        height: 30
-                        radius: Theme.radiusPill
-                        color: pairConfirmHover.hovered ? Theme.overlay : Theme.orange
-
-                        Text {
-                            id: confirmLabel
-
-                            anchors.centerIn: parent
-                            text: "Confirm"
-                            color: Theme.background
-                            font.family: Theme.fontSans
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: Font.DemiBold
-                        }
-
-                        HoverHandler {
-                            id: pairConfirmHover
-                            cursorShape: Qt.PointingHandCursor
-                        }
-
-                        TapHandler {
-                            onTapped: {
-                                if (BluetoothModel.requestWantsText(Bluetooth.pairRequest)) {
-                                    Bluetooth.respond(pairEntry.text);
-                                } else {
-                                    Bluetooth.respond("true");
-                                }
+                    ActionButton {
+                        label: "Confirm"
+                        accent: Theme.orange
+                        onActivated: {
+                            if (BluetoothModel.requestWantsText(Bluetooth.pairRequest)) {
+                                Bluetooth.respond(pairEntry.text);
+                            } else {
+                                Bluetooth.respond("true");
                             }
                         }
                     }
 
-                    Rectangle {
-                        width: denyLabel.implicitWidth + Theme.spaceLg * 2
-                        height: 30
-                        radius: Theme.radiusPill
-                        color: pairDenyHover.hovered ? Theme.overlay : Theme.container
-                        border.width: 1
-                        border.color: Theme.borderStrong
-
-                        Text {
-                            id: denyLabel
-
-                            anchors.centerIn: parent
-                            text: "Deny"
-                            color: Theme.text
-                            font.family: Theme.fontSans
-                            font.pixelSize: Theme.fontSizeCaption
-                        }
-
-                        HoverHandler {
-                            id: pairDenyHover
-                            cursorShape: Qt.PointingHandCursor
-                        }
-
-                        TapHandler {
-                            onTapped: Bluetooth.respond("false")
-                        }
+                    ActionButton {
+                        label: "Deny"
+                        accent: Theme.red
+                        destructive: true
+                        onActivated: Bluetooth.respond("false")
                     }
                 }
             }

@@ -56,9 +56,22 @@ PanelWindow {
 
     onOpenChanged: {
         if (open) {
-            Qt.callLater(function() {
-                root.focusRailButton(Control.pages.indexOf(Control.page));
-            });
+            focusSelectedPage();
+        }
+    }
+
+    function focusSelectedPage() {
+        Qt.callLater(function() {
+            root.focusRailButton(Control.pages.indexOf(Control.page));
+        });
+    }
+
+    Connections {
+        target: Control
+        function onPageChanged() {
+            if (root.open) {
+                root.focusSelectedPage();
+            }
         }
     }
 
@@ -260,6 +273,7 @@ PanelWindow {
 
                     ControlBluetoothPage {
                         anchors.fill: parent
+                        active: root.open
                     }
                 }
 

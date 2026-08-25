@@ -45,7 +45,7 @@ func (caller BlueZCaller) Snapshot(ctx context.Context) (Adapter, []Device, erro
 		return Adapter{}, nil, err
 	}
 
-	all, err := bluezManagedObjects(conn)
+	all, err := bluezManagedObjects(ctx, conn)
 	if err != nil {
 		return Adapter{}, nil, err
 	}
@@ -92,7 +92,7 @@ func (caller BlueZCaller) Pair(ctx context.Context, address string) error {
 	if err != nil {
 		return err
 	}
-	path, err := devicePath(conn, address)
+	path, err := devicePath(ctx, conn, address)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (caller BlueZCaller) Connect(ctx context.Context, address string) error {
 	if err != nil {
 		return err
 	}
-	path, err := devicePath(conn, address)
+	path, err := devicePath(ctx, conn, address)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (caller BlueZCaller) Disconnect(ctx context.Context, address string) error 
 	if err != nil {
 		return err
 	}
-	path, err := devicePath(conn, address)
+	path, err := devicePath(ctx, conn, address)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (caller BlueZCaller) SetTrusted(ctx context.Context, address string, truste
 	if err != nil {
 		return err
 	}
-	path, err := devicePath(conn, address)
+	path, err := devicePath(ctx, conn, address)
 	if err != nil {
 		return err
 	}
@@ -145,11 +145,11 @@ func (caller BlueZCaller) Remove(ctx context.Context, address string) error {
 	if err != nil {
 		return err
 	}
-	adapter, err := adapterPath(conn)
+	adapter, err := adapterPath(ctx, conn)
 	if err != nil {
 		return err
 	}
-	device, err := devicePath(conn, address)
+	device, err := devicePath(ctx, conn, address)
 	if err != nil {
 		return err
 	}
@@ -157,9 +157,9 @@ func (caller BlueZCaller) Remove(ctx context.Context, address string) error {
 		ctx, adapterFace+".RemoveDevice", 0, device).Err
 }
 
-func bluezManagedObjects(conn *dbus.Conn) (bluezObjects, error) {
+func bluezManagedObjects(ctx context.Context, conn *dbus.Conn) (bluezObjects, error) {
 	manager := conn.Object(bluezName, bluezRoot)
-	call := manager.Call(objectManagerIface+".GetManagedObjects", 0)
+	call := manager.CallWithContext(ctx, objectManagerIface+".GetManagedObjects", 0)
 	if call.Err != nil {
 		return nil, call.Err
 	}
@@ -170,8 +170,12 @@ func bluezManagedObjects(conn *dbus.Conn) (bluezObjects, error) {
 	return all, nil
 }
 
-func adapterPath(conn *dbus.Conn) (dbus.ObjectPath, error) {
-	for path, interfaces := range mustObjects(conn) {
+func adapterPath(ctx context.Context, conn *dbus.Conn) (dbus.ObjectPath, error) {
+	objects, err := bluezManagedObjects(ctx, conn)
+	if err != nil {
+		return "", err
+	}
+	for path, interfaces := range objects {
 		if _, ok := interfaces[adapterFace]; ok {
 			return path, nil
 		}
@@ -179,9 +183,13 @@ func adapterPath(conn *dbus.Conn) (dbus.ObjectPath, error) {
 	return "", fmt.Errorf("no Bluetooth adapter")
 }
 
-func devicePath(conn *dbus.Conn, address string) (dbus.ObjectPath, error) {
+func devicePath(ctx context.Context, conn *dbus.Conn, address string) (dbus.ObjectPath, error) {
+	objects, err := bluezManagedObjects(ctx, conn)
+	if err != nil {
+		return "", err
+	}
 	target := strings.ToUpper(address)
-	for path, interfaces := range mustObjects(conn) {
+	for path, interfaces := range objects {
 		props, ok := interfaces[deviceFace]
 		if !ok || strings.ToUpper(propertyString(props, "Address")) != target {
 			continue
@@ -189,14 +197,6 @@ func devicePath(conn *dbus.Conn, address string) (dbus.ObjectPath, error) {
 		return path, nil
 	}
 	return "", fmt.Errorf("no device %q", address)
-}
-
-func mustObjects(conn *dbus.Conn) bluezObjects {
-	objects, err := bluezManagedObjects(conn)
-	if err != nil {
-		return bluezObjects{}
-	}
-	return objects
 }
 
 func propertyString(props map[string]dbus.Variant, key string) string {

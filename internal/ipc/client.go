@@ -56,7 +56,7 @@ func (client Client) OpenPowerMenu() error {
 	return client.action("power", "open", "power menu opened")
 }
 
-// OpenSettings toggles the settings window on the focused output.
+// OpenSettings opens the control center's Settings page on the focused output.
 func (client Client) OpenSettings() error {
 	return client.action("settings", "open", "settings opened")
 }

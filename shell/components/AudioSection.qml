@@ -71,18 +71,21 @@ Rectangle {
             boundsBehavior: Flickable.StopAtBounds
 
             WheelHandler {
-                blocking: true
+                blocking: false
                 onWheel: function(event) {
                     const delta = event.pixelDelta.y !== 0
                         ? event.pixelDelta.y : event.angleDelta.y / 2;
-                    deviceList.contentY = Math.max(
+                    const nextContentY = Math.max(
                         0,
                         Math.min(
                             deviceList.contentHeight - deviceList.height,
                             deviceList.contentY - delta,
                         ),
                     );
-                    event.accepted = true;
+                    event.accepted = nextContentY !== deviceList.contentY;
+                    if (event.accepted) {
+                        deviceList.contentY = nextContentY;
+                    }
                 }
             }
 

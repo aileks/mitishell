@@ -13,8 +13,8 @@ const declarations = new Map(
 
 function parseHex(hex) {
     const channels = hex.match(/[0-9a-f]{2}/gi);
-    assert.ok(channels, `invalid theme color ${hex}`);
-    return channels.map((channel) => Number.parseInt(channel, 16) / 255).concat(1).slice(0, 4);
+    assert.equal(channels?.length, 3, `invalid theme color ${hex}`);
+    return channels.map((channel) => Number.parseInt(channel, 16) / 255).concat(1);
 }
 
 function resolveColor(name, resolving = new Set()) {
@@ -23,7 +23,7 @@ function resolveColor(name, resolving = new Set()) {
     assert.ok(expression, `missing theme color ${name}`);
 
     const nextResolving = new Set(resolving).add(name);
-    const literal = expression.match(/^"(#[0-9a-f]{6}(?:[0-9a-f]{2})?)"$/i);
+    const literal = expression.match(/^"(#[0-9a-f]{6})"$/i);
     if (literal) {
         return parseHex(literal[1]);
     }
