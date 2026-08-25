@@ -19,7 +19,7 @@ Rectangle {
         : (pillPress.pressed ? Theme.pressedFill
             : (root.activeFocus || pillHover.hovered ? Theme.hoverFill : Theme.layerInset))
     border.width: root.activeFocus ? 2 : 1
-    border.color: root.activeFocus || root.checked ? Theme.blue : Theme.borderSubtle
+    border.color: root.activeFocus || root.checked ? Theme.blue : Theme.borderStrong
     activeFocusOnTab: true
     Accessible.name: label
     Accessible.role: Accessible.Button
@@ -38,6 +38,7 @@ Rectangle {
 
     HoverHandler {
         id: pillHover
+        cursorShape: Qt.PointingHandCursor
     }
 
     TapHandler {

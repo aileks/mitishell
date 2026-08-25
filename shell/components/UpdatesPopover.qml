@@ -15,7 +15,7 @@ Item {
             text: Updates.result === null ? "Checking…" : Updates.result.system.count + " system  •  " + Updates.result.aur.count + " AUR"
             color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBody
         }
-        Text { visible: Updates.error !== ""; width: parent.width; wrapMode: Text.Wrap; text: Updates.error; color: Theme.red; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBody }
+        InlineStatus { visible: Updates.error !== ""; width: parent.width; message: Updates.error }
 
         Repeater {
             model: Updates.result === null ? [] : Updates.result.system.packages.slice(0, 8)
@@ -32,10 +32,11 @@ Item {
             text: "AUR checks require paru or yay"
             color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption
         }
-        Text {
+        InlineStatus {
             visible: Updates.result !== null && (Updates.result.aur.error || "") !== ""
-            width: parent.width; wrapMode: Text.Wrap; text: Updates.result === null ? "" : (Updates.result.aur.error || "")
-            color: Theme.red; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeCaption
+            width: parent.width
+            message: Updates.result === null ? "" : (Updates.result.aur.error || "")
+            textSize: Theme.fontSizeCaption
         }
         Repeater {
             model: Updates.result === null ? [] : Updates.result.aur.packages.slice(0, 8)

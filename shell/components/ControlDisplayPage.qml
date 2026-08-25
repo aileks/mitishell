@@ -18,7 +18,6 @@ Flickable {
         SurfaceHeader {
             width: parent.width
             title: "Display"
-            description: "Brightness across connected outputs"
             accent: Theme.blue
         }
 
@@ -107,16 +106,12 @@ Flickable {
             }
         }
 
-        Text {
+        InlineStatus {
             width: parent.width
             visible: !Display.available
-            text: Display.error !== ""
+            message: Display.error !== ""
                 ? Display.error
                 : "No displays with brightness control"
-            color: Theme.red
-            wrapMode: Text.Wrap
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
         }
     }
 }

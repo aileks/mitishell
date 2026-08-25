@@ -315,7 +315,9 @@ QtObject {
             id: historyLoadError
             waitForEnd: true
         }
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             if (exitCode === 0) {
                 try {
                     root.mergeLoadedState(JSON.parse(historyLoadOutput.text));
@@ -343,7 +345,9 @@ QtObject {
             waitForEnd: true
         }
         onStarted: write(root.pendingSavePayload)
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.historyError = historySaveError.text.trim()
                     || "Notification history could not be saved.";
@@ -364,7 +368,9 @@ QtObject {
             id: historyClearError
             waitForEnd: true
         }
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             if (exitCode === 0) {
                 root.historyWritable = true;
                 root.historyError = "";
@@ -399,7 +405,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: {
+            // qmllint enable signal-handler-parameters
             try {
                 const monitors = JSON.parse(lockOutput.text);
                 root.sessionLocked = monitors.some(function(monitor) {
@@ -418,7 +426,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: {
+            // qmllint enable signal-handler-parameters
             try {
                 const active = JSON.parse(fullscreenOutput.text);
                 const fullscreen = active.fullscreen;

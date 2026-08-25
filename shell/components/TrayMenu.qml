@@ -282,6 +282,7 @@ FocusScope {
 
             HoverHandler {
                 id: backHover
+                cursorShape: Qt.PointingHandCursor
             }
 
             TapHandler {
@@ -461,6 +462,7 @@ FocusScope {
                     HoverHandler {
                         id: entryHover
                         enabled: menuRow.isEntry && menuRow.modelData.enabled
+                        cursorShape: Qt.PointingHandCursor
 
                         onHoveredChanged: {
                             if (hovered) {

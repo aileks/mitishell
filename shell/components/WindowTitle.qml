@@ -21,7 +21,7 @@ Text {
     Behavior on opacity {
         NumberAnimation {
             duration: Motion.duration(Motion.quick)
-            easing.type: Easing.OutCubic
+            easing.type: Motion.easingStandard
         }
     }
 }

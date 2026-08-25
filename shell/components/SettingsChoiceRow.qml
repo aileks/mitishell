@@ -41,13 +41,10 @@ Column {
         }
     }
 
-    Text {
+    InlineStatus {
         width: parent.width
         visible: root.error !== ""
-        text: root.error
-        wrapMode: Text.Wrap
-        color: Theme.red
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeCaption
+        message: root.error
+        textSize: Theme.fontSizeCaption
     }
 }

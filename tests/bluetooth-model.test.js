@@ -25,6 +25,11 @@ test("device actions follow state", () => {
     );
 });
 
+test("device action labels map to backend verbs", () => {
+    assert.equal(BluetoothModel.actionVerb("forget"), "remove");
+    assert.equal(BluetoothModel.actionVerb("disconnect"), "disconnect");
+});
+
 test("pairing prompts read clearly", () => {
     assert.equal(
         BluetoothModel.pairPromptLabel({ kind: "confirm", passkey: "123456", device: "WH-1000XM5" }),

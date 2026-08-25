@@ -23,7 +23,10 @@ Row {
     }
 
     Repeater {
-        model: WorkspaceModel.idsForMonitor(Hyprland.workspaces.values, root.screen.name)
+        model: WorkspaceModel.idsForMonitor(
+            Hyprland.workspaces.values,
+            root.screen !== null ? root.screen.name : "",
+        )
 
         delegate: FocusScope {
             id: workspaceItem
@@ -52,12 +55,12 @@ Row {
                 border.width: workspaceItem.activeFocus
                     ? 2
                     : (!workspaceItem.active && workspaceItem.occupied ? 1 : 0)
-                border.color: workspaceItem.activeFocus ? Theme.blue : Theme.overlay
+                border.color: workspaceItem.activeFocus ? Theme.blue : Theme.borderStrong
 
                 Behavior on width {
                     NumberAnimation {
                         duration: Motion.duration(Motion.normal)
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.easingStandard
                     }
                 }
 
@@ -79,6 +82,10 @@ Row {
                         workspaceItem.workspace.activate();
                     }
                 }
+            }
+
+            HoverHandler {
+                cursorShape: Qt.PointingHandCursor
             }
 
             Keys.onReturnPressed: function(event) {

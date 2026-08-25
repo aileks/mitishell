@@ -24,7 +24,7 @@ Item {
             text: WeatherModel.temperature(
                 Weather.snapshot !== null ? Weather.snapshot.current.temperature : Number.NaN,
             )
-            color: Weather.state === "unavailable" ? Theme.red
+            color: Weather.state === "unavailable" ? Theme.textMuted
                 : (Weather.state === "stale" || Weather.state === "locating"
                     ? Theme.yellow : Theme.text)
             font.family: Theme.fontMono

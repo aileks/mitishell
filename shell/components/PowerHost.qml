@@ -9,7 +9,9 @@ import "../core"
 // The wlogout replacement: a centered action grid on the focused output.
 // Choosing an action morphs the card into a confirmation of the same
 // action; confirming runs it.
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     required property var modelData
@@ -172,7 +174,7 @@ PanelWindow {
                     color: tilePress.pressed ? Theme.pressedFill
                         : (activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised)
                     border.width: activeFocus ? 2 : 1
-                    border.color: activeFocus ? Theme.blue : Theme.borderSubtle
+                    border.color: activeFocus ? Theme.blue : Theme.borderStrong
                     activeFocusOnTab: true
                     Accessible.name: actionTile.modelData.label
                     Accessible.role: Accessible.Button
@@ -202,6 +204,7 @@ PanelWindow {
 
                     HoverHandler {
                         id: hover
+                        cursorShape: Qt.PointingHandCursor
                     }
 
                     TapHandler {
@@ -278,9 +281,10 @@ PanelWindow {
                     width: 120
                     height: 40
                     radius: Theme.radiusMedium
-                    color: Theme.red
-                    border.width: activeFocus ? 2 : 0
-                    border.color: Theme.blue
+                    color: confirmPress.pressed ? Theme.pressedFill
+                        : (activeFocus || confirmHover.hovered ? Theme.hoverFill : Theme.layerRaised)
+                    border.width: activeFocus ? 2 : 1
+                    border.color: activeFocus ? Theme.blue : Theme.red
                     activeFocusOnTab: true
                     Accessible.name: "Confirm"
                     Accessible.role: Accessible.Button
@@ -289,13 +293,19 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: "Confirm"
-                        color: Theme.background
+                        color: Theme.textBright
                         font.family: Theme.fontSans
                         font.pixelSize: Theme.fontSizeBody
                         font.weight: Font.DemiBold
                     }
 
+                    HoverHandler {
+                        id: confirmHover
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
                     TapHandler {
+                        id: confirmPress
                         onTapped: root.confirmPending()
                     }
 
@@ -318,7 +328,7 @@ PanelWindow {
                     color: cancelPress.pressed ? Theme.pressedFill
                         : (activeFocus || cancelHover.hovered ? Theme.hoverFill : Theme.layerRaised)
                     border.width: activeFocus ? 2 : 1
-                    border.color: activeFocus ? Theme.blue : Theme.borderSubtle
+                    border.color: activeFocus ? Theme.blue : Theme.borderStrong
                     activeFocusOnTab: true
                     Accessible.name: "Cancel"
                     Accessible.role: Accessible.Button
@@ -334,6 +344,7 @@ PanelWindow {
 
                     HoverHandler {
                         id: cancelHover
+                        cursorShape: Qt.PointingHandCursor
                     }
 
                     TapHandler {

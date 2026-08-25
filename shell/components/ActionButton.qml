@@ -32,7 +32,7 @@ FocusScope {
                 : (root.activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised))
         border.width: root.activeFocus ? 2 : 1
         border.color: root.activeFocus ? Theme.blue
-            : (root.selected ? root.accent : Theme.borderSubtle)
+            : (root.selected || root.destructive ? root.accent : Theme.borderStrong)
         opacity: root.enabled ? 1 : 0.38
 
         Row {
@@ -54,14 +54,14 @@ FocusScope {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.label
-                color: root.destructive ? Theme.red : Theme.textBright
+                color: Theme.textBright
                 font.family: Theme.fontSans
                 font.pixelSize: Theme.fontSizeBodySmall
                 font.weight: root.selected ? Font.DemiBold : Font.Normal
             }
         }
 
-        HoverHandler { id: hover }
+        HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
         TapHandler { id: press; onTapped: root.activate() }
     }
 

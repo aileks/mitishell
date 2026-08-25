@@ -4,11 +4,14 @@ import Quickshell.Wayland
 import "../core"
 import "../lib/OsdModel.js" as OsdModel
 
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     required property var modelData
-    readonly property bool focused: Osd.open && Osd.screenName === modelData.name
+    readonly property bool focused: modelData !== null
+        && Osd.open && Osd.screenName === modelData.name
     readonly property var iconLayout: OsdModel.iconCandidate(Osd.icon)
     readonly property bool themeIconAvailable: iconLayout.kind === "theme"
         && Quickshell.hasThemeIcon(iconLayout.value)

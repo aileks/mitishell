@@ -41,7 +41,7 @@ Rectangle {
             width: parent.width - percent.width - Theme.spaceSm
             text: root.stream.label
             elide: Text.ElideRight
-            color: root.muted ? Theme.red : Theme.text
+            color: Theme.text
             font.family: Theme.fontSans
             font.pixelSize: Theme.fontSizeBody
         }

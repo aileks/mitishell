@@ -27,8 +27,10 @@ QtObject {
     readonly property color layerBase: background
     readonly property color layerRaised: container
     readonly property color layerInset: surface
+    // Subtle borders separate decorative layers. Strong borders identify
+    // controls and other meaningful UI edges at WCAG's 3:1 threshold.
     readonly property color borderSubtle: alpha(overlay, 0.48)
-    readonly property color borderStrong: alpha(textMuted, 0.58)
+    readonly property color borderStrong: alpha(textMuted, 0.68)
     readonly property color scrim: alpha(background, 0.72)
     readonly property color shadow: alpha(background, 0.78)
     readonly property color hoverFill: alpha(overlay, 0.42)

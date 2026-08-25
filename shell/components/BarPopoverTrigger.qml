@@ -28,6 +28,10 @@ FocusScope {
         implicitHeight: childrenRect.height
     }
 
+    HoverHandler {
+        cursorShape: Qt.PointingHandCursor
+    }
+
     TapHandler {
         onTapped: root.activate()
     }

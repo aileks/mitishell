@@ -87,23 +87,6 @@ func (caller BlueZCaller) Snapshot(ctx context.Context) (Adapter, []Device, erro
 	return adapter, devices, nil
 }
 
-func (caller BlueZCaller) SetDiscovering(ctx context.Context, discovering bool) error {
-	conn, err := caller.connect(ctx)
-	if err != nil {
-		return err
-	}
-	path, err := adapterPath(conn)
-	if err != nil {
-		return err
-	}
-	object := conn.Object(bluezName, path)
-	method := adapterFace + ".StopDiscovery"
-	if discovering {
-		method = adapterFace + ".StartDiscovery"
-	}
-	return object.CallWithContext(ctx, method, 0).Err
-}
-
 func (caller BlueZCaller) Pair(ctx context.Context, address string) error {
 	conn, err := caller.connect(ctx)
 	if err != nil {

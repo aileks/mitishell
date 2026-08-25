@@ -46,14 +46,10 @@ Item {
             onDeviceChosen: function(device) { Audio.selectSource(device); }
         }
 
-        Text {
+        InlineStatus {
             width: parent.width
             visible: !Audio.ready
-            text: "PipeWire is unavailable"
-            color: Theme.red
-            wrapMode: Text.Wrap
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
+            message: "PipeWire is unavailable"
         }
     }
 }

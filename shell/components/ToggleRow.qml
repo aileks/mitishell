@@ -65,7 +65,7 @@ FocusScope {
                 : (root.activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised))
         border.width: root.activeFocus ? 2 : 1
         border.color: root.activeFocus ? Theme.blue
-            : (root.checked ? root.accent : Theme.borderSubtle)
+            : (root.checked ? root.accent : Theme.borderStrong)
 
         Rectangle {
             x: root.checked ? parent.width - width - 3 : 3
@@ -83,7 +83,7 @@ FocusScope {
             }
         }
 
-        HoverHandler { id: hover }
+        HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     }
 
     TapHandler {

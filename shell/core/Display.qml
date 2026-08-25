@@ -100,7 +100,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             try {
                 const result = JSON.parse(discoverOutput.text);
                 root.state = result.state === "ready" ? "ready" : "unavailable";
@@ -138,7 +140,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             try {
                 const result = JSON.parse(writeOutput.text);
                 if (result.state === "ready") {
@@ -177,7 +181,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             try {
                 const result = JSON.parse(connectorWriteOutput.text);
                 if (result.state === "ready") {

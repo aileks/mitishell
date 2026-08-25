@@ -94,6 +94,7 @@ Item {
 
             HoverHandler {
                 id: buttonHover
+                cursorShape: Qt.PointingHandCursor
             }
 
             TapHandler {
@@ -110,14 +111,10 @@ Item {
             }
         }
 
-        Text {
+        InlineStatus {
             width: parent.width
-            visible: text !== ""
-            text: SystemMetrics.launchError
-            color: Theme.red
-            wrapMode: Text.Wrap
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
+            visible: SystemMetrics.launchError !== ""
+            message: SystemMetrics.launchError
         }
     }
 }

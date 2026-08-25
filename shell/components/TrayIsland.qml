@@ -75,7 +75,7 @@ FocusScope {
                     font.family: Theme.fontSans
                     font.pixelSize: Theme.fontSizeTitle
                 }
-                HoverHandler { id: chevronHover }
+                HoverHandler { id: chevronHover; cursorShape: Qt.PointingHandCursor }
             }
             TapHandler { onTapped: root.expanded = !root.expanded }
             Keys.onReturnPressed: function(event) { root.expanded = !root.expanded; event.accepted = true; }
@@ -175,6 +175,7 @@ FocusScope {
 
                 HoverHandler {
                     id: hover
+                    cursorShape: Qt.PointingHandCursor
                 }
             }
 

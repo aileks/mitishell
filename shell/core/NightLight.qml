@@ -45,7 +45,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             try {
                 root.applySnapshot(JSON.parse(snapshotOutput.text));
             } catch (parseError) {
@@ -67,7 +69,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             try {
                 root.applySnapshot(JSON.parse(actionOutput.text));
             } catch (parseError) {

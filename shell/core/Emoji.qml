@@ -89,7 +89,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.persistenceError = loadErrors.text.trim()
                     || "Emoji recents could not be loaded.";
@@ -120,7 +122,9 @@ QtObject {
         }
 
         onStarted: write(root.pendingSavePayload)
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             root.persistenceError = exitCode === 0
                 ? ""
                 : (saveErrors.text.trim() || "Emoji recents could not be saved.");
@@ -135,7 +139,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             root.clearPending = false;
             root.persistenceError = exitCode === 0
                 ? ""

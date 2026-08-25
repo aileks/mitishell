@@ -66,7 +66,9 @@ QtObject {
             id: snapshotError
             waitForEnd: true
         }
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.available = false;
                 root.error = snapshotError.text.trim() || "Reminders are unavailable.";
@@ -98,7 +100,9 @@ QtObject {
             id: actionErrorOutput
             waitForEnd: true
         }
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             root.actionError = exitCode === 0
                 ? ""
                 : (actionErrorOutput.text.trim() || "Reminder action failed.");

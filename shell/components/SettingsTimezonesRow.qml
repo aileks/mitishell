@@ -48,7 +48,7 @@ Column {
                 color: zonePillHover.hovered || zonePill.activeFocus
                     ? Theme.hoverFill : Theme.layerInset
                 border.width: zonePill.activeFocus ? 2 : 1
-                border.color: zonePill.activeFocus ? Theme.blue : Theme.borderSubtle
+                border.color: zonePill.activeFocus ? Theme.blue : Theme.borderStrong
                 activeFocusOnTab: true
                 Accessible.name: "Remove timezone " + zonePill.modelData
                 Accessible.role: Accessible.Button
@@ -84,7 +84,7 @@ Column {
                     }
                 }
 
-                HoverHandler { id: zonePillHover }
+                HoverHandler { id: zonePillHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler {
                     onTapped: {
                         zonePill.forceActiveFocus(Qt.TabFocusReason);
@@ -109,7 +109,7 @@ Column {
         radius: Theme.radiusSmall
         color: Theme.layerInset
         border.width: zoneInput.activeFocus ? 2 : 1
-        border.color: zoneInput.activeFocus ? Theme.blue : Theme.borderSubtle
+        border.color: zoneInput.activeFocus ? Theme.blue : Theme.borderStrong
 
         TextInput {
             id: zoneInput
@@ -117,14 +117,13 @@ Column {
             anchors.fill: parent
             anchors.leftMargin: Theme.spaceSm
             anchors.rightMargin: Theme.spaceSm
-            anchors.topMargin: 7
             clip: true
+            verticalAlignment: TextInput.AlignVCenter
             color: Theme.textBright
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
             activeFocusOnTab: true
             Accessible.name: "Add timezone"
-            verticalAlignment: TextInput.AlignVCenter
 
             Text {
                 anchors.fill: parent
@@ -149,13 +148,10 @@ Column {
         }
     }
 
-    Text {
+    InlineStatus {
         width: parent.width
         visible: root.error !== ""
-        text: root.error
-        wrapMode: Text.Wrap
-        color: Theme.red
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeCaption
+        message: root.error
+        textSize: Theme.fontSizeCaption
     }
 }

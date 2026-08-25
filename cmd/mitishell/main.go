@@ -27,6 +27,15 @@ import (
 )
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "_bluetooth-scan" {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		if err := bluetooth.RunScan(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "mitishell: bluetooth scan: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 	if len(os.Args) >= 2 && os.Args[1] == "_bluetooth-agent" {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()

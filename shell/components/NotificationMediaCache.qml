@@ -10,7 +10,8 @@ Item {
     id: root
 
     required property var screen
-    readonly property bool active: Notifications.popupScreenName === screen.name
+    readonly property bool active: screen !== null
+        && Notifications.popupScreenName === screen.name
     readonly property var task: active && Notifications.mediaQueue.length > 0
         ? Notifications.mediaQueue[0]
         : null
@@ -121,7 +122,9 @@ Item {
             waitForEnd: true
         }
         onStarted: write(root.importPayload)
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
             const completedTask = root.importingTask;
             root.importingTask = null;
             root.capturing = false;

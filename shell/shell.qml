@@ -35,12 +35,6 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        delegate: SettingsHost {}
-    }
-
-    Variants {
-        model: Quickshell.screens
-
         delegate: ReminderHost {}
     }
 
@@ -147,7 +141,8 @@ ShellRoot {
             if (screen === null) {
                 return "settings unavailable";
             }
-            SurfaceCoordinator.toggle("settings", screen);
+            Control.selectPage("settings");
+            SurfaceCoordinator.toggle("control", screen);
             return "settings opened";
         }
     }

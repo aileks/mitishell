@@ -42,7 +42,9 @@ QtObject {
     property Process missionCenterProcess: Process {
         id: missionCenter
         command: ["missioncenter"]
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.launchError = "Mission Center could not be opened";
             }

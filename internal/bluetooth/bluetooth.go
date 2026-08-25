@@ -34,7 +34,6 @@ type Snapshot struct {
 
 type Caller interface {
 	Snapshot(ctx context.Context) (Adapter, []Device, error)
-	SetDiscovering(ctx context.Context, discovering bool) error
 	Pair(ctx context.Context, address string) error
 	Connect(ctx context.Context, address string) error
 	Disconnect(ctx context.Context, address string) error
@@ -60,10 +59,6 @@ func (service Service) Snapshot(ctx context.Context) Snapshot {
 		Adapter:   adapter,
 		Devices:   ordered(devices),
 	}
-}
-
-func (service Service) SetDiscovering(ctx context.Context, discovering bool) error {
-	return service.caller.SetDiscovering(ctx, discovering)
 }
 
 func (service Service) Pair(ctx context.Context, address string) error {

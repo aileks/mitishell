@@ -14,6 +14,7 @@ QtObject {
     property var snapshot: null
     property string error: ""
     property bool joining: false
+    property bool wifiBusy: false
 
     readonly property var wifi: snapshot !== null ? snapshot.wifi : null
     readonly property var ethernet: snapshot !== null ? snapshot.ethernet : null
@@ -42,6 +43,17 @@ QtObject {
         forgetProcess.running = true;
     }
 
+    function setWifiEnabled(enabled) {
+        wifiBusy = true;
+        error = "";
+        wifiPowerProcess.command = [
+            Config.binary,
+            "_network-wifi",
+            enabled ? "on" : "off",
+        ];
+        wifiPowerProcess.running = true;
+    }
+
     property Process snapshotProcess: Process {
         id: snapshotProcess
 
@@ -55,7 +67,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             try {
                 const parsed = JSON.parse(snapshotOutput.text);
                 if (parsed.error !== undefined && parsed.error !== "") {
@@ -82,7 +96,9 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             root.joining = false;
             if (exitCode !== 0) {
                 root.error = joinErrors.text.trim() || "could not join network";
@@ -99,9 +115,30 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.error = forgetErrors.text.trim() || "could not forget network";
+            }
+            root.refresh();
+        }
+    }
+
+    property Process wifiPowerProcess: Process {
+        id: wifiPowerProcess
+
+        stderr: StdioCollector {
+            id: wifiPowerErrors
+            waitForEnd: true
+        }
+
+        // qmllint disable signal-handler-parameters
+        onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
+            root.wifiBusy = false;
+            if (exitCode !== 0) {
+                root.error = wifiPowerErrors.text.trim() || "could not change Wi-Fi state";
             }
             root.refresh();
         }

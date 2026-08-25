@@ -20,11 +20,11 @@ ControlDisplayPage 1.0 ControlDisplayPage.qml
 ControlHomePage 1.0 ControlHomePage.qml
 ControlHost 1.0 ControlHost.qml
 ControlIsland 1.0 ControlIsland.qml
-ControlMediaPage 1.0 ControlMediaPage.qml
 ControlNetworkPage 1.0 ControlNetworkPage.qml
 EmojiHost 1.0 EmojiHost.qml
 IconButton 1.0 IconButton.qml
 IconLabel 1.0 IconLabel.qml
+InlineStatus 1.0 InlineStatus.qml
 MediaIsland 1.0 MediaIsland.qml
 MediaPopover 1.0 MediaPopover.qml
 KeyboardLayoutIsland 1.0 KeyboardLayoutIsland.qml
@@ -41,7 +41,7 @@ ReminderHost 1.0 ReminderHost.qml
 ReminderIsland 1.0 ReminderIsland.qml
 ShellSlider 1.0 ShellSlider.qml
 SettingsChoiceRow 1.0 SettingsChoiceRow.qml
-SettingsHost 1.0 SettingsHost.qml
+SettingsPage 1.0 SettingsPage.qml
 SettingsNumberRow 1.0 SettingsNumberRow.qml
 SettingsOutputsRow 1.0 SettingsOutputsRow.qml
 SettingsPill 1.0 SettingsPill.qml

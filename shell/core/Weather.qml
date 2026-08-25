@@ -1,7 +1,9 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 import Quickshell.Io
+import "../lib/WeatherModel.js" as WeatherModel
 
 QtObject {
     id: root
@@ -11,11 +13,19 @@ QtObject {
     property int ageMinutes: 0
     property string error: ""
 
-    readonly property string units: Config.weather.units === "auto"
-        ? (Qt.locale().measurementSystem === Locale.ImperialUSSystem
-            ? "fahrenheit" : "celsius")
-        : Config.weather.units
+    readonly property string units: WeatherModel.unitsForLocale(
+        Config.weather.units,
+        Qt.locale().name,
+        Qt.locale().measurementSystem === Locale.ImperialUSSystem
+            ? "imperial-us" : "metric",
+        Quickshell.env("LANG"),
+    )
     readonly property bool visible: Config.weather.enabled
+    readonly property string refreshKey: [
+        Config.weather.enabled ? "enabled" : "disabled",
+        units,
+        Config.weather.location,
+    ].join("\n")
 
     function refresh() {
         if (!Config.weather.enabled) {
@@ -28,6 +38,12 @@ QtObject {
         if (!weatherProcess.running) {
             state = "locating";
             error = "";
+            weatherProcess.command = [
+                Config.binary,
+                "_weather-snapshot",
+                units,
+            ];
+            weatherProcess.requestKey = refreshKey;
             weatherProcess.running = true;
         }
     }
@@ -35,7 +51,8 @@ QtObject {
     property Process snapshotProcess: Process {
         id: weatherProcess
 
-        command: [Config.binary, "_weather-snapshot", root.units]
+        property string requestKey: ""
+
         stdout: StdioCollector {
             id: weatherOutput
             waitForEnd: true
@@ -45,7 +62,13 @@ QtObject {
             waitForEnd: true
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
+            // qmllint enable signal-handler-parameters
+            if (requestKey !== root.refreshKey) {
+                Qt.callLater(root.refresh);
+                return;
+            }
             try {
                 const result = JSON.parse(weatherOutput.text);
                 root.state = result.state;
@@ -63,9 +86,9 @@ QtObject {
         }
     }
 
-    property Connections configConnections: Connections {
-        target: Config
-        function onWeatherChanged() { root.refresh(); }
+    onRefreshKeyChanged: {
+        snapshot = null;
+        refresh();
     }
 
     property Timer refreshTimer: Timer {

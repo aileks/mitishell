@@ -31,6 +31,31 @@ type objects = map[dbus.ObjectPath]map[string]map[string]dbus.Variant
 // NMCaller is the production Caller over the system bus.
 type NMCaller struct{}
 
+func (caller NMCaller) WirelessEnabled(ctx context.Context) (bool, error) {
+	conn, err := caller.connect(ctx)
+	if err != nil {
+		return false, err
+	}
+	value, err := conn.Object(nmName, nmRoot).GetProperty(nmInterface + ".WirelessEnabled")
+	if err != nil {
+		return false, err
+	}
+	enabled, ok := value.Value().(bool)
+	if !ok {
+		return false, fmt.Errorf("WirelessEnabled is not a boolean")
+	}
+	return enabled, nil
+}
+
+func (caller NMCaller) SetWirelessEnabled(ctx context.Context, enabled bool) error {
+	conn, err := caller.connect(ctx)
+	if err != nil {
+		return err
+	}
+	return conn.Object(nmName, nmRoot).SetProperty(
+		nmInterface+".WirelessEnabled", enabled)
+}
+
 func (caller NMCaller) connect(ctx context.Context) (*dbus.Conn, error) {
 	conn, err := dbus.SystemBus()
 	if err != nil {

@@ -24,7 +24,7 @@ FocusScope {
         color: parent.activeFocus || hover.hovered ? Theme.hoverFill : "transparent"
         border.width: parent.activeFocus ? 2 : 0
         border.color: Theme.blue
-        HoverHandler { id: hover }
+        HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     }
     TapHandler { onTapped: KeyboardLayout.cycle() }
     Keys.onReturnPressed: function(event) { KeyboardLayout.cycle(); event.accepted = true; }

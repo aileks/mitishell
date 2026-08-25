@@ -7,7 +7,9 @@ import Quickshell.Wayland
 import "../core"
 import "../lib/ReminderModel.js" as ReminderModel
 
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     required property var modelData
@@ -238,7 +240,7 @@ PanelWindow {
                         color: Theme.layerInset
                         border.width: minutesInput.activeFocus ? 2 : 1
                         border.color: minutesInput.activeFocus
-                            ? Theme.blue : Theme.borderSubtle
+                            ? Theme.blue : Theme.borderStrong
 
                         TextInput {
                             id: minutesInput
@@ -284,7 +286,7 @@ PanelWindow {
                         color: Theme.layerInset
                         border.width: messageInput.activeFocus ? 2 : 1
                         border.color: messageInput.activeFocus
-                            ? Theme.blue : Theme.borderSubtle
+                            ? Theme.blue : Theme.borderStrong
 
                         TextInput {
                             id: messageInput
@@ -331,14 +333,11 @@ PanelWindow {
                     }
                 }
 
-                Text {
+                InlineStatus {
                     visible: Reminders.actionError !== ""
                     width: parent.width
-                    text: Reminders.actionError
-                    color: Theme.red
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeBodySmall
-                    wrapMode: Text.Wrap
+                    message: Reminders.actionError
+                    textSize: Theme.fontSizeBodySmall
                 }
             }
 
