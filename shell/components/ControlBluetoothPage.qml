@@ -198,6 +198,9 @@ Flickable {
 
                 required property var modelData
 
+                readonly property bool actionBusy: Bluetooth.actionRunning
+                    && Bluetooth.actionAddress === modelData.address
+
                 width: parent.width
                 implicitHeight: deviceContent.implicitHeight + Theme.spaceSm * 2
                 radius: Theme.radiusMedium
@@ -239,14 +242,18 @@ Flickable {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             text: {
-                                let parts = [BluetoothModel.deviceStatus(deviceEntry.modelData)];
-                                if (deviceEntry.modelData.battery !== null
+                                let parts = [deviceEntry.actionBusy
+                                    ? BluetoothModel.actionProgressLabel(Bluetooth.actionVerb)
+                                    : BluetoothModel.deviceStatus(deviceEntry.modelData)];
+                                if (!deviceEntry.actionBusy
+                                    && deviceEntry.modelData.battery !== null
                                     && deviceEntry.modelData.battery !== undefined) {
                                     parts.push(deviceEntry.modelData.battery + "%");
                                 }
                                 return parts.join(" · ");
                             }
-                            color: deviceEntry.modelData.connected
+                            color: deviceEntry.actionBusy
+                                ? Theme.orange : deviceEntry.modelData.connected
                                 ? Theme.green : Theme.textMuted
                             font.family: Theme.fontMono
                             font.pixelSize: Theme.fontSizeCaption
@@ -271,6 +278,8 @@ Flickable {
                                     ? Theme.overlay : "transparent"
                                 border.width: activeFocus ? 2 : 1
                                 border.color: activeFocus ? Theme.blue : Theme.borderStrong
+                                enabled: !Bluetooth.actionRunning
+                                opacity: enabled ? 1 : 0.5
                                 activeFocusOnTab: true
                                 Accessible.name: deviceAction.modelData
                                     + " " + deviceEntry.modelData.name

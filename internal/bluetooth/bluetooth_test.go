@@ -96,10 +96,29 @@ func TestActionsValidateAddresses(t *testing.T) {
 	if err := service.Pair(context.Background(), "AA:BB:CC:DD:EE:FF"); err != nil {
 		t.Fatalf("Pair() error = %v", err)
 	}
-	if err := service.SetTrusted(context.Background(), "AA:BB:CC:DD:EE:FF", true); err != nil {
+	if err := service.SetTrusted(context.Background(), "AA:BB:CC:DD:EE:FF", false); err != nil {
 		t.Fatalf("SetTrusted() error = %v", err)
 	}
-	if len(stub.paired) != 1 || len(stub.trusted) != 1 {
+	if len(stub.paired) != 1 || len(stub.connected) != 1 || len(stub.trusted) != 2 || stub.trusted[1][1] != false {
 		t.Fatalf("stubs = %#v %#v", stub.paired, stub.trusted)
+	}
+}
+
+func TestPairCompletesUsableConnection(t *testing.T) {
+	stub := &callerStub{}
+	service := bluetooth.NewService(stub)
+	address := "AA:BB:CC:DD:EE:FF"
+
+	if err := service.Pair(context.Background(), address); err != nil {
+		t.Fatalf("Pair() error = %v", err)
+	}
+	if len(stub.paired) != 1 || stub.paired[0] != address {
+		t.Fatalf("paired = %v", stub.paired)
+	}
+	if len(stub.trusted) != 1 || stub.trusted[0] != [2]any{address, true} {
+		t.Fatalf("trusted = %v", stub.trusted)
+	}
+	if len(stub.connected) != 1 || stub.connected[0] != address {
+		t.Fatalf("connected = %v", stub.connected)
 	}
 }

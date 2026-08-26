@@ -32,6 +32,25 @@ function actionVerb(action) {
     return action === "forget" ? "remove" : action;
 }
 
+function actionProgressLabel(action) {
+    switch (action) {
+    case "pair":
+        return "Pairing…";
+    case "connect":
+        return "Connecting…";
+    case "disconnect":
+        return "Disconnecting…";
+    case "trust":
+        return "Trusting…";
+    case "untrust":
+        return "Removing trust…";
+    case "remove":
+        return "Forgetting…";
+    default:
+        return "Working…";
+    }
+}
+
 function pairPromptLabel(request) {
     switch (request.kind) {
     case "confirm":
@@ -67,6 +86,7 @@ if (typeof module !== "undefined") {
         deviceStatus,
         deviceActions,
         actionVerb,
+        actionProgressLabel,
         pairPromptLabel,
         requestIsDisplayOnly,
         requestWantsText,

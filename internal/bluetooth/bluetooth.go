@@ -65,7 +65,16 @@ func (service Service) Pair(ctx context.Context, address string) error {
 	if !validAddress(address) {
 		return fmt.Errorf("no device %q", address)
 	}
-	return service.caller.Pair(ctx, address)
+	if err := service.caller.Pair(ctx, address); err != nil {
+		return fmt.Errorf("pair device: %w", err)
+	}
+	if err := service.caller.SetTrusted(ctx, address, true); err != nil {
+		return fmt.Errorf("trust paired device: %w", err)
+	}
+	if err := service.caller.Connect(ctx, address); err != nil {
+		return fmt.Errorf("connect paired device: %w", err)
+	}
+	return nil
 }
 
 func (service Service) Connect(ctx context.Context, address string) error {

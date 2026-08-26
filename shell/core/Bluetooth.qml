@@ -19,6 +19,10 @@ QtObject {
     readonly property var adapter: snapshot !== null ? snapshot.adapter : null
     readonly property var devices: snapshot !== null ? snapshot.devices : []
     readonly property bool scanning: scanProcess.running
+    readonly property bool actionRunning: actionProcess.running
+
+    property string actionVerb: ""
+    property string actionAddress: ""
 
     property bool stoppingScan: false
 
@@ -29,7 +33,12 @@ QtObject {
     }
 
     function action(verb, address) {
+        if (actionProcess.running) {
+            return;
+        }
         error = "";
+        actionVerb = verb;
+        actionAddress = address;
         actionProcess.command = [Config.binary, "_bluetooth-action", verb, address];
         actionProcess.running = true;
     }
@@ -124,6 +133,8 @@ QtObject {
             if (exitCode !== 0) {
                 root.error = actionErrors.text.trim() || "bluetooth action failed";
             }
+            root.actionVerb = "";
+            root.actionAddress = "";
             root.refresh();
         }
     }

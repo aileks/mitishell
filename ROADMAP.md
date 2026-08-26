@@ -17,6 +17,7 @@ Each tag ships one useful slice.
 - [x] v0.8.0: new views. A focused-output picker searches a bundled emoji catalog, groups categories, copies selections, and keeps recents. The Control Center and CLI show and switch a user-managed hyprsunset with focused-output OSD feedback. Mitishell does not own a night-light daemon or configuration
 - [x] v0.9.0: the final pre-1.0 audit strengthened WCAG AA text and interactive-edge contrast, normalized shared surfaces and accent roles, added pointer and focus feedback, and moved settings into the Control Center while retaining Home's compact now-playing card. Stabilization fixed audio list scrolling, Bluetooth discovery and device actions, Wi-Fi power control, weather locale and refresh races, multi-output focus placement, and QML lint noise. The review covered the bar, islands, popovers, notification surfaces, every Control Center page, settings, emoji, reminders, power, and OSD states across both available outputs with keyboard and reduced-motion checks
 - [x] v0.9.3: notification images became compact left-side thumbnails with application-icon fallback
+- [x] v0.9.4: Bluetooth pairing moved its private response channel to the user bus, registered a correctly typed BlueZ agent path, and made Pair finish trust and connection with visible progress
 - [ ] v1.0: use Mitishell as the main shell for one week. Then run user sign-off and add a release tag with notes
 
 ## Known issues
