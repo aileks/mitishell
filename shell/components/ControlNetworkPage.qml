@@ -19,6 +19,31 @@ Flickable {
     readonly property var wifiStations: wifiAvailable ? Network.wifi.stations : []
     readonly property var savedWifi: wifiAvailable ? Network.wifi.saved : []
 
+    // Join-form state lives at page level so a poll-driven rebuild of the
+    // station delegates can never wipe a password mid-entry.
+    property string joinSsid: ""
+    property string joinPassword: ""
+
+    function openJoin(ssid) {
+        joinPassword = "";
+        // Force even the current row through its visibility sync. User
+        // edits break TextField.text's binding, so changing only the page
+        // state can otherwise leave an old password visible.
+        joinSsid = "";
+        joinSsid = ssid;
+    }
+
+    Connections {
+        target: Network
+
+        function onJoiningChanged() {
+            if (!Network.joining && !Network.error && root.joinSsid !== "") {
+                root.joinSsid = "";
+                root.joinPassword = "";
+            }
+        }
+    }
+
     contentWidth: width
     contentHeight: content.implicitHeight
     clip: true
@@ -148,7 +173,7 @@ Flickable {
                             width: parent.width
                             height: 40
                             radius: Theme.radiusMedium
-                            color: stationEntry.modelData.inUse || joinRow.ssid === stationEntry.modelData.ssid
+                            color: stationEntry.modelData.inUse || root.joinSsid === stationEntry.modelData.ssid
                                 || stationRow.activeFocus || stationHover.hovered
                                 ? Theme.overlay : "transparent"
                             border.width: stationRow.activeFocus ? 2 : 0
@@ -165,7 +190,7 @@ Flickable {
                                 } else if (stationEntry.modelData.security === "enterprise") {
                                     Network.error = "Enterprise networks need sign-in that mitishell does not support";
                                 } else {
-                                    joinRow.openFor(stationEntry.modelData.ssid);
+                                    root.openJoin(stationEntry.modelData.ssid);
                                 }
                             }
 
@@ -277,16 +302,20 @@ Flickable {
                         Column {
                             id: joinRow
 
-                            property string ssid: ""
-
                             width: parent.width
-                            visible: ssid === stationEntry.modelData.ssid
+                            visible: root.joinSsid === stationEntry.modelData.ssid
                             spacing: Theme.spaceXs
 
-                            function openFor(ssid) {
-                                joinRow.ssid = ssid;
-                                passwordField.text = "";
-                                passwordField.forceActiveFocus(Qt.TabFocusReason);
+                            onVisibleChanged: {
+                                if (visible) {
+                                    // Typing breaks the text binding, so
+                                    // re-sync on open; programmatic writes
+                                    // don't fire onTextEdited.
+                                    passwordField.text = root.joinPassword;
+                                    Qt.callLater(function() {
+                                        passwordField.forceActiveFocus(Qt.TabFocusReason);
+                                    });
+                                }
                             }
 
                             Controls.TextField {
@@ -294,7 +323,8 @@ Flickable {
 
                                 width: parent.width
                                 echoMode: TextInput.Password
-                                placeholderText: "Password for " + joinRow.ssid
+                                text: root.joinPassword
+                                placeholderText: "Password for " + root.joinSsid
                                 color: Theme.text
                                 font.family: Theme.fontSans
                                 font.pixelSize: Theme.fontSizeBody
@@ -307,6 +337,7 @@ Flickable {
                                         ? Theme.blue : Theme.borderStrong
                                 }
 
+                                onTextEdited: root.joinPassword = text
                                 onAccepted: joinRow.submit()
                             }
 
@@ -342,7 +373,7 @@ Flickable {
                             }
 
                             function submit() {
-                                Network.connectToNetwork(joinRow.ssid, passwordField.text, false);
+                                Network.connectToNetwork(root.joinSsid, root.joinPassword, false);
                             }
                         }
                     }

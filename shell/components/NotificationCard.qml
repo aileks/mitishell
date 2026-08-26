@@ -26,6 +26,10 @@ SurfaceFrame {
         }
         return Quickshell.iconPath(avatarValue, true);
     }
+    // Shared by the display frame and the raster sourceSize so the image
+    // keeps one aspect ratio.
+    readonly property real imageAspectRatio: 0.75
+
     readonly property var actionable: notification.live
         ? notification.actions.filter(function(action) {
             return action.identifier !== "default" && action.text !== "";
@@ -194,8 +198,8 @@ SurfaceFrame {
         Rectangle {
             visible: contentImage.status === Image.Ready
             anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.min(parent.width, root.historyMode ? 280 : 240)
-            height: width * 0.75
+            width: Math.min(parent.width, root.historyMode ? 200 : 160)
+            height: width * root.imageAspectRatio
             radius: Theme.radiusMedium
             color: Theme.layerRaised
             border.width: 1
@@ -207,8 +211,8 @@ SurfaceFrame {
 
                 anchors.fill: parent
                 source: root.notification.image
-                sourceSize.width: 280
-                sourceSize.height: 210
+                sourceSize.width: 200
+                sourceSize.height: sourceSize.width * root.imageAspectRatio
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
             }

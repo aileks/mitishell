@@ -77,7 +77,14 @@ QtObject {
                     root.error = parsed.error;
                     return;
                 }
-                root.snapshot = parsed;
+                // Keep the previous snapshot object while the data is
+                // unchanged so the page's bindings, and with them the
+                // station list delegates, survive each poll without
+                // rebuilding mid-interaction.
+                if (root.snapshot === null
+                        || JSON.stringify(parsed) !== JSON.stringify(root.snapshot)) {
+                    root.snapshot = parsed;
+                }
                 root.state = "ready";
                 root.error = "";
             } catch (parseError) {
@@ -99,10 +106,15 @@ QtObject {
         // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
             // qmllint enable signal-handler-parameters
-            root.joining = false;
+            // Settle the error before joining flips: the page's joining
+            // guard reads it synchronously and must see this join's
+            // real outcome.
             if (exitCode !== 0) {
                 root.error = joinErrors.text.trim() || "could not join network";
+            } else {
+                root.error = "";
             }
+            root.joining = false;
             root.refresh();
         }
     }

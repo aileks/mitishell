@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell.Io
+import "../lib/BluetoothModel.js" as BluetoothModel
 
 QtObject {
     id: root
@@ -50,6 +51,9 @@ QtObject {
         try {
             const request = JSON.parse(payload);
             pairRequest = request;
+            pairDisplayTimer.interval = BluetoothModel.requestIsDisplayOnly(request)
+                ? pairDisplayDurationMs
+                : pairPromptDurationMs;
             pairDisplayTimer.restart();
         } catch (parseError) {
             // A malformed pairing push is dropped; the agent times out on
@@ -169,10 +173,22 @@ QtObject {
         command: [Config.binary, "_bluetooth-agent"]
         running: true
 
+        stderr: StdioCollector {
+            id: agentErrors
+            waitForEnd: true
+        }
+
         // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
             // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
+                // Surface why the agent died (registration refusal, shell
+                // unreachable) instead of restarting silently; the next
+                // successful snapshot clears the message.
+                const detail = agentErrors.text.trim();
+                if (detail !== "") {
+                    root.error = detail;
+                }
                 root.agentRestart.restart();
             }
         }
@@ -183,8 +199,14 @@ QtObject {
         onTriggered: agentProcess.running = true
     }
 
+    // Display-only requests just repeat a pin typed elsewhere, so they
+    // clear quickly; answerable prompts wait out the agent's request
+    // window (requestTimeout in internal/bluetooth/agent.go).
+    readonly property int pairDisplayDurationMs: 12000
+    readonly property int pairPromptDurationMs: 120000
+
     property Timer pairDisplayTimer: Timer {
-        interval: 12000
+        interval: root.pairDisplayDurationMs
         onTriggered: root.pairRequest = null
     }
 

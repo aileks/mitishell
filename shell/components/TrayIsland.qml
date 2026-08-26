@@ -70,7 +70,7 @@ FocusScope {
                 border.color: Theme.blue
                 Text {
                     anchors.centerIn: parent
-                    text: root.expanded ? "‹" : "›"
+                    text: root.expanded ? "›" : "‹"
                     color: Theme.textBright
                     font.family: Theme.fontSans
                     font.pixelSize: Theme.fontSizeTitle

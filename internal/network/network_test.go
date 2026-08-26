@@ -92,6 +92,30 @@ func TestSnapshotNormalizesDevices(t *testing.T) {
 	}
 }
 
+func TestSnapshotOrdersEqualSignalStationsBySsid(t *testing.T) {
+	stub := &callerStub{devices: []network.Device{{
+		Type:  network.DeviceWifi,
+		State: 30,
+		AccessPoints: []network.AccessPoint{
+			{Ssid: "Zulu", Signal: 50, Security: network.SecurityOpen},
+			{Ssid: "Echo", Signal: 50, Security: network.SecurityOpen},
+			{Ssid: "Mike", Signal: 50, Security: network.SecurityOpen},
+			{Ssid: "Alpha", Signal: 50, Security: network.SecurityOpen},
+			{Ssid: "Kilo", Signal: 50, Security: network.SecurityOpen},
+		},
+	}}}
+
+	want := []string{"Alpha", "Echo", "Kilo", "Mike", "Zulu"}
+	for attempt := 0; attempt < 20; attempt++ {
+		stations := network.NewService(stub).Snapshot(context.Background()).Wifi.Stations
+		for index, ssid := range want {
+			if stations[index].Ssid != ssid {
+				t.Fatalf("attempt %d stations = %#v, want SSID order %v", attempt, stations, want)
+			}
+		}
+	}
+}
+
 func TestSnapshotMapsDeviceStates(t *testing.T) {
 	cases := map[uint32]string{
 		100: "connected",

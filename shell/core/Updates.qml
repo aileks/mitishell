@@ -53,5 +53,15 @@ QtObject {
         onTriggered: root.refresh()
     }
 
+    // A failed check usually means the shell started before the package
+    // tools or network were ready; retry gently instead of sitting in the
+    // error state for half an hour.
+    property Timer retryTimer: Timer {
+        interval: 5 * 60 * 1000
+        repeat: true
+        running: root.state === "error"
+        onTriggered: root.refresh()
+    }
+
     Component.onCompleted: refresh()
 }
