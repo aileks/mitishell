@@ -130,7 +130,7 @@ PanelWindow {
     visible: modelData !== null && Config.outputEnabled(modelData.name)
     color: "transparent"
     implicitHeight: Config.bar.height
-    exclusiveZone: visible ? implicitHeight + Config.bar.marginTop : 0
+    exclusiveZone: visible ? implicitHeight : 0
 
     anchors {
         top: true
