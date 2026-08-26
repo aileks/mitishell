@@ -304,6 +304,10 @@ Flickable {
 
                             onVisibleChanged: {
                                 if (visible) {
+                                    // Typing breaks the text binding, so
+                                    // re-sync on open; programmatic writes
+                                    // don't fire onTextEdited.
+                                    passwordField.text = root.joinPassword;
                                     Qt.callLater(function() {
                                         passwordField.forceActiveFocus(Qt.TabFocusReason);
                                     });

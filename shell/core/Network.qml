@@ -106,10 +106,15 @@ QtObject {
         // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
             // qmllint enable signal-handler-parameters
-            root.joining = false;
+            // Settle the error before joining flips: the page's joining
+            // guard reads it synchronously and must see this join's
+            // real outcome.
             if (exitCode !== 0) {
                 root.error = joinErrors.text.trim() || "could not join network";
+            } else {
+                root.error = "";
             }
+            root.joining = false;
             root.refresh();
         }
     }
