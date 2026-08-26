@@ -30,6 +30,10 @@ test("device action labels map to backend verbs", () => {
     assert.equal(BluetoothModel.actionVerb("disconnect"), "disconnect");
 });
 
+test("pairing action reports useful progress", () => {
+    assert.equal(BluetoothModel.actionProgressLabel("pair"), "Pairing…");
+});
+
 test("pairing prompts read clearly", () => {
     assert.equal(
         BluetoothModel.pairPromptLabel({ kind: "confirm", passkey: "123456", device: "WH-1000XM5" }),
