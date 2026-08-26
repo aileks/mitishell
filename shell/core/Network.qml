@@ -77,7 +77,14 @@ QtObject {
                     root.error = parsed.error;
                     return;
                 }
-                root.snapshot = parsed;
+                // Keep the previous snapshot object while the data is
+                // unchanged so the page's bindings, and with them the
+                // station list delegates, survive each poll without
+                // rebuilding mid-interaction.
+                if (root.snapshot === null
+                        || JSON.stringify(parsed) !== JSON.stringify(root.snapshot)) {
+                    root.snapshot = parsed;
+                }
                 root.state = "ready";
                 root.error = "";
             } catch (parseError) {

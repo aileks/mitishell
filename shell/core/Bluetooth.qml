@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell.Io
+import "../lib/BluetoothModel.js" as BluetoothModel
 
 QtObject {
     id: root
@@ -50,6 +51,11 @@ QtObject {
         try {
             const request = JSON.parse(payload);
             pairRequest = request;
+            // Answerable prompts wait out the pairing agent's two-minute
+            // window; display-only ones just repeat what to type elsewhere.
+            pairDisplayTimer.interval = BluetoothModel.requestIsDisplayOnly(request)
+                ? 12000
+                : 120000;
             pairDisplayTimer.restart();
         } catch (parseError) {
             // A malformed pairing push is dropped; the agent times out on
@@ -169,10 +175,22 @@ QtObject {
         command: [Config.binary, "_bluetooth-agent"]
         running: true
 
+        stderr: StdioCollector {
+            id: agentErrors
+            waitForEnd: true
+        }
+
         // qmllint disable signal-handler-parameters
         onExited: function(exitCode) {
             // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
+                // Surface why the agent died (registration refusal, shell
+                // unreachable) instead of restarting silently; the next
+                // successful snapshot clears the message.
+                const detail = agentErrors.text.trim();
+                if (detail !== "") {
+                    root.error = detail;
+                }
                 root.agentRestart.restart();
             }
         }

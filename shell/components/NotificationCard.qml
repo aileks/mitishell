@@ -194,7 +194,7 @@ SurfaceFrame {
         Rectangle {
             visible: contentImage.status === Image.Ready
             anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.min(parent.width, root.historyMode ? 280 : 240)
+            width: Math.min(parent.width, root.historyMode ? 200 : 160)
             height: width * 0.75
             radius: Theme.radiusMedium
             color: Theme.layerRaised
@@ -207,8 +207,8 @@ SurfaceFrame {
 
                 anchors.fill: parent
                 source: root.notification.image
-                sourceSize.width: 280
-                sourceSize.height: 210
+                sourceSize.width: 200
+                sourceSize.height: 150
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
             }

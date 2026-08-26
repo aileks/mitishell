@@ -268,6 +268,10 @@ ShellRoot {
     // discovery needs to run before the first brightness call arrives.
     Component.onCompleted: Display.refresh()
 
+    // HyprlandSync only watches events; referencing it here instantiates
+    // the singleton at startup so the resync covers the whole session.
+    readonly property bool hyprlandSyncWatched: HyprlandSync.resyncPending
+
     function focusedScreen() {
         const screens = Quickshell.screens !== undefined ? Quickshell.screens : [];
         for (let index = 0; index < screens.length; index++) {

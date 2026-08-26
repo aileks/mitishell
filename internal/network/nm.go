@@ -112,13 +112,15 @@ func wirelessDetails(
 	device *Device,
 ) error {
 	accessObject := conn.Object(nmName, path)
-	call := accessObject.CallWithContext(ctx, nmName+".Device.Wireless.GetAccessPoints", 0)
-	if call.Err != nil {
-		return call.Err
-	}
+	// A device mid-transition (radio powering up, connecting) can refuse
+	// the access-point listing; report it without stations rather than
+	// failing the whole snapshot.
 	var paths []dbus.ObjectPath
-	if err := call.Store(&paths); err != nil {
-		return err
+	if call := accessObject.CallWithContext(
+		ctx, nmName+".Device.Wireless.GetAccessPoints", 0); call.Err == nil {
+		if err := call.Store(&paths); err != nil {
+			return err
+		}
 	}
 	for _, accessPath := range paths {
 		if props, ok := all[accessPath][nmName+".AccessPoint"]; ok {

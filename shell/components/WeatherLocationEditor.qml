@@ -5,6 +5,10 @@ Column {
     id: root
 
     property string draft: Config.weather.location || ""
+    // The config value this editor last saw. External changes adopt the
+    // new value only while no unsaved draft exists, so they can never
+    // clobber text the user is entering.
+    property string appliedLocation: Config.weather.location || ""
     readonly property string error: Settings.fieldErrors["weather.location"] || ""
 
     width: parent ? parent.width : 320
@@ -88,8 +92,11 @@ Column {
     Connections {
         target: Config
         function onWeatherChanged() {
-            if (!locationInput.activeFocus)
-                root.draft = Config.weather.location || "";
+            const location = Config.weather.location || "";
+            if (root.draft === root.appliedLocation) {
+                root.draft = location;
+            }
+            root.appliedLocation = location;
         }
     }
 }
