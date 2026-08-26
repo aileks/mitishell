@@ -57,6 +57,25 @@ test("snapshots copy drawable fields without the live object", () => {
     assert.equal(snapshot.live, true);
 });
 
+test("notification images lead the compact icon fallback order", () => {
+    assert.equal(NotificationModel.avatarValue({
+        image: "image://notifications/8",
+        appIcon: "signal-desktop",
+        desktopEntry: "signal",
+    }), "image://notifications/8");
+    assert.equal(NotificationModel.avatarValue({
+        image: "",
+        appIcon: "signal-desktop",
+        desktopEntry: "signal",
+    }), "signal-desktop");
+    assert.equal(NotificationModel.avatarValue({
+        image: "",
+        appIcon: "",
+        desktopEntry: "signal",
+    }), "signal");
+    assert.equal(NotificationModel.avatarValue({}), "");
+});
+
 test("durable snapshots omit actions and restored records are history only", () => {
     const live = NotificationModel.snapshotOf({
         id: 9,

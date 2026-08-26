@@ -30,6 +30,15 @@ function plainBody(body) {
         .trim();
 }
 
+// Match Omarchy's compact notification media order: a per-notification image
+// leads, followed by the application icon and desktop-entry fallback.
+function avatarValue(notification) {
+    return String(notification.image
+        || notification.appIcon
+        || notification.desktopEntry
+        || "");
+}
+
 // Copy the drawable fields of a live notification into a plain object;
 // models must never hold the notification QObject itself.
 function snapshotOf(notification, timestamp, recordId) {
@@ -149,6 +158,7 @@ function popupTarget(focusedName, screenNames, outputs) {
 
 if (typeof module !== "undefined") {
     module.exports = {
+        avatarValue,
         historyLimit,
         durableEntry,
         durableEntries,

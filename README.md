@@ -82,7 +82,7 @@ bindl = SUPER, C, exec, mitishell settings
 
 Mitishell runs its own notification server, so no external daemon is needed. The bar's bell island opens a popover with recent history, actions, and the do-not-disturb switch; toast cards stack under the same island, pause while that output is fullscreen or the session is locked, and land in history. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
 
-The newest 50 non-transient notifications persist across reloads and restarts. State lives at `$XDG_STATE_HOME/mitishell/notifications/history.json`, or `~/.local/state/mitishell/notifications/history.json` when `XDG_STATE_HOME` is unset. Captured avatars and content images live in the sibling `media` directory. Restored notifications are history-only and don't retain live actions.
+The newest 50 non-transient notifications persist across reloads and restarts. State lives at `$XDG_STATE_HOME/mitishell/notifications/history.json`, or `~/.local/state/mitishell/notifications/history.json` when `XDG_STATE_HOME` is unset. Captured notification images and application icons live in the sibling `media` directory. Restored notifications are history-only and don't retain live actions.
 
 The power menu is a centered overlay with lock, logout, suspend, hibernate, reboot, and shutdown. Choosing an action morphs it into a confirmation. Suspend and hibernate appear only when logind supports them, and locking goes through the session's lock signal so your idle daemon decides what locks the screen.
 

@@ -81,7 +81,7 @@ Item {
         }, Qt.size(media.width, media.height));
     }
 
-    onTaskChanged: {
+    function handleTaskChanged() {
         if (task === null || capturing) {
             return;
         }
@@ -91,6 +91,11 @@ Item {
             Qt.callLater(captureCurrent);
         }
     }
+
+    // Let taskSource and resolvedSource settle before inspecting them. Reading
+    // those dependent bindings directly from onTaskChanged re-enters task when
+    // a completed media capture advances the queue.
+    onTaskChanged: Qt.callLater(handleTaskChanged)
 
     Image {
         id: media
