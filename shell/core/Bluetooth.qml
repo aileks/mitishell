@@ -51,11 +51,9 @@ QtObject {
         try {
             const request = JSON.parse(payload);
             pairRequest = request;
-            // Answerable prompts wait out the pairing agent's two-minute
-            // window; display-only ones just repeat what to type elsewhere.
             pairDisplayTimer.interval = BluetoothModel.requestIsDisplayOnly(request)
-                ? 12000
-                : 120000;
+                ? pairDisplayDurationMs
+                : pairPromptDurationMs;
             pairDisplayTimer.restart();
         } catch (parseError) {
             // A malformed pairing push is dropped; the agent times out on
@@ -201,8 +199,14 @@ QtObject {
         onTriggered: agentProcess.running = true
     }
 
+    // Display-only requests just repeat a pin typed elsewhere, so they
+    // clear quickly; answerable prompts wait out the agent's request
+    // window (requestTimeout in internal/bluetooth/agent.go).
+    readonly property int pairDisplayDurationMs: 12000
+    readonly property int pairPromptDurationMs: 120000
+
     property Timer pairDisplayTimer: Timer {
-        interval: 12000
+        interval: pairDisplayDurationMs
         onTriggered: root.pairRequest = null
     }
 
