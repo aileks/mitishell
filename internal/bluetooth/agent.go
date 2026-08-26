@@ -21,11 +21,11 @@ import (
 // control interface from the one-shot _bluetooth-respond verb.
 
 const (
-	agentPath        = "/io/github/aileks/mitishell/agent"
-	agentFace        = "org.bluez.Agent1"
-	agentManager     = "org.bluez.AgentManager1"
-	agentManagerPath = "/org/bluez"
-	requestTimeout   = 2 * time.Minute
+	agentPath        dbus.ObjectPath = "/io/github/aileks/mitishell/agent"
+	agentFace                        = "org.bluez.Agent1"
+	agentManager                     = "org.bluez.AgentManager1"
+	agentManagerPath                 = "/org/bluez"
+	requestTimeout                   = 2 * time.Minute
 )
 
 // PairRequest is the payload pushed to the shell.
@@ -60,11 +60,17 @@ func (notifier qsNotifier) PairRequest(payload string) error {
 // RunAgent registers a KeyboardDisplay agent and serves pairing requests
 // until the context ends, then unregisters.
 func RunAgent(ctx context.Context) error {
-	conn, err := dbus.SystemBus()
+	systemBus, err := dbus.SystemBus()
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer systemBus.Close()
+
+	sessionBus, err := dbus.SessionBus()
+	if err != nil {
+		return err
+	}
+	defer sessionBus.Close()
 
 	qsExecutable := os.Getenv("MITISHELL_QS_BIN")
 	if qsExecutable == "" {
@@ -80,19 +86,19 @@ func RunAgent(ctx context.Context) error {
 		notify:  qsNotifier{client: ipc.NewClient(qsExecutable, shellPath)},
 	}
 
-	if err := conn.Export(agent, agentPath, agentFace); err != nil {
+	if err := systemBus.Export(agent, agentPath, agentFace); err != nil {
 		return err
 	}
-	if err := conn.Export(&agentControl{agent: agent}, controlPath, controlFace); err != nil {
+	if err := sessionBus.Export(&agentControl{agent: agent}, controlPath, controlFace); err != nil {
 		return err
 	}
-	if reply, err := conn.RequestName(controlName, dbus.NameFlagDoNotQueue); err != nil {
+	if reply, err := sessionBus.RequestName(controlName, dbus.NameFlagDoNotQueue); err != nil {
 		return err
 	} else if reply != dbus.RequestNameReplyPrimaryOwner {
 		return fmt.Errorf("another mitishell bluetooth agent is running")
 	}
 
-	manager := conn.Object(bluezName, agentManagerPath)
+	manager := systemBus.Object(bluezName, agentManagerPath)
 	if err := manager.Call(agentManager+".RegisterAgent", 0,
 		agentPath, "KeyboardDisplay").Err; err != nil {
 		return fmt.Errorf("register agent: %w", err)
@@ -279,7 +285,7 @@ func deviceAddress(path dbus.ObjectPath) string {
 
 // Respond answers a pending pairing request from a one-shot process.
 func Respond(id string, value string) error {
-	conn, err := dbus.SystemBus()
+	conn, err := dbus.SessionBus()
 	if err != nil {
 		return err
 	}
