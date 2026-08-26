@@ -25,8 +25,12 @@ Flickable {
     property string joinPassword: ""
 
     function openJoin(ssid) {
-        joinSsid = ssid;
         joinPassword = "";
+        // Force even the current row through its visibility sync. User
+        // edits break TextField.text's binding, so changing only the page
+        // state can otherwise leave an old password visible.
+        joinSsid = "";
+        joinSsid = ssid;
     }
 
     Connections {

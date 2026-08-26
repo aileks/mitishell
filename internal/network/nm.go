@@ -79,7 +79,7 @@ func (caller NMCaller) Devices(ctx context.Context) ([]Device, error) {
 	}
 
 	var devices []Device
-	for path, interfaces := range all {
+	for _, interfaces := range all {
 		deviceProps, ok := interfaces[nmName+".Device"]
 		if !ok {
 			continue
@@ -94,9 +94,7 @@ func (caller NMCaller) Devices(ctx context.Context) ([]Device, error) {
 			State: valueUintOr(deviceProps, "State"),
 		}
 		if wireless, ok := interfaces[nmName+".Device.Wireless"]; ok {
-			if err := wirelessDetails(ctx, conn, path, wireless, all, &device); err != nil {
-				return nil, err
-			}
+			wirelessDetails(wireless, all, &device)
 		}
 		devices = append(devices, device)
 	}
@@ -104,25 +102,13 @@ func (caller NMCaller) Devices(ctx context.Context) ([]Device, error) {
 }
 
 func wirelessDetails(
-	ctx context.Context,
-	conn *dbus.Conn,
-	path dbus.ObjectPath,
 	wireless map[string]dbus.Variant,
 	all objects,
 	device *Device,
-) error {
-	accessObject := conn.Object(nmName, path)
-	// A device mid-transition (radio powering up, connecting) can refuse
-	// the access-point listing; report it without stations rather than
-	// failing the whole snapshot.
-	var paths []dbus.ObjectPath
-	if call := accessObject.CallWithContext(
-		ctx, nmName+".Device.Wireless.GetAccessPoints", 0); call.Err == nil {
-		if err := call.Store(&paths); err != nil {
-			return err
-		}
-	}
-	for _, accessPath := range paths {
+) {
+	// Use the access-point paths from the same managed-object snapshot as
+	// their properties. This avoids a second D-Bus call racing device churn.
+	for _, accessPath := range valuePathsOr(wireless, "AccessPoints") {
 		if props, ok := all[accessPath][nmName+".AccessPoint"]; ok {
 			device.AccessPoints = append(device.AccessPoints, accessPoint(props))
 		}
@@ -133,7 +119,6 @@ func wirelessDetails(
 			device.Active = accessPoint(props)
 		}
 	}
-	return nil
 }
 
 func (caller NMCaller) Saved(ctx context.Context) ([]Saved, error) {
@@ -308,6 +293,15 @@ func valuePath(props map[string]dbus.Variant, key string) (dbus.ObjectPath, bool
 	}
 	path, ok := value.Value().(dbus.ObjectPath)
 	return path, ok
+}
+
+func valuePathsOr(props map[string]dbus.Variant, key string) []dbus.ObjectPath {
+	value, ok := props[key]
+	if !ok {
+		return nil
+	}
+	paths, _ := value.Value().([]dbus.ObjectPath)
+	return paths
 }
 
 func valueBytesOr(props map[string]dbus.Variant, key string) []byte {

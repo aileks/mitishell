@@ -206,11 +206,14 @@ func stations(device Device, saved []Saved) []Station {
 			Saved:    savedBySsid[ssid],
 		})
 	}
-	sort.SliceStable(list, func(first, second int) bool {
+	sort.Slice(list, func(first, second int) bool {
 		if list[first].InUse != list[second].InUse {
 			return list[first].InUse
 		}
-		return list[first].Signal > list[second].Signal
+		if list[first].Signal != list[second].Signal {
+			return list[first].Signal > list[second].Signal
+		}
+		return list[first].Ssid < list[second].Ssid
 	})
 	return list
 }
