@@ -206,7 +206,7 @@ QtObject {
     readonly property int pairPromptDurationMs: 120000
 
     property Timer pairDisplayTimer: Timer {
-        interval: pairDisplayDurationMs
+        interval: root.pairDisplayDurationMs
         onTriggered: root.pairRequest = null
     }
 
