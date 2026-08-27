@@ -18,6 +18,7 @@ type callerStub struct {
 	err              error
 	wirelessDisabled bool
 	wirelessChanges  []bool
+	scanRequests     int
 }
 
 func (stub *callerStub) WirelessEnabled(context.Context) (bool, error) {
@@ -44,6 +45,11 @@ func (stub *callerStub) Connect(_ context.Context, settings map[string]map[strin
 
 func (stub *callerStub) Forget(_ context.Context, id string) error {
 	stub.forgot = append(stub.forgot, id)
+	return stub.err
+}
+
+func (stub *callerStub) RequestScan(context.Context) error {
+	stub.scanRequests += 1
 	return stub.err
 }
 
@@ -147,6 +153,16 @@ func TestWifiPowerStateAndChangesUseNetworkManager(t *testing.T) {
 	}
 	if len(stub.wirelessChanges) != 1 || !stub.wirelessChanges[0] {
 		t.Fatalf("wireless changes = %v", stub.wirelessChanges)
+	}
+}
+
+func TestRequestScanReachesNetworkManager(t *testing.T) {
+	stub := &callerStub{}
+	if err := network.NewService(stub).RequestScan(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if stub.scanRequests != 1 {
+		t.Fatalf("scan requests = %d", stub.scanRequests)
 	}
 }
 

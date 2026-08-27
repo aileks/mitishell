@@ -16,13 +16,15 @@ Item {
 
         Image {
             anchors.verticalCenter: parent.verticalCenter
-            width: 15
-            height: 15
+            width: 16
+            height: 16
             source: Audio.outputMuted
                 ? "../assets/icons/volume-x.svg"
                 : "../assets/icons/volume-2.svg"
-            sourceSize.width: 15
-            sourceSize.height: 15
+            // Raster at twice the drawn size; the filtered downscale keeps
+            // the thin arcs crisp at bar scale.
+            sourceSize.width: 32
+            sourceSize.height: 32
             opacity: Audio.ready ? 1 : 0.5
         }
 

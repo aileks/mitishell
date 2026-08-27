@@ -210,6 +210,15 @@ QtObject {
         onTriggered: agentProcess.running = true
     }
 
+    // The bar island reads availability and the connected count straight
+    // from the snapshot, so it keeps its own gentle refresh cadence.
+    property Timer snapshotTimer: Timer {
+        interval: 30000
+        repeat: true
+        running: true
+        onTriggered: root.refresh()
+    }
+
     // Display-only requests just repeat a pin typed elsewhere, so they
     // clear quickly; answerable prompts wait out the agent's request
     // window (requestTimeout in internal/bluetooth/agent.go).

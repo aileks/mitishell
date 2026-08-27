@@ -54,18 +54,19 @@ PopupWindow {
                 return;
             }
 
-            const localX = root.anchorItem.width - root.implicitWidth;
+            // The stack hugs the output's right edge, wherever the bell
+            // island sits in the configured order; only the vertical anchor
+            // follows the island.
             const localY = root.anchorItem.height + Theme.spaceSm;
             const point = root.anchorWindow.contentItem.mapFromItem(
                 root.anchorItem,
-                localX,
+                0,
                 localY,
             );
             // qmllint disable unresolved-type
-            root.anchor.rect.x = Math.round(Math.max(
-                Theme.spaceSm,
-                Math.min(point.x, root.anchorWindow.width - root.implicitWidth - Theme.spaceSm),
-            ));
+            root.anchor.rect.x = Math.round(
+                root.anchorWindow.width - root.implicitWidth - Theme.spaceSm,
+            );
             root.anchor.rect.y = Math.round(point.y);
             // qmllint enable unresolved-type
         }

@@ -18,7 +18,7 @@ QtObject {
             "showWindowTitle": true,
             "showMedia": true,
             "systemMetrics": "separate",
-            "islands": ["system", "audio", "keyboardLayout", "updates", "clock", "tray", "control", "notifications", "reminders", "weather", "power"]
+            "islands": ["system", "audio", "keyboardLayout", "updates", "clock", "tray", "bluetooth", "control", "notifications", "reminders", "weather", "power"]
         },
         "weather": {
             "enabled": false,
@@ -52,8 +52,20 @@ QtObject {
         || (Quickshell.env("HOME") + "/.config")
     readonly property string configPath: configRoot + "/mitishell/config.json"
 
+    readonly property var screenNames: {
+        const screens = Quickshell.screens !== undefined ? Quickshell.screens : [];
+        return screens.map(function(screen) { return screen.name; });
+    }
+
+    // Connectors that should host a bar right now; falls back to the first
+    // live screen when every configured connector has vanished.
+    readonly property var barTargetConnectors: ConfigModel.barTargets(
+        bar.outputs,
+        screenNames,
+    )
+
     function outputEnabled(connector) {
-        return ConfigModel.outputEnabled(bar.outputs, connector);
+        return barTargetConnectors.indexOf(connector) !== -1;
     }
 
     function refresh() {

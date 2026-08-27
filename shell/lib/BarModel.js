@@ -1,5 +1,3 @@
-const separatorsAfter = ["system", "audio", "clock"];
-
 function move(order, from, to) {
     const result = order.slice();
     if (from < 0 || to < 0 || from >= result.length || to >= result.length || from === to) return result;
@@ -36,19 +34,9 @@ function moveVisible(order, index, direction, visible) {
     return move(order, index, visibleTarget(order, index, direction, visible));
 }
 
-function separatorAfter(id, nextId) {
-    if (nextId === "") return false;
-    return separatorsAfter.includes(id) || nextId === "weather";
-}
-
-function render(order, visible) {
-    const result = [];
-    for (let index = 0; index < order.length; index += 1) {
-        const id = order[index];
-        if (!visible(id)) continue;
-        result.push({ id, separatorAfter: separatorAfter(id, nextVisible(order, index, visible)) });
-    }
-    return result;
+// Every visible island except the last one gets a trailing divider.
+function hasVisibleSuccessor(order, index, visible) {
+    return nextVisible(order, index, visible) !== "";
 }
 
 if (typeof module !== "undefined") module.exports = {
@@ -56,7 +44,6 @@ if (typeof module !== "undefined") module.exports = {
     moveAtDrop,
     moveVisible,
     nextVisible,
-    render,
-    separatorAfter,
+    hasVisibleSuccessor,
     visibleTarget,
 };

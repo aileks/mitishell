@@ -25,6 +25,21 @@ QtObject {
         }
     }
 
+    // NetworkManager sweeps for access points only opportunistically on its
+    // own; this asks it for a fresh pass so the page's list stays current.
+    // Failures stay silent: the next snapshot still shows the cached list.
+    function requestScan() {
+        if (!scanProcess.running) {
+            scanProcess.running = true;
+        }
+    }
+
+    property Process scanProcess: Process {
+        id: scanProcess
+
+        command: [Config.binary, "_network-scan"]
+    }
+
     function connectToNetwork(ssid, password, hidden) {
         joining = true;
         error = "";

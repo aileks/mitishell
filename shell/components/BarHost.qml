@@ -33,11 +33,8 @@ PanelWindow {
             : id === "updates" ? Updates.visible
             : id === "tray" ? Tray.available
             : id === "reminders" ? Reminders.count > 0
+            : id === "bluetooth" ? Bluetooth.state === "ready"
             : id === "weather" ? Weather.visible : true;
-    }
-
-    function nextVisible(index) {
-        return BarModel.nextVisible(localOrder, index, islandVisible);
     }
 
     function beginDrag(islandDelegate, pressScenePosition, scenePosition) {
@@ -164,7 +161,7 @@ PanelWindow {
         id: leftIsland
 
         anchors.left: parent.left
-        width: Math.min(leftContent.implicitWidth + Theme.spaceLg * 2, 560)
+        width: Math.min(Math.ceil(leftContent.implicitWidth) + Theme.spaceLg * 2, 560)
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.layerRaised
@@ -216,7 +213,7 @@ PanelWindow {
         width: visible ? Math.min(
             272,
             root.availableCenterWidth,
-            mediaTrigger.implicitWidth + Theme.spaceLg * 2,
+            Math.ceil(mediaTrigger.implicitWidth) + Theme.spaceMd * 2,
         ) : 0
         height: parent.height
         radius: Theme.radiusPill
@@ -237,8 +234,11 @@ PanelWindow {
         BarPopoverTrigger {
             id: mediaTrigger
 
-            anchors.centerIn: parent
-            width: Math.max(0, parent.width - Theme.spaceLg * 2)
+            // Whole-pixel placement: a half-pixel offset from centering
+            // softens every glyph and icon in the row.
+            x: Math.round((parent.width - width) / 2)
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, parent.width - Theme.spaceMd * 2)
             implicitWidth: mediaContent.implicitWidth
             clip: true
             popoverKey: "media"
@@ -267,7 +267,7 @@ PanelWindow {
 
         anchors.right: parent.right
         width: rightContent.implicitWidth > 0
-            ? rightContent.implicitWidth + Theme.spaceLg * 2 : 0
+            ? Math.ceil(rightContent.implicitWidth) + Theme.spaceLg * 2 : 0
         height: parent.height
         radius: Theme.radiusPill
         color: Theme.layerRaised
@@ -278,7 +278,10 @@ PanelWindow {
         Row {
             id: rightContent
 
-            anchors.centerIn: parent
+            // Whole-pixel placement: a half-pixel offset from centering
+            // softens every glyph and icon in the row.
+            x: Math.round((parent.width - width) / 2)
+            anchors.verticalCenter: parent.verticalCenter
             height: parent.height
             spacing: Theme.spaceMd
 
@@ -309,9 +312,10 @@ PanelWindow {
                         anchors.centerIn: parent
                         islandId: islandDelegate.modelData
                         screen: root.modelData
-                        separatorAfter: BarModel.separatorAfter(
-                            islandDelegate.modelData,
-                            root.nextVisible(islandDelegate.index),
+                        separatorAfter: BarModel.hasVisibleSuccessor(
+                            root.localOrder,
+                            islandDelegate.index,
+                            root.islandVisible,
                         )
                     }
 

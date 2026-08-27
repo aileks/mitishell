@@ -24,7 +24,7 @@ Rectangle {
     implicitWidth: 344
     implicitHeight: 64
     radius: Theme.radiusMedium
-    color: activeFocus || hover.hovered ? Theme.overlay : "transparent"
+    color: activeFocus || hover.hovered ? Theme.hoverFill : "transparent"
     border.width: activeFocus ? 2 : 0
     border.color: Theme.blue
     activeFocusOnTab: true

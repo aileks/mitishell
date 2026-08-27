@@ -32,7 +32,29 @@ Flickable {
         width: root.width
         spacing: Theme.spaceMd
 
-        Text { text: "Weather"; color: Theme.textBright; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeHeading; font.weight: Font.DemiBold }
+        Row {
+            width: parent.width
+            spacing: Theme.spaceSm
+
+            Text {
+                width: parent.width - refreshButton.width - parent.spacing
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Weather"
+                color: Theme.textBright
+                font.family: Theme.fontSans
+                font.pixelSize: Theme.fontSizeHeading
+                font.weight: Font.DemiBold
+            }
+
+            IconButton {
+                id: refreshButton
+
+                iconSource: "../assets/icons/rotate-ccw.svg"
+                accessibleName: "Refresh weather"
+                enabled: Weather.state !== "locating"
+                onClicked: Weather.refresh()
+            }
+        }
         Text { width: parent.width; visible: Weather.snapshot !== null; text: root.resolvedLocation; elide: Text.ElideRight; color: Theme.cyan; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBodySmall }
         Text { width: parent.width; visible: Weather.state === "locating"; text: Weather.snapshot === null ? "Fetching " + root.configuredLocation + "…" : "Refreshing " + root.configuredLocation + "…"; color: Theme.yellow; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBodySmall }
         InlineStatus {

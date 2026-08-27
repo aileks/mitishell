@@ -30,15 +30,6 @@ Column {
         font.pixelSize: Theme.fontSizeBody
     }
 
-    Text {
-        width: parent.width
-        text: "Leave empty to let wttr.in detect a rough location from the network."
-        wrapMode: Text.Wrap
-        color: Theme.textMuted
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeCaption
-    }
-
     Rectangle {
         width: parent.width
         height: 32

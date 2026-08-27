@@ -75,7 +75,7 @@ Item {
             width: parent.width
             height: 38
             radius: Theme.radiusMedium
-            color: activeFocus || buttonHover.hovered ? Theme.overlay : Theme.container
+            color: activeFocus || buttonHover.hovered ? Theme.hoverFill : Theme.container
             border.width: activeFocus ? 2 : 0
             border.color: Theme.blue
             activeFocusOnTab: true

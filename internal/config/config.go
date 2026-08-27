@@ -40,14 +40,14 @@ type Bar struct {
 func DefaultIslands() []string {
 	return []string{
 		"system", "audio", "keyboardLayout", "updates", "clock", "tray",
-		"control", "notifications", "reminders", "weather", "power",
+		"bluetooth", "control", "notifications", "reminders", "weather", "power",
 	}
 }
 
 func knownIsland(id string) bool {
 	switch id {
 	case "system", "audio", "keyboardLayout", "updates", "clock", "tray",
-		"control", "notifications", "reminders", "weather", "power":
+		"bluetooth", "control", "notifications", "reminders", "weather", "power":
 		return true
 	}
 	return false

@@ -34,7 +34,7 @@ SurfaceFrame {
     implicitHeight: content.implicitHeight + padding * 2
     padding: Theme.spaceMd
     fill: Theme.layerInset
-    accent: notification.urgency === 2 ? Theme.red : Theme.pink
+    accent: notification.urgency === 2 ? Theme.red : Theme.orange
     floating: !historyMode
 
     property Timer expiry: Timer {
@@ -57,9 +57,9 @@ SurfaceFrame {
                 width: 42
                 height: 42
                 radius: Theme.radiusMedium
-                color: Theme.alpha(Theme.pink, 0.16)
+                color: Theme.alpha(Theme.orange, 0.16)
                 border.width: 1
-                border.color: Theme.alpha(Theme.pink, 0.42)
+                border.color: Theme.alpha(Theme.orange, 0.42)
                 clip: true
 
                 Image {
@@ -78,7 +78,7 @@ SurfaceFrame {
                     visible: root.avatarSource === "" || avatar.status === Image.Error
                     anchors.centerIn: parent
                     text: "󰂚"
-                    color: Theme.pink
+                    color: Theme.orange
                     font.family: Theme.fontMono
                     font.pixelSize: Theme.iconMd
                 }
@@ -103,7 +103,7 @@ SurfaceFrame {
                             ? root.notification.appName
                             : "Notification"
                         elide: Text.ElideRight
-                        color: Theme.pink
+                        color: Theme.orange
                         font.family: Theme.fontSans
                         font.pixelSize: Theme.fontSizeCaption
                         font.weight: Font.DemiBold
@@ -202,7 +202,7 @@ SurfaceFrame {
 
                     implicitWidth: Math.max(72, implicitContentWidth)
                     label: modelData.text
-                    accent: Theme.pink
+                    accent: Theme.orange
                     onActivated: {
                         Notifications.invokeAction(
                             root.notification.liveId,

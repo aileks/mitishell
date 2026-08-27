@@ -7,26 +7,20 @@ test("islands move without losing hidden ids", () => {
     assert.deepEqual(model.move(["system", "audio"], -1, 1), ["system", "audio"]);
 });
 
-test("separator lookup skips hidden islands and avoids edges", () => {
+test("next-visible lookup skips hidden islands", () => {
     const order = ["system", "updates", "clock", "weather"];
     const visible = id => id !== "updates";
     assert.equal(model.nextVisible(order, 0, visible), "clock");
-    assert.equal(model.separatorAfter("system", "clock"), true);
-    assert.equal(model.separatorAfter("clock", "weather"), true);
-    assert.equal(model.separatorAfter("weather", ""), false);
+    assert.equal(model.nextVisible(order, 2, visible), "weather");
+    assert.equal(model.nextVisible(order, 3, visible), "");
 });
 
-test("render order derives only meaningful separators", () => {
-    const visible = id => !["keyboardLayout", "updates", "reminders"].includes(id);
-    assert.deepEqual(
-        model.render(["weather", "system", "keyboardLayout", "audio", "updates", "clock", "reminders"], visible),
-        [
-            { id: "weather", separatorAfter: false },
-            { id: "system", separatorAfter: true },
-            { id: "audio", separatorAfter: true },
-            { id: "clock", separatorAfter: false },
-        ],
-    );
+test("separators land between every visible island", () => {
+    const order = ["system", "updates", "clock", "weather"];
+    const visible = id => id !== "updates";
+    assert.equal(model.hasVisibleSuccessor(order, 0, visible), true);
+    assert.equal(model.hasVisibleSuccessor(order, 2, visible), true);
+    assert.equal(model.hasVisibleSuccessor(order, 3, visible), false);
 });
 
 test("keyboard moves use visible neighbors and retain hidden islands", () => {

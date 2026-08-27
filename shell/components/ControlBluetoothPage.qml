@@ -275,7 +275,7 @@ Flickable {
                                 height: 26
                                 radius: Theme.radiusPill
                                 color: actionHover.hovered || activeFocus
-                                    ? Theme.overlay : "transparent"
+                                    ? Theme.hoverFill : "transparent"
                                 border.width: activeFocus ? 2 : 1
                                 border.color: activeFocus ? Theme.blue : Theme.borderStrong
                                 enabled: !Bluetooth.actionRunning

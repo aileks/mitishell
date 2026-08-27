@@ -137,7 +137,7 @@ FocusScope {
                 anchors.fill: parent
                 radius: Theme.radiusSmall
                 color: trayItem.activeFocus || hover.hovered
-                    ? Theme.overlay : "transparent"
+                    ? Theme.hoverFill : "transparent"
                 border.width: trayItem.activeFocus ? 2 : 0
                 border.color: Theme.blue
 

@@ -52,9 +52,12 @@ Flickable {
     onVisibleChanged: {
         if (visible) {
             Network.refresh();
+            Network.requestScan();
             pollTimer.restart();
+            scanTimer.restart();
         } else {
             pollTimer.stop();
+            scanTimer.stop();
         }
     }
 
@@ -62,6 +65,14 @@ Flickable {
         interval: 4000
         repeat: true
         onTriggered: Network.refresh()
+    }
+
+    // Sweeps pace slower than status polls; NetworkManager rejects
+    // back-to-back scan requests.
+    property Timer scanTimer: Timer {
+        interval: 12000
+        repeat: true
+        onTriggered: Network.requestScan()
     }
 
     Column {
@@ -173,9 +184,12 @@ Flickable {
                             width: parent.width
                             height: 40
                             radius: Theme.radiusMedium
-                            color: stationEntry.modelData.inUse || root.joinSsid === stationEntry.modelData.ssid
-                                || stationRow.activeFocus || stationHover.hovered
-                                ? Theme.overlay : "transparent"
+                            color: root.joinSsid === stationEntry.modelData.ssid
+                                ? Theme.alpha(Theme.blue, 0.22)
+                                : stationEntry.modelData.inUse
+                                ? Theme.alpha(Theme.cyan, 0.22)
+                                : (stationRow.activeFocus || stationHover.hovered
+                                    ? Theme.hoverFill : "transparent")
                             border.width: stationRow.activeFocus ? 2 : 0
                             border.color: Theme.blue
                             activeFocusOnTab: true
@@ -249,14 +263,24 @@ Flickable {
                                 }
 
                                 Rectangle {
+                                    id: forgetButton
+
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: stationEntry.modelData.saved
                                     width: forgetLabel.implicitWidth + Theme.spaceLg * 2
                                     height: 24
                                     radius: Theme.radiusPill
-                                    color: forgetHover.hovered ? Theme.overlay : "transparent"
-                                    border.width: 1
-                                    border.color: Theme.borderStrong
+                                    color: forgetTap.pressed ? Theme.pressedFill
+                                        : (forgetButton.activeFocus || forgetHover.hovered
+                                            ? Theme.hoverFill : "transparent")
+                                    border.width: forgetButton.activeFocus ? 2 : 1
+                                    border.color: forgetButton.activeFocus
+                                        ? Theme.blue : Theme.borderStrong
+                                    activeFocusOnTab: true
+                                    Accessible.name: "Forget " + stationEntry.modelData.ssid
+                                    Accessible.role: Accessible.Button
+                                    Accessible.onPressAction: Network.forget(
+                                        stationEntry.modelData.ssid)
 
                                     Text {
                                         id: forgetLabel
@@ -274,7 +298,17 @@ Flickable {
                                     }
 
                                     TapHandler {
+                                        id: forgetTap
                                         onTapped: Network.forget(stationEntry.modelData.ssid)
+                                    }
+
+                                    Keys.onReturnPressed: function(event) {
+                                        Network.forget(stationEntry.modelData.ssid);
+                                        event.accepted = true;
+                                    }
+                                    Keys.onSpacePressed: function(event) {
+                                        Network.forget(stationEntry.modelData.ssid);
+                                        event.accepted = true;
                                     }
                                 }
                             }
@@ -344,31 +378,11 @@ Flickable {
                             Row {
                                 spacing: Theme.spaceSm
 
-                                Rectangle {
-                                    width: joinLabel.implicitWidth + Theme.spaceLg * 2
-                                    height: 30
-                                    radius: Theme.radiusPill
-                                    color: joinHover.hovered ? Theme.overlay : Theme.orange
-
-                                    Text {
-                                        id: joinLabel
-
-                                        anchors.centerIn: parent
-                                        text: Network.joining ? "Joining" : "Join"
-                                        color: Theme.background
-                                        font.family: Theme.fontSans
-                                        font.pixelSize: Theme.fontSizeCaption
-                                        font.weight: Font.DemiBold
-                                    }
-
-                                    HoverHandler {
-                                        id: joinHover
-                                        cursorShape: Qt.PointingHandCursor
-                                    }
-
-                                    TapHandler {
-                                        onTapped: joinRow.submit()
-                                    }
+                                ActionButton {
+                                    label: Network.joining ? "Joining" : "Join"
+                                    accent: Theme.orange
+                                    enabled: !Network.joining
+                                    onActivated: joinRow.submit()
                                 }
                             }
 

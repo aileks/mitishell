@@ -25,7 +25,7 @@ FocusScope {
         anchors.fill: parent
         radius: Theme.radiusPill
         color: root.active || root.activeFocus || hover.hovered
-            ? Theme.overlay
+            ? Theme.hoverFill
             : "transparent"
         border.width: root.activeFocus ? 2 : (root.active ? 1 : 0)
         border.color: root.activeFocus ? Theme.blue : Theme.orange

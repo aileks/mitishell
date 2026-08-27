@@ -15,10 +15,11 @@ Item {
         : islandId === "updates" ? Updates.visible
         : islandId === "tray" ? Tray.available
         : islandId === "reminders" ? Reminders.count > 0
+        : islandId === "bluetooth" ? Bluetooth.state === "ready"
         : islandId === "weather" ? Weather.visible
         : true
 
-    implicitWidth: available ? islandLoader.implicitWidth + (separatorAfter ? Theme.spaceMd + 1 : 0) : 0
+    implicitWidth: available ? islandLoader.implicitWidth : 0
     implicitHeight: 28
     visible: implicitWidth > 0
 
@@ -32,6 +33,7 @@ Item {
             : root.islandId === "updates" ? updatesComponent
             : root.islandId === "clock" ? clockComponent
             : root.islandId === "tray" ? trayComponent
+            : root.islandId === "bluetooth" ? bluetoothComponent
             : root.islandId === "control" ? controlComponent
             : root.islandId === "notifications" ? notificationsComponent
             : root.islandId === "reminders" ? remindersComponent
@@ -39,8 +41,11 @@ Item {
             : root.islandId === "power" ? powerComponent : null
     }
 
+    // The divider floats half a row-gap past the island's content so the
+    // row's own spacing carries it; islands never grow for the line.
     Rectangle {
         anchors.right: parent.right
+        anchors.rightMargin: -Math.floor(Theme.spaceMd / 2)
         anchors.verticalCenter: parent.verticalCenter
         visible: root.separatorAfter
         width: 1
@@ -82,6 +87,22 @@ Item {
         }
     }
     Component { id: trayComponent; TrayIsland { screen: root.screen } }
+    Component {
+        id: bluetoothComponent
+        // The island toggles the control center straight onto its bluetooth
+        // page; the shared surface owns the device management.
+        BarPopoverTrigger {
+            id: bluetoothTrigger
+            popoverKey: "control"
+            screen: root.screen
+            onTriggered: function(opened) {
+                if (opened) {
+                    Control.selectPage("bluetooth");
+                }
+            }
+            BluetoothIsland { open: bluetoothTrigger.active }
+        }
+    }
     Component { id: controlComponent; ControlIsland { screen: root.screen } }
     Component {
         id: notificationsComponent

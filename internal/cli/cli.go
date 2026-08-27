@@ -60,12 +60,14 @@ type PowerService interface {
 	Run(ctx context.Context, action power.Action) error
 }
 
-// NetworkService joins and forgets Wi-Fi networks and snapshots status.
+// NetworkService joins and forgets Wi-Fi networks, requests scans, and
+// snapshots status.
 type NetworkService interface {
 	Snapshot(ctx context.Context) network.Snapshot
 	SetWifiEnabled(ctx context.Context, enabled bool) error
 	Connect(ctx context.Context, ssid string, password string, hidden bool) error
 	Forget(ctx context.Context, ssid string) error
+	RequestScan(ctx context.Context) error
 }
 
 // BluetoothService drives BlueZ devices and reports adapter status.
@@ -480,6 +482,18 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			fmt.Fprintf(stderr, "mitishell: encode network: %v\n", err)
 			return 1
 		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_network-scan" {
+		if dependencies.NetworkService == nil {
+			fmt.Fprintln(stderr, "mitishell: network unavailable")
+			return 1
+		}
+		if err := dependencies.NetworkService.RequestScan(context.Background()); err != nil {
+			fmt.Fprintf(stderr, "mitishell: network scan unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "network scan requested")
 		return 0
 	}
 	if len(args) > 0 && args[0] == "_network-connect" {
