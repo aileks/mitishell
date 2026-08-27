@@ -141,7 +141,8 @@ func (caller NMCaller) RequestScan(ctx context.Context) error {
 			continue
 		}
 		call := conn.Object(nmName, path).CallWithContext(
-			ctx, nmName+".Device.Wireless.RequestScan", 0, "")
+			ctx, nmName+".Device.Wireless.RequestScan", 0,
+			map[string]dbus.Variant{})
 		if call.Err == nil {
 			return nil
 		}

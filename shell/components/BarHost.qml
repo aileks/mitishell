@@ -312,6 +312,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         islandId: islandDelegate.modelData
                         screen: root.modelData
+                        available: root.islandVisible(islandDelegate.modelData)
                         separatorAfter: BarModel.hasVisibleSuccessor(
                             root.localOrder,
                             islandDelegate.index,

@@ -25,7 +25,7 @@ Favor soft depth, clear rank, and sparse focal accents. Use shared parts and the
 
 Each accent has one semantic owner:
 
-- Orange: shell brand and main run state
+- Orange: shell brand, main run state, and notifications
 - Green: success and good or linked state
 - Red: harm, error, and dire state
 - Yellow: warning, stale, and pending state

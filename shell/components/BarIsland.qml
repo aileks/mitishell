@@ -8,16 +8,9 @@ Item {
 
     required property string islandId
     required property var screen
+    required property bool available
     property bool separatorAfter: false
     readonly property var dragVisual: islandLoader.item
-    readonly property bool available: islandId === "system" ? Config.bar.systemMetrics !== "hidden"
-        : islandId === "keyboardLayout" ? KeyboardLayout.available
-        : islandId === "updates" ? Updates.visible
-        : islandId === "tray" ? Tray.available
-        : islandId === "reminders" ? Reminders.count > 0
-        : islandId === "bluetooth" ? Bluetooth.state === "ready"
-        : islandId === "weather" ? Weather.visible
-        : true
 
     implicitWidth: available ? islandLoader.implicitWidth : 0
     implicitHeight: 28
