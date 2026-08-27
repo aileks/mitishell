@@ -8,17 +8,10 @@ Item {
 
     required property string islandId
     required property var screen
-    property bool separatorAfter: false
+    required property bool available
     readonly property var dragVisual: islandLoader.item
-    readonly property bool available: islandId === "system" ? Config.bar.systemMetrics !== "hidden"
-        : islandId === "keyboardLayout" ? KeyboardLayout.available
-        : islandId === "updates" ? Updates.visible
-        : islandId === "tray" ? Tray.available
-        : islandId === "reminders" ? Reminders.count > 0
-        : islandId === "weather" ? Weather.visible
-        : true
 
-    implicitWidth: available ? islandLoader.implicitWidth + (separatorAfter ? Theme.spaceMd + 1 : 0) : 0
+    implicitWidth: available ? islandLoader.implicitWidth : 0
     implicitHeight: 28
     visible: implicitWidth > 0
 
@@ -32,20 +25,12 @@ Item {
             : root.islandId === "updates" ? updatesComponent
             : root.islandId === "clock" ? clockComponent
             : root.islandId === "tray" ? trayComponent
+            : root.islandId === "bluetooth" ? bluetoothComponent
             : root.islandId === "control" ? controlComponent
             : root.islandId === "notifications" ? notificationsComponent
             : root.islandId === "reminders" ? remindersComponent
             : root.islandId === "weather" ? weatherComponent
             : root.islandId === "power" ? powerComponent : null
-    }
-
-    Rectangle {
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        visible: root.separatorAfter
-        width: 1
-        height: 16
-        color: Theme.overlay
     }
 
     Component {
@@ -82,6 +67,22 @@ Item {
         }
     }
     Component { id: trayComponent; TrayIsland { screen: root.screen } }
+    Component {
+        id: bluetoothComponent
+        // The island toggles the control center straight onto its bluetooth
+        // page; the shared surface owns the device management.
+        BarPopoverTrigger {
+            id: bluetoothTrigger
+            popoverKey: "control"
+            screen: root.screen
+            onTriggered: function(opened) {
+                if (opened) {
+                    Control.selectPage("bluetooth");
+                }
+            }
+            BluetoothIsland { open: bluetoothTrigger.active }
+        }
+    }
     Component { id: controlComponent; ControlIsland { screen: root.screen } }
     Component {
         id: notificationsComponent

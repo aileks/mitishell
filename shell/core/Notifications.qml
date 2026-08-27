@@ -41,7 +41,7 @@ QtObject {
         return screens.map(function(screen) { return screen.name; });
     }
     readonly property string popupScreenName: NotificationModel.popupTarget(
-        Osd.screenName, screenNames, Config.bar.outputs)
+        Osd.screenName, screenNames, Config.barTargetConnectors)
 
     function toggleDoNotDisturb() {
         doNotDisturb = !doNotDisturb;

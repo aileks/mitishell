@@ -55,6 +55,7 @@ type Caller interface {
 	Saved(ctx context.Context) ([]Saved, error)
 	Connect(ctx context.Context, settings map[string]map[string]dbus.Variant) error
 	Forget(ctx context.Context, id string) error
+	RequestScan(ctx context.Context) error
 }
 
 type Station struct {
@@ -131,6 +132,12 @@ func (service Service) Snapshot(ctx context.Context) Snapshot {
 
 func (service Service) SetWifiEnabled(ctx context.Context, enabled bool) error {
 	return service.caller.SetWirelessEnabled(ctx, enabled)
+}
+
+// RequestScan refreshes the access-point cache NM exposes; callers pace
+// the requests.
+func (service Service) RequestScan(ctx context.Context) error {
+	return service.caller.RequestScan(ctx)
 }
 
 func (service Service) Connect(ctx context.Context, ssid string, password string, hidden bool) error {

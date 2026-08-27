@@ -249,7 +249,7 @@ FocusScope {
             height: root.headerHeight
             visible: root.headerHeight > 0
             radius: Theme.radiusSmall
-            color: activeFocus || backHover.hovered ? Theme.overlay : "transparent"
+            color: activeFocus || backHover.hovered ? Theme.hoverFill : "transparent"
             activeFocusOnTab: visible
             Accessible.name: "Back"
             Accessible.description: root.currentTitle
@@ -332,7 +332,7 @@ FocusScope {
                     color: !isEntry || !modelData.enabled
                         ? "transparent"
                         : (activeFocus || entryHover.hovered
-                            ? Theme.overlay : "transparent")
+                            ? Theme.hoverFill : "transparent")
                     opacity: modelData.enabled ? 1 : 0.45
                     activeFocusOnTab: isEntry && modelData.enabled
                     Accessible.name: isEntry ? modelData.text : ""

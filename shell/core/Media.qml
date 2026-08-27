@@ -10,6 +10,7 @@ QtObject {
 
     property string preferredPlayerKey: ""
     property real displayPosition: 0
+    property real trackLength: 0
     property int activitySequence: 0
     property var activityByDbusName: ({})
 
@@ -60,19 +61,28 @@ QtObject {
         }
     }
 
-    onActivePlayerChanged: displayPosition = activePlayer !== null
-        && activePlayer.positionSupported ? activePlayer.position : 0
+    // Some MPRIS players swap metadata without re-emitting a Length property
+    // change, so the total is re-read alongside the position instead of
+    // bound to the player property.
+    function syncPlaybackClock() {
+        const player = activePlayer;
+        displayPosition = player !== null && player.positionSupported
+            ? player.position : 0;
+        trackLength = player !== null && player.lengthSupported
+            ? player.length : 0;
+    }
+
+    onActivePlayerChanged: syncPlaybackClock()
 
     property Connections playerConnections: Connections {
         target: root.activePlayer
 
         function onPositionChanged() {
-            root.displayPosition = root.activePlayer.position;
+            root.syncPlaybackClock();
         }
 
         function onTrackChanged() {
-            root.displayPosition = root.activePlayer.positionSupported
-                ? root.activePlayer.position : 0;
+            root.syncPlaybackClock();
         }
     }
 
@@ -110,6 +120,6 @@ QtObject {
         running: root.activePlayer !== null
             && root.activePlayer.positionSupported
             && root.activePlayer.isPlaying
-        onTriggered: root.displayPosition = root.activePlayer.position
+        onTriggered: root.syncPlaybackClock()
     }
 }

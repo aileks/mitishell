@@ -300,7 +300,8 @@ func TestNormalizeIslandsDropsUnknownAndAppendsMissing(t *testing.T) {
 	)
 	// DefaultIslands minus clock/weather, appended in default order.
 	want = []string{"weather", "clock", "system", "audio", "keyboardLayout",
-		"updates", "tray", "control", "notifications", "reminders", "power"}
+		"updates", "tray", "bluetooth", "control", "notifications",
+		"reminders", "power"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("NormalizeIslands() = %#v, want %#v", got, want)
 	}

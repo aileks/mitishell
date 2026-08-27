@@ -8,8 +8,7 @@ Item {
     id: root
 
     readonly property var player: Media.activePlayer
-    readonly property real trackLength: player !== null && player.lengthSupported
-        ? player.length : 0
+    readonly property real trackLength: Media.trackLength
     readonly property real progress: trackLength > 0
         ? Math.max(0, Math.min(1, Media.displayPosition / trackLength)) : 0
 
@@ -190,7 +189,9 @@ Item {
                         width: playerLabel.implicitWidth + Theme.spaceLg * 2
                         height: 32
                         radius: Theme.radiusPill
-                        color: selected ? Theme.purple : Theme.container
+                        color: selected ? Theme.purple
+                            : (playerChoice.activeFocus || choiceHover.hovered
+                                ? Theme.hoverFill : Theme.container)
                         border.width: activeFocus ? 2 : 0
                         border.color: Theme.blue
                         activeFocusOnTab: true
@@ -207,6 +208,7 @@ Item {
                         }
 
                         HoverHandler {
+                            id: choiceHover
                             cursorShape: Qt.PointingHandCursor
                         }
 

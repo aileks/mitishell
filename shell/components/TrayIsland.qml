@@ -14,7 +14,7 @@ FocusScope {
     readonly property bool menuOpen: SurfaceCoordinator.activeKey === "tray"
         && SurfaceCoordinator.originScreen === screen
 
-    implicitWidth: trayRow.implicitWidth
+    implicitWidth: trayRow.implicitWidth + Theme.spaceSm * 2
     implicitHeight: 24
     activeFocusOnTab: true
 
@@ -137,7 +137,7 @@ FocusScope {
                 anchors.fill: parent
                 radius: Theme.radiusSmall
                 color: trayItem.activeFocus || hover.hovered
-                    ? Theme.overlay : "transparent"
+                    ? Theme.hoverFill : "transparent"
                 border.width: trayItem.activeFocus ? 2 : 0
                 border.color: Theme.blue
 

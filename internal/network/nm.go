@@ -121,6 +121,36 @@ func wirelessDetails(
 	}
 }
 
+// RequestScan asks NetworkManager for a fresh access-point sweep. NM only
+// scans opportunistically on its own, so the network page triggers this to
+// keep its station list current.
+func (caller NMCaller) RequestScan(ctx context.Context) error {
+	conn, err := caller.connect(ctx)
+	if err != nil {
+		return err
+	}
+	all, err := managedObjects(conn)
+	if err != nil {
+		return err
+	}
+
+	scanErr := fmt.Errorf("no Wi-Fi device")
+	for path, interfaces := range all {
+		deviceProps, ok := interfaces[nmName+".Device"]
+		if !ok || int(valueUintOr(deviceProps, "DeviceType")) != DeviceWifi {
+			continue
+		}
+		call := conn.Object(nmName, path).CallWithContext(
+			ctx, nmName+".Device.Wireless.RequestScan", 0,
+			map[string]dbus.Variant{})
+		if call.Err == nil {
+			return nil
+		}
+		scanErr = call.Err
+	}
+	return scanErr
+}
+
 func (caller NMCaller) Saved(ctx context.Context) ([]Saved, error) {
 	conn, err := caller.connect(ctx)
 	if err != nil {

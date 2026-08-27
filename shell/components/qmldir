@@ -12,6 +12,7 @@ BarIsland 1.0 BarIsland.qml
 BarPopoverTrigger 1.0 BarPopoverTrigger.qml
 BarReorderGesture 1.0 BarReorderGesture.qml
 BarDragGhost 1.0 BarDragGhost.qml
+BluetoothIsland 1.0 BluetoothIsland.qml
 CalendarPopover 1.0 CalendarPopover.qml
 ClockIsland 1.0 ClockIsland.qml
 ControlAudioPage 1.0 ControlAudioPage.qml

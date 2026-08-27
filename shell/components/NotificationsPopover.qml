@@ -37,7 +37,7 @@ Flickable {
                 description: Notifications.unread > 0
                     ? Notifications.unread + " unread"
                     : "Recent activity"
-                accent: Theme.pink
+                accent: Theme.orange
             }
 
             ActionButton {
@@ -48,7 +48,7 @@ Flickable {
                 implicitWidth: 82
                 implicitHeight: Theme.controlHeightSm
                 label: "Clear all"
-                accent: Theme.pink
+                accent: Theme.orange
                 onActivated: Notifications.clearHistory()
             }
         }
@@ -82,7 +82,7 @@ Flickable {
             visible: Notifications.history.length === 0
             title: "No notifications"
             description: "New activity will appear here."
-            accent: Theme.pink
+            accent: Theme.orange
         }
 
         Repeater {

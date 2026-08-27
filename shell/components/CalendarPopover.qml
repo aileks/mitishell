@@ -119,7 +119,7 @@ FocusScope {
                 width: 32
                 height: 32
                 radius: Theme.radiusPill
-                color: activeFocus || previousHover.hovered ? Theme.overlay : "transparent"
+                color: activeFocus || previousHover.hovered ? Theme.hoverFill : "transparent"
                 activeFocusOnTab: true
                 Accessible.name: "Previous month"
                 Accessible.role: Accessible.Button
@@ -162,7 +162,7 @@ FocusScope {
                 width: 32
                 height: 32
                 radius: Theme.radiusPill
-                color: activeFocus || nextHover.hovered ? Theme.overlay : "transparent"
+                color: activeFocus || nextHover.hovered ? Theme.hoverFill : "transparent"
                 activeFocusOnTab: true
                 Accessible.name: "Next month"
                 Accessible.role: Accessible.Button
@@ -281,7 +281,7 @@ FocusScope {
                             height: 32
                             radius: Theme.radiusSmall
                             color: cursor ? Theme.orange
-                                : (activeFocus || dayHover.hovered ? Theme.overlay : "transparent")
+                                : (activeFocus || dayHover.hovered ? Theme.hoverFill : "transparent")
                             border.width: today && !cursor ? 1 : (activeFocus ? 2 : 0)
                             border.color: activeFocus ? Theme.blue : Theme.orange
                             activeFocusOnTab: true
@@ -367,7 +367,7 @@ FocusScope {
             width: parent.width
             height: 34
             radius: Theme.radiusMedium
-            color: activeFocus || todayHover.hovered ? Theme.overlay : Theme.container
+            color: activeFocus || todayHover.hovered ? Theme.hoverFill : Theme.container
             border.width: activeFocus ? 2 : 0
             border.color: Theme.blue
             activeFocusOnTab: true

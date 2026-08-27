@@ -28,6 +28,7 @@ Each tag ships one useful slice.
 - [x] cut media island space and moved long track text on one line
 - [x] matched sound popover space and type with the system view
 - [x] replaced the plain tray list with tray icons users can press
+- [x] fixed the post-use audit batch: shared hover shading, a wifi scan trigger with clearer rows, a weather refresh button, control island padding, dividers between every bar island, a fresher media track length, a bluetooth bar island, orange notification accents, popups pinned to the screen edge, and a fallback bar screen when outputs vanish
 
 ## Planned after v1
 
