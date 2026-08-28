@@ -16,6 +16,11 @@ Item {
             color: Theme.textMuted; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBody
         }
         InlineStatus { visible: Updates.error !== ""; width: parent.width; message: Updates.error }
+        InlineStatus {
+            visible: Updates.launchError !== ""
+            width: parent.width
+            message: Updates.launchError
+        }
 
         Repeater {
             model: Updates.result === null ? [] : Updates.result.system.packages.slice(0, 8)
@@ -51,10 +56,15 @@ Item {
 
         Row {
             spacing: Theme.spaceSm
-            ActionButton { label: Updates.state === "loading" ? "Checking…" : "Refresh"; enabled: Updates.state !== "loading"; onActivated: Updates.refresh() }
             ActionButton {
-                label: "Update in terminal"
-                enabled: Updates.result !== null && Updates.result.updateCommand && Updates.result.updateCommand.length > 0
+                label: Updates.state === "loading" ? "Checking…" : "Refresh"
+                enabled: Updates.state !== "loading" && !Updates.updating
+                onActivated: Updates.refresh()
+            }
+            ActionButton {
+                label: Updates.updating ? "Updating…" : "Update in terminal"
+                enabled: !Updates.updating && Updates.result !== null
+                    && Updates.result.updateCommand && Updates.result.updateCommand.length > 0
                 onActivated: Updates.launchUpdate()
             }
         }

@@ -36,16 +36,19 @@ QtObject {
     readonly property color hoverFill: alpha(overlay, 0.42)
     readonly property color pressedFill: alpha(overlay, 0.68)
 
-    readonly property int radiusSmall: 6
-    readonly property int radiusMedium: 10
-    readonly property int radiusLarge: 14
-    readonly property int radiusPill: 999
+    readonly property int radiusSmall: 0
+    readonly property int radiusMedium: 0
+    readonly property int radiusLarge: 0
+    readonly property int radiusPill: 0
 
     readonly property int spaceXs: 4
     readonly property int spaceSm: 8
     readonly property int spaceMd: 12
     readonly property int spaceLg: 16
     readonly property int spaceXl: 24
+
+    // Horizontal padding inside a bar island, on both sides of its content.
+    readonly property int islandPadding: spaceSm * 2
 
     readonly property int controlHeightSm: 28
     readonly property int controlHeight: 36

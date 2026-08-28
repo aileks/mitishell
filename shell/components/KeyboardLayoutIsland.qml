@@ -2,7 +2,7 @@ import QtQuick
 import "../core"
 
 FocusScope {
-    implicitWidth: label.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: label.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     activeFocusOnTab: true
     Accessible.name: "Keyboard layout " + KeyboardLayout.label + ", activate to cycle"

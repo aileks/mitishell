@@ -210,7 +210,7 @@ QtObject {
         onTriggered: agentProcess.running = true
     }
 
-    // The bar island reads availability and the connected count straight
+    // The bar widget reads availability and the connected count straight
     // from the snapshot, so it keeps its own gentle refresh cadence.
     property Timer snapshotTimer: Timer {
         interval: 30000

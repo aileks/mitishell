@@ -2,44 +2,134 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const model = require("../shell/lib/BarModel.js");
 
-test("islands move without losing hidden ids", () => {
-    assert.deepEqual(model.move(["system", "audio", "weather"], 2, 0), ["weather", "system", "audio"]);
-    assert.deepEqual(model.move(["system", "audio"], -1, 1), ["system", "audio"]);
+function layout() {
+    return {
+        left: ["workspaces", "windowTitle"],
+        center: ["media"],
+        right: ["audio", "clock", "status", "power"],
+        hidden: ["weather"],
+    };
+}
+
+test("widgets move within and across sections without duplication", () => {
+    const moved = model.moveAtDrop(layout(), "weather", "clock", false);
+    assert.deepEqual(moved.right, ["audio", "weather", "clock", "status", "power"]);
+    assert.deepEqual(moved.hidden, []);
 });
 
-test("keyboard moves use visible neighbors and retain hidden islands", () => {
-    const order = ["system", "keyboardLayout", "audio", "updates", "clock"];
-    const visible = id => id !== "keyboardLayout" && id !== "updates";
-    assert.equal(model.visibleTarget(order, 0, 1, visible), 2);
-    assert.deepEqual(
-        model.moveVisible(order, 0, 1, visible),
-        ["keyboardLayout", "audio", "system", "updates", "clock"],
-    );
-    assert.deepEqual(model.moveVisible(order, 4, 1, visible), order);
+test("interactive moves reject a fourth center widget", () => {
+    const current = layout();
+    current.center = ["media", "clock", "weather"];
+    current.right = ["audio", "status", "power"];
+    assert.deepEqual(model.moveTo(current, "audio", "center", 3), current);
 });
 
-test("pointer drops place islands before or after visible targets", () => {
-    const order = ["system", "keyboardLayout", "audio", "updates", "clock"];
+test("keyboard movement crosses sections and respects center capacity", () => {
+    const moved = model.moveKeyboard(layout(), "windowTitle", "next-section");
+    assert.deepEqual(moved.left, ["workspaces"]);
+    assert.deepEqual(moved.center, ["media", "windowTitle"]);
+});
 
-    assert.deepEqual(
-        model.moveAtDrop(order, "clock", "system", false),
-        ["clock", "system", "keyboardLayout", "audio", "updates"],
+test("arrow keys map to the four keyboard move directions", () => {
+    assert.equal(model.moveDirection(0x01000012), "previous");
+    assert.equal(model.moveDirection(0x01000013), "next");
+    assert.equal(model.moveDirection(0x01000014), "previous-section");
+    assert.equal(model.moveDirection(0x01000015), "next-section");
+    assert.equal(model.moveDirection(0x41), "");
+});
+
+test("responsive overflow is non-mutating and preserves configured order", () => {
+    const ids = ["audio", "clock", "weather", "status", "power"];
+    const before = ids.slice();
+    const overflow = model.overflowFor(
+        ids,
+        { audio: 50, clock: 50, weather: 50, status: 50, power: 50 },
+        170,
+        4,
+        28,
     );
+    assert.deepEqual(ids, before);
+    assert.deepEqual(overflow, ["audio", "weather"]);
+});
+
+test("essential access remains visible when low-priority widgets can overflow", () => {
+    assert.equal(model.priority("status"), 100);
+    assert.equal(model.priority("power"), 100);
+    assert.equal(model.priority("quickSettings"), 100);
+    assert.equal(model.priority("audio"), 10);
+});
+
+test("light sides keep an even budget split", () => {
+    const widths = { workspaces: 100, power: 60 };
     assert.deepEqual(
-        model.moveAtDrop(order, "system", "audio", true),
-        ["keyboardLayout", "audio", "system", "updates", "clock"],
-    );
-    assert.deepEqual(
-        model.moveAtDrop(order, "audio", "clock", true),
-        ["system", "keyboardLayout", "updates", "clock", "audio"],
+        model.overflowBudgets(["workspaces"], ["power"], widths, 400, 4, 28),
+        { left: 200, right: 200 },
     );
 });
 
-test("pointer drops preserve hidden islands and ignore no-op targets", () => {
-    const order = ["system", "keyboardLayout", "audio", "updates", "clock"];
+test("a crowded side uses the other side's unused space", () => {
+    const widths = { workspaces: 100, media: 200, power: 60 };
+    const budgets = model.overflowBudgets(
+        ["workspaces", "media"],
+        ["power"],
+        widths,
+        400,
+        4,
+        28,
+    );
+    assert.deepEqual(budgets, { left: 304, right: 96 });
+    assert.deepEqual(model.overflowFor(["workspaces", "media"], widths, budgets.left, 4, 28), []);
+    assert.deepEqual(model.overflowFor(["power"], widths, budgets.right, 4, 28), []);
+});
 
-    assert.deepEqual(model.moveAtDrop(order, "audio", "audio", false), order);
-    assert.deepEqual(model.moveAtDrop(order, "audio", "audio", true), order);
-    assert.deepEqual(model.moveAtDrop(order, "missing", "clock", false), order);
-    assert.deepEqual(model.moveAtDrop(order, "audio", "missing", false), order);
+test("sides over their share fall back to an even split", () => {
+    const widths = { workspaces: 100, media: 200, clock: 100, updates: 200 };
+    assert.deepEqual(
+        model.overflowBudgets(
+            ["workspaces", "media"],
+            ["clock", "updates"],
+            widths,
+            400,
+            4,
+            28,
+        ),
+        { left: 200, right: 200 },
+    );
+});
+
+test("essential-heavy sides keep the even split rather than hiding access", () => {
+    const widths = { workspaces: 300, power: 300 };
+    assert.deepEqual(
+        model.overflowBudgets(["workspaces"], ["power"], widths, 400, 4, 28),
+        { left: 200, right: 200 },
+    );
+});
+
+test("a disabled hidden popover copy cannot activate", () => {
+    const screen = { name: "DP-1" };
+    assert.equal(
+        model.popoverActive("networkQuick", screen, "networkQuick", screen, false),
+        false,
+    );
+    assert.equal(
+        model.popoverActive("networkQuick", screen, "networkQuick", screen, true),
+        true,
+    );
+});
+
+test("overflow stays open only for quick surfaces it contains", () => {
+    const screen = { name: "DP-1" };
+    const overflowIds = ["system", "audio"];
+    assert.equal(
+        model.overflowOpen(false, "networkQuick", screen, screen, overflowIds),
+        false,
+    );
+    assert.equal(
+        model.overflowOpen(false, "system", screen, screen, overflowIds),
+        true,
+    );
+    assert.equal(
+        model.overflowOpen(true, "barOverflow", screen, screen, overflowIds),
+        true,
+    );
 });

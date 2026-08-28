@@ -29,6 +29,11 @@ test("remaining labels update through minutes and seconds", () => {
 test("typed ids and count labels stay explicit", () => {
     assert.equal(ReminderModel.validId("0123456789abcdef"), true);
     assert.equal(ReminderModel.validId("../../timer"), false);
+    assert.equal(ReminderModel.barCountLabel(0), "");
+    assert.equal(ReminderModel.barCountLabel(1), "1");
+    assert.equal(ReminderModel.barCountLabel(12), "9+");
+    assert.equal(ReminderModel.barVisible(0), false);
+    assert.equal(ReminderModel.barVisible(1), true);
     assert.equal(ReminderModel.countLabel(1), "1 active reminder");
     assert.equal(ReminderModel.countLabel(3), "3 active reminders");
 });

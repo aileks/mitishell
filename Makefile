@@ -10,7 +10,7 @@ BIN_INSTALL_DIR ?= $(HOME)/.local/bin
 SHELL_INSTALL_DIR ?= $(XDG_DATA_HOME)/mitishell/shell
 DESKTOP_INSTALL_DIR ?= $(XDG_DATA_HOME)/applications
 
-.PHONY: build check install run test uninstall
+.PHONY: build check install install-prebuilt run test uninstall
 
 build:
 	mkdir -p bin
@@ -34,6 +34,10 @@ run: build
 		$(QUICKSHELL) -n -p $(CURDIR)/shell
 
 install: build
+	$(MAKE) --no-print-directory install-prebuilt
+
+install-prebuilt:
+	test -x bin/mitishell
 	install -Dm755 bin/mitishell $(BIN_INSTALL_DIR)/mitishell
 	install -Dm644 data/mitishell.desktop $(DESKTOP_INSTALL_DIR)/mitishell.desktop
 	rm -rf $(SHELL_INSTALL_DIR)

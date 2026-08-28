@@ -2,7 +2,7 @@ import QtQuick
 import "../core"
 
 Item {
-    implicitWidth: content.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     Accessible.description: "Right click to change time format"
 

@@ -21,6 +21,7 @@ import (
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/reminders"
+	"github.com/aileks/mitishell/internal/systemmetrics"
 	"github.com/aileks/mitishell/internal/updates"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -30,7 +31,6 @@ type Shell interface {
 	Reload() error
 	ToggleNotifications() error
 	OpenPowerMenu() error
-	OpenSettings() error
 }
 
 // AudioControl applies audio actions in the running shell, which shows the
@@ -49,9 +49,9 @@ type DisplayControl interface {
 	BrightnessSet(value int) error
 }
 
-// ControlCenter toggles the shell's control center on the focused output.
-type ControlCenter interface {
-	ToggleControlCenter(page string) error
+// SettingsSurface toggles Settings on the focused output.
+type SettingsSurface interface {
+	ToggleSettings(page string) error
 }
 
 // PowerService runs session power actions and reports logind support.
@@ -153,6 +153,10 @@ type NightLightService interface {
 	Apply(context.Context, nightlight.Action) (nightlight.Snapshot, error)
 }
 
+type SystemTemperature interface {
+	Snapshot() systemmetrics.Temperature
+}
+
 type Dependencies struct {
 	ConfigPath          string
 	Shell               Shell
@@ -161,7 +165,7 @@ type Dependencies struct {
 	AudioControl        AudioControl
 	DisplayControl      DisplayControl
 	DisplayService      DisplayService
-	ControlCenter       ControlCenter
+	SettingsSurface     SettingsSurface
 	PowerService        PowerService
 	NetworkService      NetworkService
 	BluetoothService    BluetoothService
@@ -173,10 +177,22 @@ type Dependencies struct {
 	EmojiRecents        EmojiRecents
 	Updates             UpdateService
 	NightLight          NightLightService
+	SystemTemperature   SystemTemperature
 	Stdin               io.Reader
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 1 && args[0] == "_system-temperature-snapshot" {
+		result := systemmetrics.Temperature{}
+		if dependencies.SystemTemperature != nil {
+			result = dependencies.SystemTemperature.Snapshot()
+		}
+		if err := json.NewEncoder(stdout).Encode(result); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode system temperature: %v\n", err)
+			return 1
+		}
+		return 0
+	}
 	if len(args) == 1 && args[0] == "_night-light-snapshot" {
 		result := nightlight.Snapshot{Error: "hyprsunset unavailable"}
 		if dependencies.NightLight != nil {
@@ -550,10 +566,10 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		return 0
 	}
 	if len(args) > 0 && args[0] == "network" {
-		return runControlAction([]string{"control", "network"}, stdout, stderr, dependencies)
+		return runSettingsAction([]string{"settings", "network"}, stdout, stderr, dependencies)
 	}
 	if len(args) > 0 && args[0] == "bluetooth" {
-		return runControlAction([]string{"control", "bluetooth"}, stdout, stderr, dependencies)
+		return runSettingsAction([]string{"settings", "bluetooth"}, stdout, stderr, dependencies)
 	}
 	if len(args) == 1 && args[0] == "_bluetooth-snapshot" {
 		if dependencies.BluetoothService == nil {
@@ -580,7 +596,10 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		return 2
 	}
 	if len(args) > 0 && args[0] == "control" {
-		return runControlAction(args, stdout, stderr, dependencies)
+		return runLegacyControlAction(args, stdout, stderr, dependencies)
+	}
+	if len(args) > 0 && args[0] == "settings" {
+		return runSettingsAction(args, stdout, stderr, dependencies)
 	}
 	if len(args) > 0 && args[0] == "osd" {
 		return runOSD(args[1:], stdout, stderr, dependencies)
@@ -623,14 +642,6 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		fmt.Fprintln(stdout, "power menu opened")
-		return 0
-	}
-	if len(args) == 1 && args[0] == "settings" {
-		if err := dependencies.Shell.OpenSettings(); err != nil {
-			fmt.Fprintf(stderr, "mitishell: settings unavailable: %v\n", err)
-			return 1
-		}
-		fmt.Fprintln(stdout, "settings opened")
 		return 0
 	}
 	if len(args) != 1 {
@@ -975,27 +986,50 @@ func runWeatherAction(args []string, stdout io.Writer, stderr io.Writer, depende
 	return 0
 }
 
-func runControlAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
-	page := "home"
+func runSettingsAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	page := "overview"
 	if len(args) == 2 {
 		page = args[1]
 	}
 	valid := slices.Contains(
-		[]string{"home", "audio", "display", "network", "bluetooth", "settings"}, page)
+		[]string{"overview", "audio", "display", "network", "bluetooth", "system"}, page)
 	if len(args) > 2 || !valid {
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell settings <overview|audio|display|network|bluetooth|system>")
+		return 2
+	}
+	if dependencies.SettingsSurface == nil {
+		fmt.Fprintln(stderr, "mitishell: settings unavailable")
+		return 1
+	}
+	if err := dependencies.SettingsSurface.ToggleSettings(page); err != nil {
+		fmt.Fprintf(stderr, "mitishell: settings unavailable: %v\n", err)
+		return 1
+	}
+	fmt.Fprintln(stdout, "settings toggled")
+	return 0
+}
+
+func runLegacyControlAction(
+	args []string,
+	stdout io.Writer,
+	stderr io.Writer,
+	dependencies Dependencies,
+) int {
+	validPages := []string{"home", "audio", "display", "network", "bluetooth", "settings"}
+	if len(args) > 2 || (len(args) == 2 && !slices.Contains(validPages, args[1])) {
 		fmt.Fprintln(stderr, "mitishell: usage: mitishell control <home|audio|display|network|bluetooth|settings>")
 		return 2
 	}
-	if dependencies.ControlCenter == nil {
-		fmt.Fprintln(stderr, "mitishell: control center unavailable")
-		return 1
+	page := "overview"
+	if len(args) == 2 {
+		// Legacy aliases must match the renames in shell.qml's control
+		// toggle handler; direct IPC callers rely on that side too.
+		page = map[string]string{"home": "overview", "settings": "system"}[args[1]]
+		if page == "" {
+			page = args[1]
+		}
 	}
-	if err := dependencies.ControlCenter.ToggleControlCenter(page); err != nil {
-		fmt.Fprintf(stderr, "mitishell: control center unavailable: %v\n", err)
-		return 1
-	}
-	fmt.Fprintln(stdout, "control center toggled")
-	return 0
+	return runSettingsAction([]string{"settings", page}, stdout, stderr, dependencies)
 }
 
 func runAudioAction(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {

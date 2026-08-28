@@ -10,7 +10,7 @@ FocusScope {
     readonly property bool active: SurfaceCoordinator.activeKey === "power"
         && SurfaceCoordinator.originScreen === screen
 
-    implicitWidth: 16 + Theme.spaceSm * 2
+    implicitWidth: 16 + Theme.islandPadding
     implicitHeight: 24
     activeFocusOnTab: true
     Accessible.name: "Open power menu"

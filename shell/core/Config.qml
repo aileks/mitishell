@@ -9,16 +9,19 @@ QtObject {
     id: root
 
     readonly property var defaults: ({
-        "version": 1,
+        "version": 2,
         "bar": {
             "outputs": ["*"],
             "height": 36,
             "marginTop": 6,
             "marginHorizontal": 8,
-            "showWindowTitle": true,
-            "showMedia": true,
             "systemMetrics": "separate",
-            "islands": ["system", "audio", "keyboardLayout", "updates", "clock", "tray", "bluetooth", "control", "notifications", "reminders", "weather", "power"]
+            "layout": {
+                "left": ["workspaces", "windowTitle"],
+                "center": ["media"],
+                "right": ["system", "audio", "keyboardLayout", "updates", "clock", "tray", "bluetooth", "quickSettings", "notifications", "weather", "status", "power"],
+                "hidden": ["network"]
+            }
         },
         "weather": {
             "enabled": false,

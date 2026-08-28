@@ -44,6 +44,15 @@ function countLabel(count) {
     return count === 1 ? "1 active reminder" : count + " active reminders";
 }
 
+function barCountLabel(count) {
+    if (count <= 0) return "";
+    return count > 9 ? "9+" : String(count);
+}
+
+function barVisible(count) {
+    return count > 0;
+}
+
 function overlayTransform(open) {
     return {
         opacity: open ? 1 : 0,
@@ -54,6 +63,8 @@ function overlayTransform(open) {
 
 if (typeof module !== "undefined") {
     module.exports = {
+        barCountLabel,
+        barVisible,
         countLabel,
         overlayTransform,
         reminderArgs,

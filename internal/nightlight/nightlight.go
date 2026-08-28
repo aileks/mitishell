@@ -12,7 +12,10 @@ import (
 	"time"
 )
 
-const commandTimeout = 2 * time.Second
+const (
+	commandTimeout           = 2 * time.Second
+	EnabledTemperatureKelvin = 4800
+)
 
 var ErrUnavailable = errors.New("hyprsunset unavailable")
 
@@ -99,7 +102,9 @@ func (service Service) Apply(ctx context.Context, action Action) (Snapshot, erro
 		return current, errors.New(current.Error)
 	}
 	wantEnabled := action == On || (action == Toggle && !current.Enabled)
-	if current.Enabled == wantEnabled {
+	needsTemperatureCorrection := wantEnabled &&
+		current.TemperatureKelvin != EnabledTemperatureKelvin
+	if current.Enabled == wantEnabled && !needsTemperatureCorrection {
 		return current, nil
 	}
 
@@ -108,13 +113,27 @@ func (service Service) Apply(ctx context.Context, action Action) (Snapshot, erro
 		result := unavailable(fmt.Errorf("%w: hyprctl not found", ErrUnavailable))
 		return result, errors.New(result.Error)
 	}
-	identity := "true"
 	if wantEnabled {
-		identity = "false"
+		if _, err := service.output(
+			ctx,
+			hyprctl,
+			"hyprsunset",
+			"temperature",
+			strconv.Itoa(EnabledTemperatureKelvin),
+		); err != nil {
+			result := unavailable(err)
+			return result, errors.New(result.Error)
+		}
 	}
-	if _, err := service.output(ctx, hyprctl, "hyprsunset", "identity", identity); err != nil {
-		result := unavailable(err)
-		return result, errors.New(result.Error)
+	if current.Enabled != wantEnabled {
+		identity := "true"
+		if wantEnabled {
+			identity = "false"
+		}
+		if _, err := service.output(ctx, hyprctl, "hyprsunset", "identity", identity); err != nil {
+			result := unavailable(err)
+			return result, errors.New(result.Error)
+		}
 	}
 
 	updated := service.Snapshot(ctx)

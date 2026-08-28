@@ -119,11 +119,13 @@ func TestOnAndOffAreIdempotent(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			enabled := action == nightlight.On
 			identity := "true"
+			temperature := "6000"
 			if enabled {
 				identity = "false"
+				temperature = "4800"
 			}
 			runner := &runnerStub{path: "hyprctl", responses: []response{
-				{output: identity}, {output: "4500"},
+				{output: identity}, {output: temperature},
 			}}
 			result, err := nightlight.NewService(runner).Apply(context.Background(), action)
 			if err != nil || result.Enabled != enabled || len(runner.calls) != 2 {
@@ -137,14 +139,36 @@ func TestToggleAppliesOppositeIdentityAndReturnsFreshState(t *testing.T) {
 	runner := &runnerStub{path: "hyprctl", responses: []response{
 		{output: "true"}, {output: "4200"},
 		{output: "ok"},
-		{output: "false"}, {output: "4200"},
+		{output: "ok"},
+		{output: "false"}, {output: "4800"},
 	}}
 	result, err := nightlight.NewService(runner).Apply(context.Background(), nightlight.Toggle)
-	if err != nil || !result.Enabled || result.TemperatureKelvin != 4200 {
+	if err != nil || !result.Enabled || result.TemperatureKelvin != 4800 {
 		t.Fatalf("result=%#v err=%v", result, err)
 	}
-	if got := strings.Join(runner.calls[2][1:], " "); got != "hyprsunset identity false" {
-		t.Fatalf("action call = %q", got)
+	if got := strings.Join(runner.calls[2][1:], " "); got != "hyprsunset temperature 4800" {
+		t.Fatalf("temperature call = %q", got)
+	}
+	if got := strings.Join(runner.calls[3][1:], " "); got != "hyprsunset identity false" {
+		t.Fatalf("identity call = %q", got)
+	}
+}
+
+func TestOnCorrectsEnabledTemperature(t *testing.T) {
+	runner := &runnerStub{path: "hyprctl", responses: []response{
+		{output: "false"}, {output: "6000"},
+		{output: "ok"},
+		{output: "false"}, {output: "4800"},
+	}}
+	result, err := nightlight.NewService(runner).Apply(context.Background(), nightlight.On)
+	if err != nil || !result.Enabled || result.TemperatureKelvin != 4800 {
+		t.Fatalf("result=%#v err=%v", result, err)
+	}
+	if got := strings.Join(runner.calls[2][1:], " "); got != "hyprsunset temperature 4800" {
+		t.Fatalf("temperature call = %q", got)
+	}
+	if len(runner.calls) != 5 {
+		t.Fatalf("calls = %v", runner.calls)
 	}
 }
 

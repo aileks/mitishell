@@ -161,7 +161,7 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 144
                         height: 6
-                        radius: 3
+                        radius: 0
                         color: Theme.overlay
 
                         Rectangle {
@@ -169,7 +169,7 @@ PanelWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             height: parent.height
                             width: Math.round(parent.width * Osd.progress)
-                            radius: 3
+                            radius: 0
                             color: Osd.accent
 
                             Behavior on width {

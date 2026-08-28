@@ -9,7 +9,7 @@ FocusScope {
 
     property bool open: false
 
-    implicitWidth: content.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     Accessible.name: ReminderModel.countLabel(Reminders.count)
     Accessible.role: Accessible.Button
@@ -30,7 +30,7 @@ FocusScope {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: Reminders.count > 9 ? "9+" : String(Reminders.count)
+            text: ReminderModel.barCountLabel(Reminders.count)
             color: Theme.text
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption

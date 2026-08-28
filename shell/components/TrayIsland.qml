@@ -14,7 +14,7 @@ FocusScope {
     readonly property bool menuOpen: SurfaceCoordinator.activeKey === "tray"
         && SurfaceCoordinator.originScreen === screen
 
-    implicitWidth: trayRow.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: trayRow.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     activeFocusOnTab: true
 
@@ -168,7 +168,7 @@ FocusScope {
                     anchors.bottom: parent.bottom
                     width: 7
                     height: 7
-                    radius: 4
+                    radius: 0
                     visible: trayItem.modelData.status === Status.NeedsAttention
                     color: Theme.orange
                 }

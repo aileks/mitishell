@@ -22,6 +22,7 @@ import (
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/reminders"
+	"github.com/aileks/mitishell/internal/systemmetrics"
 	"github.com/aileks/mitishell/internal/updates"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -126,7 +127,7 @@ func main() {
 		AudioControl:        shell,
 		DisplayControl:      shell,
 		DisplayService:      displayService,
-		ControlCenter:       shell,
+		SettingsSurface:     shell,
 		PowerService:        power.NewService(power.LogindCaller{}),
 		NetworkService:      network.NewService(network.NMCaller{}),
 		BluetoothService:    bluetooth.NewService(bluetooth.BlueZCaller{}),
@@ -138,7 +139,11 @@ func main() {
 		EmojiRecents:        emoji.NewFileRecents(emojiRecentsPath),
 		Updates:             updates.NewService(updates.SystemRunner{}),
 		NightLight:          nightlight.NewService(nightlight.SystemRunner{}),
-		Stdin:               os.Stdin,
+		SystemTemperature: systemmetrics.NewTemperatureService(
+			"/sys/class/hwmon",
+			"/sys/class/thermal",
+		),
+		Stdin: os.Stdin,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
 }

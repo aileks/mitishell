@@ -4,6 +4,7 @@ import "../core"
 Flickable {
     id: root
 
+    acceptedButtons: Qt.NoButton
     contentWidth: width
     contentHeight: content.implicitHeight
     clip: true

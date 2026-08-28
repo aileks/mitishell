@@ -5,6 +5,7 @@ DragHandler {
 
     property point lastScenePosition: Qt.point(0, 0)
     property bool sessionActive: false
+    property bool verticalEnabled: false
 
     signal dragStarted(point pressScenePosition, point scenePosition)
     signal dragMoved(point scenePosition)
@@ -15,7 +16,7 @@ DragHandler {
     dragThreshold: 4
     acceptedButtons: Qt.LeftButton
     xAxis.enabled: true
-    yAxis.enabled: false
+    yAxis.enabled: root.verticalEnabled
     cursorShape: active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
     onActiveChanged: {

@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Build release archives
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for architecture in amd64 arm64; do
+            package="mitishell-${GITHUB_REF_NAME}-linux-${architecture}"
+            package_dir="dist/${package}"
+
+            mkdir -p "${package_dir}/bin"
+            CGO_ENABLED=0 GOOS=linux GOARCH="${architecture}" \
+              go build -trimpath -ldflags="-s -w" \
+              -o "${package_dir}/bin/mitishell" ./cmd/mitishell
+            cp -R shell data "${package_dir}/"
+            cp Makefile README.md LICENSE THIRD_PARTY_LICENSES.md "${package_dir}/"
+            tar -C dist -czf "dist/${package}.tar.gz" "${package}"
+            rm -r "${package_dir}"
+          done
+
+          cd dist
+          sha256sum ./*.tar.gz > SHA256SUMS
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          notes_file=".github/release-notes/${GITHUB_REF_NAME}.md"
+          test -f "${notes_file}"
+          gh release create "${GITHUB_REF_NAME}" \
+            --verify-tag \
+            --title "Mitishell ${GITHUB_REF_NAME}" \
+            --notes-file "${notes_file}" \
+            dist/*.tar.gz dist/SHA256SUMS

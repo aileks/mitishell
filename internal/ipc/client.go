@@ -56,11 +56,6 @@ func (client Client) OpenPowerMenu() error {
 	return client.action("power", "open", "power menu opened")
 }
 
-// OpenSettings opens the control center's Settings page on the focused output.
-func (client Client) OpenSettings() error {
-	return client.action("settings", "open", "settings opened")
-}
-
 func (client Client) ToggleEmojiPicker() error {
 	return client.action("emoji", "toggle", "emoji picker toggled")
 }
@@ -95,10 +90,9 @@ func (client Client) BrightnessSet(value int) error {
 	return client.action("display", "brightnessSet", "brightness updated", strconv.Itoa(value))
 }
 
-// ToggleControlCenter toggles the control center on the focused output,
-// starting on the given page.
-func (client Client) ToggleControlCenter(page string) error {
-	return client.action("control", "toggle", "control center toggled", page)
+// ToggleSettings toggles Settings on the focused output, starting on the given page.
+func (client Client) ToggleSettings(page string) error {
+	return client.action("settings", "toggle", "settings toggled", page)
 }
 
 func (client Client) ShowOSD(request osd.Request) error {

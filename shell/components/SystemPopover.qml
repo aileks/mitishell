@@ -4,9 +4,11 @@ import "../lib/SystemModel.js" as SystemModel
 
 Item {
     id: root
+    implicitHeight: content.implicitHeight
 
     Column {
-        anchors.fill: parent
+        id: content
+        width: parent.width
         spacing: Theme.spaceMd
 
         Text {
@@ -47,14 +49,15 @@ Item {
 
                 MetricCard {
                     width: metrics.cardWidth
-                    label: "Load average"
-                    value: SystemMetrics.loadAverage.map(function(value) {
-                        return value.toFixed(2);
-                    }).join("  ")
+                    visible: SystemMetrics.temperatureC !== null
+                    label: "Temperature"
+                    value: SystemMetrics.temperatureC !== null
+                        ? SystemMetrics.temperatureC.toFixed(1) + " °C" : ""
                 }
 
                 MetricCard {
-                    width: metrics.cardWidth
+                    width: SystemMetrics.temperatureC !== null
+                        ? metrics.cardWidth : metrics.width
                     label: "Uptime"
                     value: SystemModel.uptimeLabel(SystemMetrics.uptimeSeconds)
                 }
@@ -62,59 +65,11 @@ Item {
 
             MetricCard {
                 width: parent.width
-                visible: SystemMetrics.temperatureC !== null
-                label: "Temperature"
-                value: SystemMetrics.temperatureC !== null
-                    ? SystemMetrics.temperatureC.toFixed(1) + " °C" : ""
+                label: "Load average"
+                value: SystemMetrics.loadAverage.map(function(value) {
+                    return value.toFixed(2);
+                }).join("  ")
             }
-        }
-
-        Rectangle {
-            id: missionCenterButton
-
-            width: parent.width
-            height: 38
-            radius: Theme.radiusMedium
-            color: activeFocus || buttonHover.hovered ? Theme.hoverFill : Theme.container
-            border.width: activeFocus ? 2 : 0
-            border.color: Theme.blue
-            activeFocusOnTab: true
-            Accessible.name: "Open Mission Center"
-            Accessible.role: Accessible.Button
-            Accessible.onPressAction: SystemMetrics.openMissionCenter()
-
-            Text {
-                anchors.centerIn: parent
-                text: "Open Mission Center"
-                color: Theme.textBright
-                font.family: Theme.fontSans
-                font.pixelSize: Theme.fontSizeBody
-                font.weight: Font.DemiBold
-            }
-
-            HoverHandler {
-                id: buttonHover
-                cursorShape: Qt.PointingHandCursor
-            }
-
-            TapHandler {
-                onTapped: SystemMetrics.openMissionCenter()
-            }
-
-            Keys.onReturnPressed: function(event) {
-                SystemMetrics.openMissionCenter();
-                event.accepted = true;
-            }
-            Keys.onSpacePressed: function(event) {
-                SystemMetrics.openMissionCenter();
-                event.accepted = true;
-            }
-        }
-
-        InlineStatus {
-            width: parent.width
-            visible: SystemMetrics.launchError !== ""
-            message: SystemMetrics.launchError
         }
     }
 }

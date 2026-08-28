@@ -30,7 +30,7 @@ Row {
                 anchors.bottom: parent.bottom
                 width: parent.width
                 height: 4 + bar.index * 3
-                radius: 1
+                radius: 0
                 color: bar.index < root.bars ? Theme.blue : Theme.overlay
 
                 Behavior on color {

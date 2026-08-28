@@ -368,8 +368,7 @@ FocusScope {
                         height: 14
                         visible: menuRow.isEntry
                             && menuRow.modelData.buttonType !== QsMenuButtonType.None
-                        radius: menuRow.modelData.buttonType === QsMenuButtonType.RadioButton
-                            ? 7 : 3
+                        radius: 0
                         color: menuRow.modelData.buttonType === QsMenuButtonType.CheckBox
                                 && (menuRow.checked || menuRow.partiallyChecked)
                             ? menuRow.accent : "transparent"
@@ -381,7 +380,7 @@ FocusScope {
                             anchors.centerIn: parent
                             width: 6
                             height: 6
-                            radius: 3
+                            radius: 0
                             visible: menuRow.modelData.buttonType === QsMenuButtonType.RadioButton
                                 && menuRow.checked
                             color: menuRow.accent
@@ -494,7 +493,7 @@ FocusScope {
                 anchors.right: parent.right
                 width: 3
                 height: parent.height
-                radius: 2
+                radius: 0
                 visible: entryList.contentHeight > entryList.height
                 color: Theme.container
 
@@ -502,7 +501,7 @@ FocusScope {
                     width: parent.width
                     height: Math.max(20, entryList.visibleArea.heightRatio * parent.height)
                     y: entryList.visibleArea.yPosition * parent.height
-                    radius: 2
+                    radius: 0
                     color: Theme.overlay
                 }
             }

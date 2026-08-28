@@ -19,7 +19,7 @@ type blueZDiscoverySession struct {
 
 // RunScan owns a BlueZ discovery session until the context ends. BlueZ ties
 // discovery to the D-Bus client, so the connection must stay open while the
-// control-center scan is active.
+// Settings Bluetooth scan is active.
 func RunScan(ctx context.Context) error {
 	session, err := newBlueZDiscoverySession(ctx)
 	if err != nil {

@@ -11,9 +11,11 @@ PanelWindow {
     id: root
 
     required property var modelData
-    property var localOrder: Config.bar.islands.slice()
+    property var localLayout: BarModel.clone(Config.bar.layout)
+    property var overflowIds: []
     property string dragSourceId: ""
     property string dragTargetId: ""
+    property string dragTargetSection: ""
     property bool dragAfter: false
     property point dragPointerGlobal: Qt.point(0, 0)
     property point dragPressOffset: Qt.point(0, 0)
@@ -22,87 +24,91 @@ PanelWindow {
     property rect dragMarkerGlobalRect: Qt.rect(0, 0, 0, 0)
     property bool dragDropValid: false
     readonly property bool dragging: dragSourceId !== ""
-    readonly property real availableCenterWidth: Math.max(0, 2 * Math.min(
-        width / 2 - leftIsland.width - Theme.spaceLg,
-        width / 2 - rightIsland.width - Theme.spaceLg,
-    ))
 
-    function islandVisible(id) {
-        return id === "system" ? Config.bar.systemMetrics !== "hidden"
-            : id === "keyboardLayout" ? KeyboardLayout.available
-            : id === "updates" ? Updates.visible
-            : id === "tray" ? Tray.available
-            : id === "reminders" ? Reminders.count > 0
-            : id === "bluetooth" ? Bluetooth.state === "ready"
-            : id === "weather" ? Weather.visible : true;
+    function saveLayout(next) {
+        if (JSON.stringify(next) === JSON.stringify(localLayout)) return;
+        localLayout = next;
+        Settings.setField("bar.layout", JSON.stringify(next));
+        overflowTimer.restart();
     }
 
-    function beginDrag(islandDelegate, pressScenePosition, scenePosition) {
-        const visual = islandDelegate.dragVisual;
-        if (visual === null) return;
+    function keyboardMove(id, direction) {
+        saveLayout(BarModel.moveKeyboard(localLayout, id, direction));
+    }
 
-        dragSourceId = islandDelegate.modelData;
+    function beginDrag(delegateItem, pressScenePosition, scenePosition) {
+        const visual = delegateItem.dragVisual;
+        if (visual === null) return;
+        dragSourceId = delegateItem.modelData;
         dragPressOffset = visual.mapFromItem(null, pressScenePosition);
         dragGhostSize = Qt.size(Math.ceil(visual.width), Math.ceil(visual.height));
         SurfaceCoordinator.close();
         updateDrag(scenePosition);
-
         const sourceId = dragSourceId;
         visual.grabToImage(function(result) {
             if (root.dragSourceId === sourceId) root.dragImageSource = result.url;
         }, dragGhostSize);
     }
 
+    function sectionEntries() {
+        return [
+            { name: "left", row: leftRow, repeater: leftRepeater },
+            { name: "center", row: centerRow, repeater: centerRepeater },
+            { name: "right", row: rightRow, repeater: rightRepeater },
+        ];
+    }
+
     function updateDrag(scenePosition) {
         if (!dragging) return;
         dragPointerGlobal = contentItem.mapToGlobal(scenePosition.x, scenePosition.y);
-
-        const rowPosition = rightContent.mapFromItem(null, scenePosition);
-        if (rowPosition.x < 0 || rowPosition.x > rightContent.width
-                || rowPosition.y < 0 || rowPosition.y > rightContent.height) {
-            dragTargetId = "";
-            dragDropValid = false;
-            return;
-        }
-
+        const entries = sectionEntries();
+        const third = width / 3;
+        let chosen = scenePosition.x < third ? entries[0]
+            : (scenePosition.x > third * 2 ? entries[2] : entries[1]);
+        let bestDistance = Number.POSITIVE_INFINITY;
         let target = null;
-        let targetId = "";
-        let after = false;
-        for (let index = 0; index < localOrder.length; index += 1) {
-            const candidate = rightRepeater.itemAt(index);
-            if (candidate === null || !candidate.visible || candidate.width <= 0) continue;
-            target = candidate;
-            targetId = localOrder[index];
-            after = rowPosition.x >= candidate.x + candidate.width / 2;
-            if (!after) break;
+        for (let sectionIndex = 0; sectionIndex < entries.length; sectionIndex += 1) {
+            const entry = entries[sectionIndex];
+            for (let index = 0; index < entry.repeater.count; index += 1) {
+                const candidate = entry.repeater.itemAt(index);
+                if (candidate === null || !candidate.visible || candidate.width <= 0) continue;
+                const center = candidate.mapToItem(null, candidate.width / 2, candidate.height / 2);
+                const distance = Math.abs(scenePosition.x - center.x);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    target = candidate;
+                    chosen = entry;
+                }
+            }
         }
 
-        if (target === null) {
-            dragTargetId = "";
-            dragDropValid = false;
-            return;
-        }
-
-        dragTargetId = targetId;
-        dragAfter = after;
-        const marker = target.mapToGlobal(after ? target.width : 0, 0);
-        dragMarkerGlobalRect = Qt.rect(marker.x, marker.y, 3, target.height);
-        dragDropValid = true;
+        dragTargetSection = chosen.name;
+        dragTargetId = target === null ? "" : target.modelData;
+        dragAfter = target !== null
+            && scenePosition.x >= target.mapToItem(null, target.width / 2, 0).x;
+        const markerPoint = target !== null
+            ? target.mapToGlobal(dragAfter ? target.width : 0, 0)
+            : chosen.row.mapToGlobal(chosen.name === "right" ? chosen.row.width : 0, 0);
+        dragMarkerGlobalRect = Qt.rect(
+            markerPoint.x,
+            markerPoint.y,
+            3,
+            target !== null ? target.height : chosen.row.height,
+        );
+        dragDropValid = dragTargetSection !== ""
+            && !(dragTargetSection === "center"
+                && BarModel.sectionOf(localLayout, dragSourceId) !== "center"
+                && localLayout.center.length >= 3);
     }
 
     function finishDrag(scenePosition) {
         updateDrag(scenePosition);
         if (dragDropValid) {
-            const moved = BarModel.moveAtDrop(
-                localOrder,
-                dragSourceId,
-                dragTargetId,
-                dragAfter,
-            );
-            if (JSON.stringify(moved) !== JSON.stringify(localOrder)) {
-                localOrder = moved;
-                Settings.setField("bar.islands", JSON.stringify(localOrder));
-            }
+            const next = dragTargetId === ""
+                ? BarModel.moveTo(localLayout, dragSourceId, dragTargetSection,
+                    localLayout[dragTargetSection].length)
+                : BarModel.moveAtDrop(localLayout, dragSourceId, dragTargetId, dragAfter);
+            saveLayout(next);
         }
         clearDrag();
     }
@@ -110,17 +116,31 @@ PanelWindow {
     function clearDrag() {
         dragSourceId = "";
         dragTargetId = "";
-        dragAfter = false;
+        dragTargetSection = "";
         dragDropValid = false;
         dragImageSource = "";
         dragGhostSize = Qt.size(0, 0);
     }
 
-    function moveKeyboard(index, delta) {
-        const moved = BarModel.moveVisible(localOrder, index, delta, islandVisible);
-        if (JSON.stringify(moved) === JSON.stringify(localOrder)) return;
-        localOrder = moved;
-        Settings.setField("bar.islands", JSON.stringify(localOrder));
+    function collectWidths(repeater, ids, target) {
+        for (let index = 0; index < repeater.count; index += 1) {
+            const item = repeater.itemAt(index);
+            if (item !== null && item.widgetAvailable) target[ids[index]] = item.widgetWidth;
+        }
+    }
+
+    function recomputeOverflow() {
+        const widths = {};
+        collectWidths(leftRepeater, localLayout.left, widths);
+        collectWidths(rightRepeater, localLayout.right, widths);
+        const left = localLayout.left.filter(function(id) { return widths[id] !== undefined; });
+        const right = localLayout.right.filter(function(id) { return widths[id] !== undefined; });
+        const totalSides = Math.max(0,
+            width - Math.min(centerRow.implicitWidth, 420) - Theme.spaceXl * 4);
+        const budgets = BarModel.overflowBudgets(
+            left, right, widths, totalSides, Theme.spaceXs, 28);
+        overflowIds = BarModel.overflowFor(left, widths, budgets.left, Theme.spaceXs, 28)
+            .concat(BarModel.overflowFor(right, widths, budgets.right, Theme.spaceXs, 28));
     }
 
     screen: modelData
@@ -128,23 +148,14 @@ PanelWindow {
     color: "transparent"
     implicitHeight: Config.bar.height
     exclusiveZone: visible ? implicitHeight : 0
-
-    anchors {
-        top: true
-        left: true
-        right: true
-    }
-    // QuickShell's generated PanelWindow metadata does not resolve the
-    // margins group even though the runtime API exposes it.
+    anchors { top: true; left: true; right: true }
     // qmllint disable unqualified unresolved-type
     margins.top: Config.bar.marginTop
     margins.left: Config.bar.marginHorizontal
     margins.right: Config.bar.marginHorizontal
     // qmllint enable unqualified unresolved-type
 
-    NotificationMediaCache {
-        screen: root.modelData
-    }
+    NotificationMediaCache { screen: root.modelData }
 
     BarDragGhost {
         ghostScreen: root.modelData
@@ -158,205 +169,164 @@ PanelWindow {
     }
 
     Rectangle {
-        id: leftIsland
-
-        anchors.left: parent.left
-        width: Math.min(Math.ceil(leftContent.implicitWidth) + Theme.spaceLg * 2, 560)
-        height: parent.height
+        id: barSurface
+        anchors.fill: parent
         radius: Theme.radiusPill
         color: Theme.layerRaised
         border.width: 1
         border.color: Theme.borderSubtle
 
-        Behavior on width {
-            NumberAnimation {
-                duration: Motion.duration(Motion.normal)
-                easing.type: Motion.easingStandard
-            }
-        }
-
         Row {
-            id: leftContent
-
+            id: leftRow
             anchors.left: parent.left
-            anchors.leftMargin: Theme.spaceLg
+            anchors.leftMargin: Theme.spaceSm
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, parent.width - Theme.spaceLg * 2)
-            spacing: Theme.spaceMd
+            spacing: Theme.spaceXs
 
-            WorkspaceStrip {
-                id: workspaceStrip
-                screen: root.modelData
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 1
-                height: 16
-                color: Theme.overlay
-                visible: Config.bar.showWindowTitle
-            }
-
-            WindowTitle {
-                anchors.verticalCenter: parent.verticalCenter
-                screen: root.modelData
-                width: Math.min(implicitWidth, 280)
-                visible: Config.bar.showWindowTitle
+            Repeater {
+                id: leftRepeater
+                model: root.localLayout.left
+                delegate: widgetDelegate
             }
         }
-    }
-
-    Rectangle {
-        id: centerIsland
-
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: visible ? Math.min(
-            272,
-            root.availableCenterWidth,
-            Math.ceil(mediaTrigger.implicitWidth) + Theme.spaceMd * 2,
-        ) : 0
-        height: parent.height
-        radius: Theme.radiusPill
-        color: Theme.layerRaised
-        border.width: 1
-        border.color: Theme.alpha(Theme.purple, 0.42)
-        visible: Config.bar.showMedia && Media.meaningful
-            && root.availableCenterWidth > 0
-        clip: true
-
-        Behavior on width {
-            NumberAnimation {
-                duration: Motion.duration(Motion.normal)
-                easing.type: Motion.easingStandard
-            }
-        }
-
-        BarPopoverTrigger {
-            id: mediaTrigger
-
-            // Whole-pixel placement: a half-pixel offset from centering
-            // softens every glyph and icon in the row.
-            x: Math.round((parent.width - width) / 2)
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(0, parent.width - Theme.spaceMd * 2)
-            implicitWidth: mediaContent.implicitWidth
-            clip: true
-            popoverKey: "media"
-            screen: root.modelData
-
-            MediaIsland {
-                id: mediaContent
-                width: mediaTrigger.width
-            }
-        }
-
-        AnchoredPopover {
-            anchorItem: mediaTrigger
-            open: mediaTrigger.active && Config.bar.showMedia && Media.meaningful
-            contentWidth: 360
-            contentHeight: Media.players.length > 1 ? 300 : 236
-
-            MediaPopover {
-                anchors.fill: parent
-            }
-        }
-    }
-
-    Rectangle {
-        id: rightIsland
-
-        anchors.right: parent.right
-        width: rightContent.implicitWidth > 0
-            ? Math.ceil(rightContent.implicitWidth) + Theme.spaceLg * 2 : 0
-        height: parent.height
-        radius: Theme.radiusPill
-        color: Theme.layerRaised
-        border.width: 1
-        border.color: Theme.borderSubtle
-        visible: width > 0
 
         Row {
-            id: rightContent
-
-            // Whole-pixel placement: a half-pixel offset from centering
-            // softens every glyph and icon in the row.
-            x: Math.round((parent.width - width) / 2)
+            id: centerRow
+            anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            height: parent.height
+            spacing: Theme.spaceXs
+
+            Repeater {
+                id: centerRepeater
+                model: root.localLayout.center
+                delegate: widgetDelegate
+            }
+        }
+
+        Row {
+            id: rightRow
+            anchors.right: overflowButton.left
+            anchors.rightMargin: overflowButton.visible ? Theme.spaceXs : 0
+            anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spaceXs
 
             Repeater {
                 id: rightRepeater
-                model: root.localOrder
+                model: root.localLayout.right
+                delegate: widgetDelegate
+            }
+        }
 
-                delegate: Item {
-                    id: islandDelegate
-                    required property string modelData
-                    required property int index
-                    readonly property var dragVisual: island.dragVisual
+        Item {
+            id: overflowButton
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceSm
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.overflowIds.length > 0
+            width: visible ? trigger.implicitWidth : 0
+            height: 28
 
-                    width: island.implicitWidth
-                    height: rightContent.height
-                    opacity: root.dragSourceId === modelData ? 0.24 : 1
-                    Accessible.description: "Drag to reorder, or press Control Shift Left or Right"
+            BarPopoverTrigger {
+                id: trigger
+                popoverKey: "barOverflow"
+                screen: root.modelData
+                StatusButton { glyph: "•••"; accessibleName: "More bar items" }
+            }
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Motion.duration(Motion.quick)
-                            easing.type: Motion.easingStandard
-                        }
-                    }
+            AnchoredPopover {
+                anchorItem: trigger
+                open: BarModel.overflowOpen(
+                    trigger.active,
+                    SurfaceCoordinator.activeKey,
+                    SurfaceCoordinator.originScreen,
+                    root.modelData,
+                    root.overflowIds,
+                )
+                focusGrabEnabled: trigger.active
+                contentWidth: 440
+                contentHeight: overflowFlow.implicitHeight + Theme.spaceLg * 2
 
-                    BarIsland {
-                        id: island
-                        anchors.centerIn: parent
-                        islandId: islandDelegate.modelData
-                        screen: root.modelData
-                        available: root.islandVisible(islandDelegate.modelData)
-                    }
+                Flow {
+                    id: overflowFlow
+                    anchors.fill: parent
+                    spacing: Theme.spaceSm
 
-                    BarReorderGesture {
-                        onDragStarted: function(pressScenePosition, scenePosition) {
-                            root.beginDrag(islandDelegate, pressScenePosition, scenePosition);
-                        }
-                        onDragMoved: function(scenePosition) { root.updateDrag(scenePosition); }
-                        onDragFinished: function(scenePosition) { root.finishDrag(scenePosition); }
-                        onDragCanceled: root.clearDrag()
-                    }
-
-                    Keys.onPressed: function(event) {
-                        if ((event.modifiers & Qt.ControlModifier)
-                                && (event.modifiers & Qt.ShiftModifier)
-                                && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
-                            root.moveKeyboard(islandDelegate.index, event.key === Qt.Key_Left ? -1 : 1);
-                            event.accepted = true;
+                    Repeater {
+                        model: root.overflowIds
+                        delegate: BarWidget {
+                            required property string modelData
+                            widgetId: modelData
+                            screen: root.modelData
                         }
                     }
                 }
             }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 8
-                height: 8
-                radius: 4
-                visible: Config.error !== ""
-                color: Theme.red
-            }
         }
     }
 
+    Component {
+        id: widgetDelegate
+        Item {
+            id: delegateItem
+            required property string modelData
+            readonly property var dragVisual: widget.dragVisual
+            readonly property real widgetWidth: widget.implicitWidth
+            readonly property bool widgetAvailable: widget.available
+            width: widget.implicitWidth
+            height: 28
+            visible: widget.available && root.overflowIds.indexOf(modelData) === -1
+            enabled: visible
+            opacity: root.dragSourceId === modelData ? 0.24 : 1
+            Accessible.description: "Drag to rearrange. Control Shift arrows move this bar item."
+
+            BarWidget {
+                id: widget
+                anchors.centerIn: parent
+                widgetId: delegateItem.modelData
+                screen: root.modelData
+            }
+
+            BarReorderGesture {
+                onDragStarted: function(pressScenePosition, scenePosition) {
+                    root.beginDrag(delegateItem, pressScenePosition, scenePosition);
+                }
+                onDragMoved: function(scenePosition) { root.updateDrag(scenePosition); }
+                onDragFinished: function(scenePosition) { root.finishDrag(scenePosition); }
+                onDragCanceled: root.clearDrag()
+            }
+
+            Keys.onPressed: function(event) {
+                if (!(event.modifiers & Qt.ControlModifier)
+                        || !(event.modifiers & Qt.ShiftModifier)) return;
+                const direction = BarModel.moveDirection(event.key);
+                if (direction === "") return;
+                root.keyboardMove(modelData, direction);
+                event.accepted = true;
+            }
+
+            onWidgetWidthChanged: overflowTimer.restart()
+            onWidgetAvailableChanged: overflowTimer.restart()
+        }
+    }
+
+    Timer { id: overflowTimer; interval: 0; onTriggered: root.recomputeOverflow() }
+    onWidthChanged: overflowTimer.restart()
+    Component.onCompleted: overflowTimer.restart()
+
     Connections {
         target: Config
-        function onBarChanged() { if (!root.dragging) root.localOrder = Config.bar.islands.slice(); }
+        function onBarChanged() {
+            if (!root.dragging) root.localLayout = BarModel.clone(Config.bar.layout);
+            overflowTimer.restart();
+        }
     }
 
     Connections {
         target: Settings
         function onFieldErrorsChanged() {
-            if (Settings.fieldErrors["bar.islands"] !== undefined)
-                root.localOrder = Config.bar.islands.slice();
+            if (Settings.fieldErrors["bar.layout"] !== undefined) {
+                root.localLayout = BarModel.clone(Config.bar.layout);
+            }
         }
     }
-
 }

@@ -18,7 +18,7 @@ FocusScope {
         return count;
     }
 
-    implicitWidth: content.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     Accessible.name: root.connectedCount === 1
         ? "Bluetooth, 1 device connected"
