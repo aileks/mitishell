@@ -121,7 +121,7 @@ QtObject {
             kind: "night-light",
             icon: "moon",
             message: enabled
-                ? "Night light on · " + temperatureKelvin + " K"
+                ? "Night light on"
                 : "Night light off",
             hasProgress: false,
             progress: 0,
