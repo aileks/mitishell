@@ -32,7 +32,7 @@ Item {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.activeStation !== null ? root.activeStation.signal + "%" : "ETH"
+            text: root.activeStation !== null ? root.activeStation.signal + "%" : ""
             color: Theme.text
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
