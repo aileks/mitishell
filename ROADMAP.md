@@ -18,7 +18,7 @@ Each tag ships one useful slice.
 - [x] v0.9.0: the final pre-1.0 audit strengthened WCAG AA text and interactive-edge contrast, normalized shared surfaces and accent roles, added pointer and focus feedback, and moved settings into the Control Center while retaining Home's compact now-playing card. Stabilization fixed audio list scrolling, Bluetooth discovery and device actions, Wi-Fi power control, weather locale and refresh races, multi-output focus placement, and QML lint noise. The review covered the bar, islands, popovers, notification surfaces, every Control Center page, settings, emoji, reminders, power, and OSD states across both available outputs with keyboard and reduced-motion checks
 - [x] v0.9.3: notification images became compact left-side thumbnails with application-icon fallback
 - [x] v0.9.4: Bluetooth pairing moved its private response channel to the user bus, registered a correctly typed BlueZ agent path, and made Pair finish trust and connection with visible progress
-- [ ] v1.0: use Mitishell as the main shell for one week. Then run user sign-off and add a release tag with notes
+- [x] v1.0.0: one week as the main shell, user sign-off, final bar and Settings workflow, prebuilt release archives, and release notes
 
 ## Known issues
 
