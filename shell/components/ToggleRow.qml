@@ -59,7 +59,7 @@ FocusScope {
         anchors.verticalCenter: parent.verticalCenter
         width: 44
         height: 24
-        radius: Theme.radiusPill
+        radius: height / 2
         color: root.checked ? root.accent
             : (press.pressed ? Theme.pressedFill
                 : (root.activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised))
@@ -72,7 +72,7 @@ FocusScope {
             anchors.verticalCenter: parent.verticalCenter
             width: 18
             height: 18
-            radius: Theme.radiusPill
+            radius: height / 2
             color: root.checked ? Theme.background : Theme.textBright
 
             Behavior on x {

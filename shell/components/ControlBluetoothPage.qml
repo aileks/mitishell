@@ -8,6 +8,7 @@ import "../lib/BluetoothModel.js" as BluetoothModel
 Flickable {
     id: root
 
+    acceptedButtons: Qt.NoButton
     required property bool active
 
     contentWidth: width

@@ -20,14 +20,15 @@ test("workspace label maps ten to zero", () => {
     assert.equal(WorkspaceModel.label(4), "4");
 });
 
-test("window title uses the active workspace title with a desktop fallback", () => {
+test("window title is empty when no window is focused", () => {
     assert.equal(
         WorkspaceModel.windowTitle({ lastIpcObject: { lastwindowtitle: "Terminal" } }),
         "Terminal",
     );
-    assert.equal(WorkspaceModel.windowTitle(null), "Desktop");
+    assert.equal(WorkspaceModel.windowTitle(null), "");
+    assert.equal(WorkspaceModel.windowTitle({ lastIpcObject: null }), "");
     assert.equal(
         WorkspaceModel.windowTitle({ lastIpcObject: { lastwindowtitle: "   " } }),
-        "Desktop",
+        "",
     );
 });

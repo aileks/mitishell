@@ -1,7 +1,6 @@
 pragma Singleton
 
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
 QtObject {
@@ -10,6 +9,8 @@ QtObject {
     property string state: "loading"
     property var result: null
     property string error: ""
+    property string launchError: ""
+    readonly property bool updating: updateProcess.running
     readonly property bool visible: result !== null && result.supported
     readonly property int count: result === null ? 0 : result.system.count + result.aur.count
 
@@ -21,8 +22,11 @@ QtObject {
     }
 
     function launchUpdate() {
-        if (result !== null && result.updateCommand && result.updateCommand.length > 0) {
-            Quickshell.execDetached(result.updateCommand);
+        if (!updateProcess.running && result !== null
+                && result.updateCommand && result.updateCommand.length > 0) {
+            launchError = "";
+            state = "updating";
+            updateProcess.running = true;
             SurfaceCoordinator.close();
         }
     }
@@ -43,6 +47,20 @@ QtObject {
                 root.state = "error";
                 root.error = snapshotErrors.text.trim() || "Could not read available updates";
             }
+        }
+    }
+
+    property Process updateProcess: Process {
+        command: root.result !== null && root.result.updateCommand
+            ? root.result.updateCommand : []
+
+        // qmllint disable signal-handler-parameters
+        onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
+            if (exitCode !== 0) {
+                root.launchError = "The terminal update did not finish successfully";
+            }
+            root.refresh();
         }
     }
 

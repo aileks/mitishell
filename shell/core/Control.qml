@@ -5,13 +5,13 @@ import QtQuick
 QtObject {
     id: root
 
-    // Which page the control center shows. Summoning entry points choose the
-    // starting page (the bar island always resets to home); the rail and the
+    // Which page the Settings surface shows. Summoning entry points choose the
+    // starting page (the bar button always resets to overview); the rail and the
     // IPC can move it while open.
-    property string page: "home"
+    property string page: "overview"
 
     readonly property var pages: [
-        "home", "audio", "display", "network", "bluetooth", "settings",
+        "overview", "audio", "display", "network", "bluetooth", "system",
     ]
 
     function selectPage(next) {

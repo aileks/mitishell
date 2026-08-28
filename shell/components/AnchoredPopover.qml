@@ -8,6 +8,7 @@ PopupWindow {
 
     required property Item anchorItem
     property bool open: false
+    property bool focusGrabEnabled: true
     property int contentWidth: 320
     property int contentHeight: 240
     default property alias content: card.content
@@ -20,7 +21,7 @@ PopupWindow {
     implicitHeight: contentHeight
 
     onOpenChanged: {
-        if (open) {
+        if (open && focusGrabEnabled) {
             Qt.callLater(function() {
                 card.contentItem.forceActiveFocus(Qt.TabFocusReason);
             });
@@ -34,9 +35,11 @@ PopupWindow {
     }
 
     HyprlandFocusGrab {
-        active: root.open
+        active: root.open && root.focusGrabEnabled
         windows: root.anchorWindow === null ? [root] : [root, root.anchorWindow]
-        onCleared: SurfaceCoordinator.close()
+        onCleared: {
+            if (root.open && root.focusGrabEnabled) SurfaceCoordinator.close();
+        }
     }
 
     anchor {

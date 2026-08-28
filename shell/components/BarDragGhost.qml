@@ -76,7 +76,7 @@ PanelWindow {
         y: Math.round(root.markerLocal.y)
         width: 3
         height: root.markerGlobalRect.height
-        radius: width / 2
+        radius: 0
         color: Theme.orange
         visible: root.active && root.markerVisible
     }

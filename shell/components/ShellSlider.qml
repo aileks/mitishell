@@ -21,13 +21,13 @@ Controls.Slider {
         y: root.topPadding + root.availableHeight / 2 - height / 2
         width: root.availableWidth
         height: 5
-        radius: 3
+        radius: 0
         color: Theme.borderStrong
 
         Rectangle {
             width: root.visualPosition * parent.width
             height: parent.height
-            radius: parent.radius
+            radius: 0
             color: root.accent
         }
     }
@@ -37,7 +37,7 @@ Controls.Slider {
         y: root.topPadding + root.availableHeight / 2 - height / 2
         width: 14
         height: 14
-        radius: 7
+        radius: height / 2
         color: root.activeFocus ? Theme.blue : Theme.textBright
         border.width: 2
         border.color: Theme.layerInset

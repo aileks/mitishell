@@ -18,6 +18,9 @@ QtObject {
 
     readonly property var wifi: snapshot !== null ? snapshot.wifi : null
     readonly property var ethernet: snapshot !== null ? snapshot.ethernet : null
+    readonly property bool useful: state === "ready"
+        && ((wifi !== null && wifi.available)
+            || (ethernet !== null && ethernet.available))
 
     function refresh() {
         if (!snapshotProcess.running) {

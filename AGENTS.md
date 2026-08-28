@@ -17,6 +17,15 @@ Mitishell gives Hyprland a shell built with QuickShell, QML, and a small Go tool
 
 Keep framework and I/O work at the edges. If tests feel hard, seek a clean seam instead of mocking half of QuickShell.
 
+Shell surfaces follow one interaction-depth contract:
+
+- The bar exposes immediate state and actions.
+- Popovers expose current status and a bounded set of frequent controls that take seconds to use, then route deeper work onward.
+- Settings pages own complete operational views. Settings > System owns persistent Mitishell preferences.
+- Dedicated overlays own focused workflows such as power confirmation, reminders, and emoji selection.
+
+Each feature has one core service that owns state, commands, parsing, and mutations. UI surfaces compose shared controls from that service. A popover is a fast path, not a compact copy of a complete Settings page.
+
 ## Visual design
 
 Mitishell uses one fixed Cinder Grove look. Keep the exact colors from `Theme.qml`. Keep the Adwaita Sans and Adwaita Mono fonts. You may use alpha forms of these colors. Change the set only when the user asks.

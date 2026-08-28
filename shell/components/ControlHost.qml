@@ -13,7 +13,7 @@ PanelWindow {
 
     required property var modelData
 
-    readonly property bool open: SurfaceCoordinator.activeKey === "control"
+    readonly property bool open: SurfaceCoordinator.activeKey === "settings"
         && SurfaceCoordinator.originScreen === modelData
 
     screen: modelData
@@ -21,7 +21,7 @@ PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     focusable: true
-    WlrLayershell.namespace: "mitishell-control"
+    WlrLayershell.namespace: "mitishell-settings"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: root.open
         ? (focusPrime.running ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
@@ -107,8 +107,8 @@ PanelWindow {
         id: card
 
         anchors.centerIn: parent
-        width: 620
-        height: 520
+        width: Math.min(720, root.width - Theme.spaceXl * 2)
+        height: Math.min(560, root.height - Theme.spaceXl * 2)
         floating: true
         padding: Theme.spaceLg
         opacity: root.open ? 1 : 0
@@ -139,19 +139,19 @@ PanelWindow {
             Column {
                 id: rail
 
-                width: Theme.controlHeightLg
+                width: 136
                 spacing: Theme.spaceSm
 
                 Repeater {
                     id: railRepeater
 
                     model: [
-                        { key: "home", label: "Home", icon: "../assets/icons/home.svg", accent: Theme.orange },
+                        { key: "overview", label: "Overview", icon: "../assets/icons/home.svg", accent: Theme.orange },
                         { key: "audio", label: "Audio", icon: "../assets/icons/volume-2.svg", accent: Theme.orange },
                         { key: "display", label: "Display", icon: "../assets/icons/sun.svg", accent: Theme.blue },
                         { key: "network", label: "Network", icon: "../assets/icons/wifi.svg", accent: Theme.cyan },
                         { key: "bluetooth", label: "Bluetooth", icon: "../assets/icons/bluetooth.svg", accent: Theme.cyan },
-                        { key: "settings", label: "Settings", icon: "../assets/icons/settings.svg", accent: Theme.blue },
+                        { key: "system", label: "System", icon: "../assets/icons/settings.svg", accent: Theme.blue },
                     ]
 
                     delegate: Rectangle {
@@ -160,7 +160,7 @@ PanelWindow {
                         required property var modelData
                         required property int index
 
-                        width: Theme.controlHeightLg
+                        width: rail.width
                         height: Theme.controlHeightLg
                         radius: Theme.radiusPill
                         color: Control.page === modelData.key
@@ -179,13 +179,31 @@ PanelWindow {
                             Control.selectPage(modelData.key);
                         }
 
-                        Image {
-                            anchors.centerIn: parent
-                            width: Theme.iconSm
-                            height: Theme.iconSm
-                            source: railButton.modelData.icon
-                            sourceSize.width: 18
-                            sourceSize.height: 18
+                        Row {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.margins: Theme.spaceMd
+                            spacing: Theme.spaceSm
+
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Theme.iconSm
+                                height: Theme.iconSm
+                                source: railButton.modelData.icon
+                                sourceSize.width: 18
+                                sourceSize.height: 18
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: railButton.modelData.label
+                                color: Theme.textBright
+                                font.family: Theme.fontSans
+                                font.pixelSize: Theme.fontSizeBody
+                                font.weight: Control.page === railButton.modelData.key
+                                    ? Font.DemiBold : Font.Normal
+                            }
                         }
 
                         HoverHandler {
@@ -226,7 +244,7 @@ PanelWindow {
                     : Control.page === "display" ? displayPage
                     : Control.page === "network" ? networkPage
                     : Control.page === "bluetooth" ? bluetoothPage
-                    : Control.page === "settings" ? settingsPage
+                    : Control.page === "system" ? settingsPage
                     : homePage
 
                 Behavior on opacity {

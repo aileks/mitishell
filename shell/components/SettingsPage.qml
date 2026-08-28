@@ -3,10 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../core"
 
-// The complete validated configuration UI, hosted as a control-center page.
+// Persistent Mitishell preferences, hosted as the Settings surface's System page.
 Flickable {
     id: root
 
+    acceptedButtons: Qt.NoButton
     contentWidth: width
     contentHeight: settingsColumn.implicitHeight
     clip: true
@@ -20,7 +21,7 @@ Flickable {
 
         SurfaceHeader {
             width: parent.width
-            title: "Settings"
+            title: "System"
             accent: Theme.blue
         }
 
@@ -67,26 +68,6 @@ Flickable {
                     to: 64
                 }
 
-                ToggleRow {
-                    width: parent.width
-                    accent: Theme.blue
-                    label: "Window title"
-                    description: "Show the focused window's title on the bar."
-                    checked: Config.bar.showWindowTitle
-                    onToggled: Settings.setField(
-                        "bar.showWindowTitle", checked ? "false" : "true")
-                }
-
-                ToggleRow {
-                    width: parent.width
-                    accent: Theme.blue
-                    label: "Media controls"
-                    description: "Show the media island when something plays."
-                    checked: Config.bar.showMedia
-                    onToggled: Settings.setField(
-                        "bar.showMedia", checked ? "false" : "true")
-                }
-
                 SettingsChoiceRow {
                     width: parent.width
                     label: "System metrics"
@@ -95,8 +76,11 @@ Flickable {
                     choices: [
                         { value: "separate", label: "Separate" },
                         { value: "combined", label: "Combined" },
-                        { value: "hidden", label: "Hidden" },
                     ]
+                }
+
+                SettingsBarLayout {
+                    width: parent.width
                 }
 
                 SettingsOutputsRow {

@@ -14,7 +14,7 @@ import (
 	"unicode/utf8"
 )
 
-const CurrentVersion = 1
+const CurrentVersion = 2
 
 type Config struct {
 	Version  int      `json:"version"`
@@ -26,55 +26,151 @@ type Config struct {
 }
 
 type Bar struct {
-	Outputs          []string `json:"outputs"`
-	Height           int      `json:"height"`
-	MarginTop        int      `json:"marginTop"`
-	MarginHorizontal int      `json:"marginHorizontal"`
-	ShowWindowTitle  bool     `json:"showWindowTitle"`
-	ShowMedia        bool     `json:"showMedia"`
-	SystemMetrics    string   `json:"systemMetrics"`
-	Islands          []string `json:"islands"`
+	Outputs          []string  `json:"outputs"`
+	Height           int       `json:"height"`
+	MarginTop        int       `json:"marginTop"`
+	MarginHorizontal int       `json:"marginHorizontal"`
+	SystemMetrics    string    `json:"systemMetrics"`
+	Layout           BarLayout `json:"layout"`
 }
 
-// DefaultIslands is the shipped right-island order.
-func DefaultIslands() []string {
+type BarLayout struct {
+	Left   []string `json:"left"`
+	Center []string `json:"center"`
+	Right  []string `json:"right"`
+	Hidden []string `json:"hidden"`
+}
+
+var knownWidgets = []string{
+	"workspaces", "windowTitle", "media", "system", "audio",
+	"keyboardLayout", "updates", "clock", "tray", "network",
+	"bluetooth", "quickSettings", "notifications", "weather",
+	"status", "power",
+}
+
+// DefaultBarLayout is the shipped placement for the closed widget set.
+func DefaultBarLayout() BarLayout {
+	return BarLayout{
+		Left:   []string{"workspaces", "windowTitle"},
+		Center: []string{"media"},
+		Right: []string{
+			"system", "audio", "keyboardLayout", "updates", "clock", "tray",
+			"bluetooth", "quickSettings", "notifications",
+			"weather", "status", "power",
+		},
+		Hidden: []string{"network"},
+	}
+}
+
+func defaultLegacyIslands() []string {
 	return []string{
 		"system", "audio", "keyboardLayout", "updates", "clock", "tray",
 		"bluetooth", "control", "notifications", "reminders", "weather", "power",
 	}
 }
 
-func knownIsland(id string) bool {
-	switch id {
-	case "system", "audio", "keyboardLayout", "updates", "clock", "tray",
-		"bluetooth", "control", "notifications", "reminders", "weather", "power":
-		return true
+func knownWidget(id string) bool {
+	for _, candidate := range knownWidgets {
+		if candidate == id {
+			return true
+		}
 	}
 	return false
 }
 
-// NormalizeIslands keeps known ids in the given order, drops unknown and
-// duplicate ids, and appends any island missing from the list in default
-// order so a stale or hand-edited array still renders every island.
-func NormalizeIslands(islands []string) []string {
-	seen := make(map[string]struct{}, len(islands))
-	normalized := make([]string, 0, len(islands))
-	for _, id := range islands {
-		if !knownIsland(id) {
+// NormalizeBarLayout repairs hand-edited layouts without making widgets
+// unexpectedly visible. The first placement wins; excess center widgets and
+// every missing known widget move to hidden.
+func NormalizeBarLayout(layout BarLayout) BarLayout {
+	layout = normalizeQuickSettingsAlias(layout)
+	seen := make(map[string]struct{}, len(knownWidgets))
+	result := BarLayout{Left: []string{}, Center: []string{}, Right: []string{}, Hidden: []string{}}
+	centerExcess := []string{}
+
+	appendUnique := func(target *[]string, values []string) {
+		for _, id := range values {
+			if !knownWidget(id) {
+				continue
+			}
+			if _, exists := seen[id]; exists {
+				continue
+			}
+			seen[id] = struct{}{}
+			*target = append(*target, id)
+		}
+	}
+
+	appendUnique(&result.Left, layout.Left)
+	for _, id := range layout.Center {
+		if !knownWidget(id) {
 			continue
 		}
 		if _, exists := seen[id]; exists {
 			continue
 		}
 		seen[id] = struct{}{}
-		normalized = append(normalized, id)
-	}
-	for _, id := range DefaultIslands() {
-		if _, exists := seen[id]; !exists {
-			normalized = append(normalized, id)
+		if len(result.Center) < 3 {
+			result.Center = append(result.Center, id)
+		} else {
+			centerExcess = append(centerExcess, id)
 		}
 	}
-	return normalized
+	appendUnique(&result.Right, layout.Right)
+	result.Hidden = append(result.Hidden, centerExcess...)
+	appendUnique(&result.Hidden, layout.Hidden)
+	for _, id := range knownWidgets {
+		if _, exists := seen[id]; !exists {
+			result.Hidden = append(result.Hidden, id)
+		}
+	}
+	return result
+}
+
+// Configs from the short-lived dual-widget layout may contain both names.
+// Preserve a visible Settings placement when Quick Settings was only hidden.
+func normalizeQuickSettingsAlias(layout BarLayout) BarLayout {
+	result := BarLayout{
+		Left:   append([]string(nil), layout.Left...),
+		Center: append([]string(nil), layout.Center...),
+		Right:  append([]string(nil), layout.Right...),
+		Hidden: append([]string(nil), layout.Hidden...),
+	}
+	sections := []*[]string{&result.Left, &result.Center, &result.Right, &result.Hidden}
+	settingsSection := -1
+	settingsIndex := -1
+	quickSettingsSection := -1
+	for sectionIndex, values := range sections {
+		for widgetIndex, id := range *values {
+			if id == "settings" && settingsSection == -1 {
+				settingsSection = sectionIndex
+				settingsIndex = widgetIndex
+			}
+			if id == "quickSettings" && quickSettingsSection == -1 {
+				quickSettingsSection = sectionIndex
+			}
+		}
+	}
+	if settingsSection == -1 {
+		return result
+	}
+
+	moveSettingsPlacement := quickSettingsSection == -1 ||
+		(quickSettingsSection == len(sections)-1 && settingsSection != len(sections)-1)
+	for _, values := range sections {
+		*values = slicesWithout(*values, "settings")
+		if moveSettingsPlacement {
+			*values = slicesWithout(*values, "quickSettings")
+		}
+	}
+	if moveSettingsPlacement {
+		values := *sections[settingsSection]
+		settingsIndex = min(settingsIndex, len(values))
+		values = append(values, "")
+		copy(values[settingsIndex+1:], values[settingsIndex:])
+		values[settingsIndex] = "quickSettings"
+		*sections[settingsSection] = values
+	}
+	return result
 }
 
 type Weather struct {
@@ -106,10 +202,8 @@ func Defaults() Config {
 			Height:           36,
 			MarginTop:        6,
 			MarginHorizontal: 8,
-			ShowWindowTitle:  true,
-			ShowMedia:        true,
 			SystemMetrics:    "separate",
-			Islands:          DefaultIslands(),
+			Layout:           DefaultBarLayout(),
 		},
 		Weather: Weather{
 			Units: "auto",
@@ -147,12 +241,29 @@ func Load(path string) (Config, error) {
 		return Config{}, fmt.Errorf("read config: %w", err)
 	}
 
-	decoder := json.NewDecoder(bytes.NewReader(contents))
-	decoder.DisallowUnknownFields()
+	var header struct {
+		Version int `json:"version"`
+	}
+	if err := json.Unmarshal(contents, &header); err != nil {
+		return Config{}, fmt.Errorf("decode config version: %w", err)
+	}
 
 	var result Config
-	if err := decoder.Decode(&result); err != nil {
-		return Config{}, fmt.Errorf("decode config: %w", err)
+	switch header.Version {
+	case 1:
+		legacy, err := decodeLegacyConfig(contents)
+		if err != nil {
+			return Config{}, err
+		}
+		result = migrateLegacyConfig(legacy)
+	case CurrentVersion:
+		decoder := json.NewDecoder(bytes.NewReader(contents))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&result); err != nil {
+			return Config{}, fmt.Errorf("decode config: %w", err)
+		}
+	default:
+		return Config{}, fmt.Errorf("validate config: version must be 1 or %d", CurrentVersion)
 	}
 	// Configs written before the clock section existed decode with an
 	// empty format; treat that as "section absent" rather than invalid.
@@ -163,18 +274,150 @@ func Load(path string) (Config, error) {
 		result.Clock.Timezones = []string{}
 	}
 	result.Weather.Location = strings.TrimSpace(result.Weather.Location)
-	// Islands normalize leniently: unknown ids drop, missing ids append
-	// in default order, so hand-edited arrays keep working.
-	if len(result.Bar.Islands) == 0 {
-		result.Bar.Islands = DefaultIslands()
-	} else {
-		result.Bar.Islands = NormalizeIslands(result.Bar.Islands)
-	}
+	result.Bar.Layout = NormalizeBarLayout(result.Bar.Layout)
 	if err := Validate(result); err != nil {
 		return Config{}, fmt.Errorf("validate config: %w", err)
 	}
 
 	return result, nil
+}
+
+type legacyConfig struct {
+	Version  int       `json:"version"`
+	Bar      legacyBar `json:"bar"`
+	Clock    Clock     `json:"clock"`
+	Calendar Calendar  `json:"calendar"`
+	Weather  Weather   `json:"weather"`
+	Motion   Motion    `json:"motion"`
+}
+
+type legacyBar struct {
+	Outputs          []string `json:"outputs"`
+	Height           int      `json:"height"`
+	MarginTop        int      `json:"marginTop"`
+	MarginHorizontal int      `json:"marginHorizontal"`
+	ShowWindowTitle  bool     `json:"showWindowTitle"`
+	ShowMedia        bool     `json:"showMedia"`
+	SystemMetrics    string   `json:"systemMetrics"`
+	Islands          []string `json:"islands"`
+}
+
+func decodeLegacyConfig(contents []byte) (legacyConfig, error) {
+	decoder := json.NewDecoder(bytes.NewReader(contents))
+	decoder.DisallowUnknownFields()
+	var result legacyConfig
+	if err := decoder.Decode(&result); err != nil {
+		return legacyConfig{}, fmt.Errorf("decode config: %w", err)
+	}
+	return result, nil
+}
+
+func migrateLegacyConfig(legacy legacyConfig) Config {
+	result := Config{
+		Version: CurrentVersion,
+		Bar: Bar{
+			Outputs:          legacy.Bar.Outputs,
+			Height:           legacy.Bar.Height,
+			MarginTop:        legacy.Bar.MarginTop,
+			MarginHorizontal: legacy.Bar.MarginHorizontal,
+			SystemMetrics:    legacy.Bar.SystemMetrics,
+		},
+		Clock: legacy.Clock, Calendar: legacy.Calendar,
+		Weather: legacy.Weather, Motion: legacy.Motion,
+	}
+	if result.Bar.SystemMetrics == "hidden" {
+		result.Bar.SystemMetrics = "separate"
+	}
+
+	islands := normalizeLegacyIslands(legacy.Bar.Islands)
+	right := make([]string, 0, len(islands)+2)
+	for _, id := range islands {
+		if id == "reminders" {
+			continue
+		}
+		if id == "bluetooth" {
+			right = append(right, "network")
+		}
+		if id == "control" {
+			right = append(right, "quickSettings")
+		} else {
+			right = append(right, id)
+		}
+	}
+	right = insertBefore(right, "power", "status")
+
+	layout := BarLayout{Left: []string{"workspaces"}, Center: []string{}, Right: right, Hidden: []string{}}
+	if legacy.Bar.ShowWindowTitle {
+		layout.Left = append(layout.Left, "windowTitle")
+	} else {
+		layout.Hidden = append(layout.Hidden, "windowTitle")
+	}
+	if legacy.Bar.ShowMedia {
+		layout.Center = append(layout.Center, "media")
+	} else {
+		layout.Hidden = append(layout.Hidden, "media")
+	}
+	if legacy.Bar.SystemMetrics == "hidden" {
+		layout.Hidden = append(layout.Hidden, "system")
+		layout.Right = slicesWithout(layout.Right, "system")
+	}
+	result.Bar.Layout = NormalizeBarLayout(layout)
+	return result
+}
+
+func normalizeLegacyIslands(islands []string) []string {
+	known := defaultLegacyIslands()
+	if len(islands) == 0 {
+		return known
+	}
+	seen := make(map[string]struct{}, len(known))
+	result := make([]string, 0, len(known))
+	for _, id := range islands {
+		if !slicesContains(known, id) {
+			continue
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		result = append(result, id)
+	}
+	for _, id := range known {
+		if _, exists := seen[id]; !exists {
+			result = append(result, id)
+		}
+	}
+	return result
+}
+
+func insertBefore(values []string, anchor string, value string) []string {
+	for index, current := range values {
+		if current == anchor {
+			result := append([]string{}, values[:index]...)
+			result = append(result, value)
+			return append(result, values[index:]...)
+		}
+	}
+	return append(values, value)
+}
+
+func slicesWithout(values []string, unwanted string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value != unwanted {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func slicesContains(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 func Validate(cfg Config) error {
@@ -211,9 +454,12 @@ func Validate(cfg Config) error {
 		return errors.New("bar.marginHorizontal must be between 0 and 64")
 	}
 	switch cfg.Bar.SystemMetrics {
-	case "separate", "combined", "hidden":
+	case "separate", "combined":
 	default:
-		return errors.New("bar.systemMetrics must be separate, combined, or hidden")
+		return errors.New("bar.systemMetrics must be separate or combined")
+	}
+	if err := validateBarLayout(cfg.Bar.Layout); err != nil {
+		return err
 	}
 	switch cfg.Weather.Units {
 	case "auto", "celsius", "fahrenheit":
@@ -250,6 +496,39 @@ func Validate(cfg Config) error {
 		}
 	}
 
+	return nil
+}
+
+func validateBarLayout(layout BarLayout) error {
+	if len(layout.Center) > 3 {
+		return errors.New("bar.layout.center must contain at most 3 widgets")
+	}
+	seen := make(map[string]string, len(knownWidgets))
+	sections := []struct {
+		name   string
+		values []string
+	}{
+		{"left", layout.Left},
+		{"center", layout.Center},
+		{"right", layout.Right},
+		{"hidden", layout.Hidden},
+	}
+	for _, section := range sections {
+		for _, id := range section.values {
+			if !knownWidget(id) {
+				return fmt.Errorf("bar.layout.%s contains unknown widget %q", section.name, id)
+			}
+			if previous, exists := seen[id]; exists {
+				return fmt.Errorf("bar layout contains duplicate widget %q in %s and %s", id, previous, section.name)
+			}
+			seen[id] = section.name
+		}
+	}
+	for _, id := range knownWidgets {
+		if _, exists := seen[id]; !exists {
+			return fmt.Errorf("bar layout is missing widget %q", id)
+		}
+	}
 	return nil
 }
 
@@ -301,7 +580,12 @@ func Write(path string, cfg Config) error {
 func SetField(cfg Config, key string, value string) (Config, error) {
 	result := cfg
 	result.Bar.Outputs = append([]string(nil), cfg.Bar.Outputs...)
-	result.Bar.Islands = append([]string(nil), cfg.Bar.Islands...)
+	result.Bar.Layout = BarLayout{
+		Left:   append([]string(nil), cfg.Bar.Layout.Left...),
+		Center: append([]string(nil), cfg.Bar.Layout.Center...),
+		Right:  append([]string(nil), cfg.Bar.Layout.Right...),
+		Hidden: append([]string(nil), cfg.Bar.Layout.Hidden...),
+	}
 	result.Clock.Timezones = append([]string(nil), cfg.Clock.Timezones...)
 
 	switch key {
@@ -329,26 +613,34 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 			return cfg, errors.New("bar.marginHorizontal must be an integer")
 		}
 		result.Bar.MarginHorizontal = parsed
-	case "bar.showWindowTitle":
-		parsed, err := strconv.ParseBool(value)
-		if err != nil {
-			return cfg, errors.New("bar.showWindowTitle must be true or false")
-		}
-		result.Bar.ShowWindowTitle = parsed
-	case "bar.showMedia":
-		parsed, err := strconv.ParseBool(value)
-		if err != nil {
-			return cfg, errors.New("bar.showMedia must be true or false")
-		}
-		result.Bar.ShowMedia = parsed
 	case "bar.systemMetrics":
 		result.Bar.SystemMetrics = parseString(value)
-	case "bar.islands":
-		var islands []string
-		if err := json.Unmarshal([]byte(value), &islands); err != nil {
-			return cfg, fmt.Errorf("bar.islands must be a JSON string array: %w", err)
+	case "bar.layout":
+		var layout BarLayout
+		if err := json.Unmarshal([]byte(value), &layout); err != nil {
+			return cfg, fmt.Errorf("bar.layout must be a layout object: %w", err)
 		}
-		result.Bar.Islands = NormalizeIslands(islands)
+		result.Bar.Layout = layout
+	case "bar.layout.left", "bar.layout.center", "bar.layout.right", "bar.layout.hidden":
+		var widgets []string
+		if err := json.Unmarshal([]byte(value), &widgets); err != nil {
+			return cfg, fmt.Errorf("%s must be a JSON string array: %w", key, err)
+		}
+		layout := result.Bar.Layout
+		switch key {
+		case "bar.layout.left":
+			layout.Left = widgets
+		case "bar.layout.center":
+			if len(widgets) > 3 {
+				return cfg, errors.New("bar.layout.center must contain at most 3 widgets")
+			}
+			layout.Center = widgets
+		case "bar.layout.right":
+			layout.Right = widgets
+		case "bar.layout.hidden":
+			layout.Hidden = widgets
+		}
+		result.Bar.Layout = NormalizeBarLayout(layout)
 	case "weather.enabled":
 		parsed, err := strconv.ParseBool(value)
 		if err != nil {
@@ -414,14 +706,18 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Bar.MarginTop
 	case "bar.marginHorizontal":
 		value = cfg.Bar.MarginHorizontal
-	case "bar.showWindowTitle":
-		value = cfg.Bar.ShowWindowTitle
-	case "bar.showMedia":
-		value = cfg.Bar.ShowMedia
 	case "bar.systemMetrics":
 		value = cfg.Bar.SystemMetrics
-	case "bar.islands":
-		value = cfg.Bar.Islands
+	case "bar.layout":
+		value = cfg.Bar.Layout
+	case "bar.layout.left":
+		value = cfg.Bar.Layout.Left
+	case "bar.layout.center":
+		value = cfg.Bar.Layout.Center
+	case "bar.layout.right":
+		value = cfg.Bar.Layout.Right
+	case "bar.layout.hidden":
+		value = cfg.Bar.Layout.Hidden
 	case "weather.enabled":
 		value = cfg.Weather.Enabled
 	case "weather.units":

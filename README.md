@@ -22,7 +22,7 @@ Reminders additionally need a working user systemd session with `systemd-run` an
 
 The update widget needs `checkupdates` from `pacman-contrib`. AUR counts and upgrades additionally use `paru` or `yay`, preferring `paru`. Missing optional update tools hide or reduce the widget without affecting the shell. Launching an update also needs `xdg-terminal-exec`, `$TERMINAL`, foot, Alacritty, kitty, or Ghostty. Mitishell only shows the command and launches it after explicit activation.
 
-Night-light controls need a user-managed `hyprsunset` process. Mitishell reads and switches its live identity state through `hyprctl`; it does not start, supervise, or configure the outside tool. The control stays hidden when `hyprsunset` is not running.
+Night-light controls need a user-managed `hyprsunset` process. Mitishell reads and switches its live state through `hyprctl`, setting 4800 K when it turns night light on. It does not start, supervise, or persist configuration for the outside tool. The control stays hidden when `hyprsunset` is not running.
 
 ## Development
 
@@ -49,38 +49,36 @@ bin/mitishell weather location auto
 bin/mitishell notifications dnd
 bin/mitishell power menu
 bin/mitishell settings
-bin/mitishell control
+bin/mitishell settings audio
 bin/mitishell emoji
 bin/mitishell night-light status
 ```
 
-`bar.islands` is the persisted right-island order. It accepts a JSON string array through `config set`; unknown and duplicate ids are removed and missing ids return in the default order. The clock defaults to 24-hour time. Right-click its bar label to cycle persisted 24-hour, 12-hour, and seconds variants. `clock.showDate`, `clock.timezones`, and `calendar.showWeekNumbers` control the remaining clock and calendar details.
+`bar.layout` persists the built-in widgets assigned to the bar's `left`, `center`, `right`, and `hidden` sections. A widget can appear once, and the center accepts at most three. Drag widgets directly on the bar or in Settings > System. Responsive overflow never changes the saved layout. Version 1 configs are migrated in memory and remain untouched until the next persistent config change writes version 2.
+
+The default layout keeps Audio and Bluetooth separate and groups Wi-Fi, brightness, do-not-disturb, night light, and reminder access behind one Quick Settings cog. A separate Network widget remains available in bar configuration and defaults to Hidden. Brightness lives in Quick Settings and Settings > Display. The compact reminder indicator appears only while a reminder is active.
+
+The clock defaults to 24-hour time. Right-click its bar label to cycle persisted 24-hour, 12-hour, and seconds variants. `clock.showDate`, `clock.timezones`, and `calendar.showWeekNumbers` control the remaining clock and calendar details.
 
 ## Weather
 
 Weather is opt-in. When enabled, Mitishell sends either the configured place name or an automatic-location request to [wttr.in](https://wttr.in/) and caches the last successful three-day forecast. Automatic mode allows wttr.in to infer a rough location from the request's network address. A manual place avoids that inference request but still sends the place text to wttr.in.
 
-Set a place with `mitishell weather location <place...>`, clear it with `mitishell weather location auto`, or use the shared editor in the weather popover and Settings page. `weather.location` stores the manual query, while an empty value means automatic detection. `weather.units` accepts `auto`, `celsius`, or `fahrenheit`. Auto follows the locale's measurement region. Cached data is reused only for the same query and unit system.
-
-## Control center
-
-`mitishell control` toggles the control center on the focused output. It has Home, Audio, Display, Network, Bluetooth, and Settings pages; pass a page to land somewhere specific, for example `mitishell control audio`. Home keeps a compact now-playing card when media is active. The bar's control island opens it too. `mitishell network` and `mitishell bluetooth` are page shortcuts.
-
-```ini
-bindl = SUPER, D, exec, mitishell control
-```
+Set a place with `mitishell weather location <place...>`, clear it with `mitishell weather location auto`, or use the shared editor in the weather popover and Settings > System. `weather.location` stores the manual query, while an empty value means automatic detection. `weather.units` accepts `auto`, `celsius`, or `fahrenheit`. Auto follows the locale's measurement region. Cached data is reused only for the same query and unit system.
 
 ## Settings
 
-`mitishell settings` opens the control center's Settings page on the focused output. It exposes bar layout, islands, weather, and motion fields. Every change saves immediately through the same validation as `mitishell config set`, applies live, and reports validation errors inline.
+`mitishell settings` toggles Settings on the focused output. Its pages are Overview, Audio, Display, Network, Bluetooth, and System. Pass a page to land somewhere specific, for example `mitishell settings audio`. Overview keeps compact quick controls and a now-playing card. System contains persistent Mitishell preferences, including the full bar layout. Every preference saves through the same validation as `mitishell config set`, applies live, and reports validation errors inline.
+
+The bar's Quick Settings cog exposes shared quick controls and routes deeper work to Settings on the same output. Its Open Settings button opens Overview. Audio and Bluetooth have their own bar widgets and complete Settings pages. An optional Network bar widget provides its own short quick-control popover. `mitishell network` and `mitishell bluetooth` remain page shortcuts. `mitishell control` is retained as a compatibility alias, with `home` mapped to Overview and its old `settings` page mapped to System.
 
 ```ini
-bindl = SUPER, C, exec, mitishell settings
+bindl = SUPER, D, exec, mitishell settings
 ```
 
 ## Notifications, power, and connectivity
 
-Mitishell runs its own notification server, so no external daemon is needed. The bar's bell island opens a popover with recent history, actions, and the do-not-disturb switch; toast cards stack under the same island, pause while that output is fullscreen or the session is locked, and land in history. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
+Mitishell runs its own notification server, so no external daemon is needed. The bar's notification widget opens a popover with recent history, actions, and the do-not-disturb switch; toast cards stack under the same widget, pause while that output is fullscreen or the session is locked, and land in history. `mitishell notifications dnd` toggles do-not-disturb; critical notifications still show.
 
 The newest 50 non-transient notifications persist across reloads and restarts. State lives at `$XDG_STATE_HOME/mitishell/notifications/history.json`, or `~/.local/state/mitishell/notifications/history.json` when `XDG_STATE_HOME` is unset. Captured notification images and application icons live in the sibling `media` directory. Restored notifications are history-only and don't retain live actions.
 
@@ -101,7 +99,7 @@ bindel = , XF86MonBrightnessUp,   exec, mitishell brightness up
 bindel = , XF86MonBrightnessDown, exec, mitishell brightness down
 ```
 
-Both also accept absolute values (`mitishell volume set 40`, `mitishell brightness set 60`). Volume steps stay within 100 percent and unmute; the audio island wheel and popover slider still reach 150 percent. Brightness drives every DDC/CI monitor, floors at 1 percent so a step can always be undone on screen, and coalesces rapid changes into few ddcutil writes.
+Both also accept absolute values (`mitishell volume set 40`, `mitishell brightness set 60`). Volume steps stay within 100 percent and unmute; the audio widget wheel and popover slider still reach 150 percent. Brightness drives every DDC/CI monitor, floors at 1 percent so a step can always be undone on screen, and coalesces rapid changes into few ddcutil writes.
 
 ## Generic OSD
 
@@ -127,7 +125,7 @@ bind = SUPER, PERIOD, exec, mitishell emoji
 
 ## Night light
 
-Mitishell controls the identity state and reports the current color temperature of an already-running `hyprsunset`. The Control Center Home page shows the live state and polls only while the control center is open. Successful changes show a focused-output OSD.
+Mitishell controls the identity state and reports the current color temperature of an already-running `hyprsunset`. Enabling night light sets the live temperature to 4800 K. Settings > Overview shows the live state and polls frequently while Settings is open. Successful changes show a focused-output OSD.
 
 ```bash
 mitishell night-light on
@@ -149,7 +147,7 @@ mitishell reminder list
 mitishell reminder clear
 ```
 
-Messages are optional. An omitted message becomes `Your N minutes are up`. Active reminders appear beside the notification control and remain individually cancellable in the overlay. Scheduling and cancellation use a pink OSD instead of adding history entries.
+Messages are optional. An omitted message becomes `Your N minutes are up`. Reminder access remains in the bar's status group, with active reminders available in a bounded quick popover and individually cancellable in the overlay. Scheduling and cancellation use a pink OSD instead of adding history entries.
 
 Timers are transient user-systemd units. Their private metadata lives under `$XDG_RUNTIME_DIR/mitishell/reminders`, so active and pending reminders end with the login session and don't survive logout or reboot. Fired reminders become normal-urgency Mitishell notifications, bypass do-not-disturb, and remain in notification history. If the notification server is absent when a timer fires, Mitishell retains that delivery until it returns during the same login.
 

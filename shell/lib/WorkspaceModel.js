@@ -18,11 +18,12 @@ function label(id) {
 }
 
 function windowTitle(workspace) {
-    if (workspace === null || workspace.lastIpcObject === undefined) {
-        return "Desktop";
+    if (workspace === null || workspace.lastIpcObject === undefined
+            || workspace.lastIpcObject === null) {
+        return "";
     }
     const title = String(workspace.lastIpcObject.lastwindowtitle || "").trim();
-    return title === "" ? "Desktop" : title;
+    return title;
 }
 
 if (typeof module !== "undefined") {

@@ -1,5 +1,6 @@
 import QtQuick
 import "../core"
+import "../lib/BarModel.js" as BarModel
 
 FocusScope {
     id: root
@@ -7,8 +8,13 @@ FocusScope {
     required property string popoverKey
     required property var screen
     default property alias content: contentItem.data
-    readonly property bool active: SurfaceCoordinator.activeKey === popoverKey
-        && SurfaceCoordinator.originScreen === screen
+    readonly property bool active: BarModel.popoverActive(
+        SurfaceCoordinator.activeKey,
+        SurfaceCoordinator.originScreen,
+        popoverKey,
+        screen,
+        enabled,
+    )
 
     signal triggered(bool opened)
 

@@ -86,9 +86,9 @@ QtObject {
     }
 
     property Timer pollTimer: Timer {
-        interval: 2000
+        interval: SurfaceCoordinator.activeKey === "settings" ? 2000 : 30000
         repeat: true
-        running: SurfaceCoordinator.activeKey === "control"
+        running: true
         triggeredOnStart: true
         onTriggered: root.refresh()
     }

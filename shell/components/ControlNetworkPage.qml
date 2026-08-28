@@ -8,6 +8,7 @@ import "../lib/NetworkModel.js" as NetworkModel
 Flickable {
     id: root
 
+    acceptedButtons: Qt.NoButton
     readonly property bool ethernetAvailable: Network.ethernet !== null
         && Network.ethernet.available
     readonly property string ethernetState: ethernetAvailable

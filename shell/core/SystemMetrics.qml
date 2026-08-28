@@ -16,7 +16,6 @@ QtObject {
     property int uptimeSeconds: 0
     property var temperatureC: null
     property bool loaded: false
-    property string launchError: ""
 
     function refresh() {
         cpuFile.reload();
@@ -25,30 +24,17 @@ QtObject {
         uptimeFile.reload();
     }
 
+    function refreshTemperature() {
+        if (!temperatureProcess.running) {
+            temperatureProcess.running = true;
+        }
+    }
+
     function updateCpu(text) {
         const current = SystemModel.parseCpu(text);
         cpuPercent = SystemModel.cpuUsage(previousCpu, current);
         previousCpu = current;
         loaded = current !== null;
-    }
-
-    function openMissionCenter() {
-        if (!missionCenter.running) {
-            launchError = "";
-            missionCenter.running = true;
-        }
-    }
-
-    property Process missionCenterProcess: Process {
-        id: missionCenter
-        command: ["missioncenter"]
-        // qmllint disable signal-handler-parameters
-        onExited: function(exitCode) {
-            // qmllint enable signal-handler-parameters
-            if (exitCode !== 0) {
-                root.launchError = "Mission Center could not be opened";
-            }
-        }
     }
 
     property FileView cpuFile: FileView {
@@ -92,14 +78,25 @@ QtObject {
         onLoaded: root.uptimeSeconds = SystemModel.uptime(text())
     }
 
-    property FileView temperatureFile: FileView {
-        id: temperatureFile
-        path: "/sys/class/thermal/thermal_zone0/temp"
-        preload: true
-        blockLoading: true
-        printErrors: false
-        onLoaded: root.temperatureC = SystemModel.temperature(text())
-        onLoadFailed: root.temperatureC = null
+    property Process temperatureProcess: Process {
+        id: temperatureProcess
+        command: [Config.binary, "_system-temperature-snapshot"]
+        stdout: StdioCollector {
+            id: temperatureOutput
+            waitForEnd: true
+        }
+
+        // qmllint disable signal-handler-parameters
+        onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
+            try {
+                const snapshot = JSON.parse(temperatureOutput.text);
+                root.temperatureC = snapshot.available === true
+                    ? Number(snapshot.celsius) : null;
+            } catch (parseError) {
+                root.temperatureC = null;
+            }
+        }
     }
 
     property Timer refreshTimer: Timer {
@@ -113,6 +110,7 @@ QtObject {
         interval: 10000
         repeat: true
         running: true
-        onTriggered: temperatureFile.reload()
+        triggeredOnStart: true
+        onTriggered: root.refreshTemperature()
     }
 }

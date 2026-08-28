@@ -46,6 +46,7 @@ Item {
             harness.dragFinishes = 0;
             harness.dragCancels = 0;
             reorderGesture.enabled = true;
+            reorderGesture.verticalEnabled = false;
         }
 
         function test_click_reaches_island_action() {
@@ -68,6 +69,18 @@ Item {
             mouseMove(island, 25, 20, 10, Qt.LeftButton);
             mouseMove(island, 40, 20, 10, Qt.LeftButton);
             mouseRelease(island, 40, 20, Qt.LeftButton);
+            compare(harness.dragStarts, 1);
+            verify(harness.dragMoves > 0);
+            tryCompare(harness, "dragFinishes", 1);
+            compare(harness.taps, 0);
+        }
+
+        function test_vertical_drag_can_reorder_settings_widget() {
+            reorderGesture.verticalEnabled = true;
+            mousePress(island, 20, 20, Qt.LeftButton);
+            mouseMove(island, 20, 25, 10, Qt.LeftButton);
+            mouseMove(island, 20, 40, 10, Qt.LeftButton);
+            mouseRelease(island, 20, 40, Qt.LeftButton);
             compare(harness.dragStarts, 1);
             verify(harness.dragMoves > 0);
             tryCompare(harness, "dragFinishes", 1);

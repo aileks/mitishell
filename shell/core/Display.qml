@@ -20,6 +20,12 @@ QtObject {
 
     readonly property bool available: state === "ready" && displays.length > 0
 
+    function supportsConnector(connector) {
+        return displays.some(function(display) {
+            return display.connector === connector;
+        });
+    }
+
     function refresh() {
         if (!discoverProcess.running) {
             discoverProcess.running = true;

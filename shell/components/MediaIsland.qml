@@ -8,7 +8,7 @@ Item {
         && !Config.motion.reduced
         && metadataStrip.implicitWidth > metadataViewport.width
 
-    implicitWidth: 16 + Theme.spaceSm + metadataStrip.implicitWidth
+    implicitWidth: metadataStrip.implicitWidth
     implicitHeight: 30
 
     function restartMarquee() {
@@ -25,66 +25,47 @@ Item {
 
     onMarqueeNeededChanged: restartMarquee()
 
-    Row {
+    Item {
+        id: metadataViewport
+
         anchors.fill: parent
-        spacing: Theme.spaceSm
+        clip: true
 
-        Image {
-            anchors.verticalCenter: parent.verticalCenter
-            width: 16
-            height: 16
-            source: Media.activePlayer !== null && Media.activePlayer.isPlaying
-                ? "../assets/icons/pause.svg"
-                : "../assets/icons/play.svg"
-            sourceSize.width: 16
-            sourceSize.height: 16
-            opacity: Media.available ? 1 : 0.5
-        }
+        onWidthChanged: root.restartMarquee()
 
-        Item {
-            id: metadataViewport
+        Row {
+            id: metadataStrip
 
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(0, parent.width - 16 - parent.spacing)
-            height: parent.height
-            clip: true
+            spacing: Theme.spaceXs
 
-            onWidthChanged: root.restartMarquee()
+            onImplicitWidthChanged: root.restartMarquee()
 
-            Row {
-                id: metadataStrip
-
+            Text {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.spaceXs
+                text: Media.title
+                color: Media.available ? Theme.textBright : Theme.textMuted
+                font.family: Theme.fontSans
+                font.pixelSize: Theme.fontSizeBody
+                font.weight: Font.DemiBold
+            }
 
-                onImplicitWidthChanged: root.restartMarquee()
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: Media.artist !== ""
+                text: "•"
+                color: Theme.purple
+                font.family: Theme.fontSans
+                font.pixelSize: Theme.fontSizeCaption
+            }
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Media.title
-                    color: Media.available ? Theme.textBright : Theme.textMuted
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeBody
-                    font.weight: Font.DemiBold
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: Media.artist !== ""
-                    text: "•"
-                    color: Theme.purple
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: Media.artist !== ""
-                    text: Media.artist
-                    color: Theme.textMuted
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeCaption
-                }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: Media.artist !== ""
+                text: Media.artist
+                color: Theme.textMuted
+                font.family: Theme.fontSans
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

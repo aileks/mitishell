@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -20,6 +21,7 @@ import (
 	"github.com/aileks/mitishell/internal/osd"
 	"github.com/aileks/mitishell/internal/power"
 	"github.com/aileks/mitishell/internal/reminders"
+	"github.com/aileks/mitishell/internal/systemmetrics"
 	"github.com/aileks/mitishell/internal/updates"
 	"github.com/aileks/mitishell/internal/weather"
 )
@@ -29,7 +31,6 @@ type shellStub struct {
 	reloadErr        error
 	notificationsErr error
 	powerErr         error
-	settingsErr      error
 }
 
 type controlStub struct {
@@ -39,8 +40,38 @@ type controlStub struct {
 	micSet        []int
 	brightness    []string
 	brightnessSet []int
-	controlPages  []string
+	settingsPages []string
 	err           error
+}
+
+type systemTemperatureStub struct {
+	temperature systemmetrics.Temperature
+}
+
+func (stub systemTemperatureStub) Snapshot() systemmetrics.Temperature {
+	return stub.temperature
+}
+
+func TestInternalSystemTemperatureSnapshotEncodesResult(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	result := systemmetrics.Temperature{Available: true, Celsius: 52.5, Sensor: "k10temp Tctl"}
+	exitCode := cli.Run(
+		[]string{"_system-temperature-snapshot"},
+		&stdout,
+		&stderr,
+		cli.Dependencies{SystemTemperature: systemTemperatureStub{temperature: result}},
+	)
+	if exitCode != 0 || stderr.Len() != 0 {
+		t.Fatalf("exitCode=%d stderr=%q", exitCode, stderr.String())
+	}
+	var got systemmetrics.Temperature
+	if err := json.Unmarshal(stdout.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got != result {
+		t.Fatalf("result = %#v", got)
+	}
 }
 
 type osdStub struct {
@@ -662,8 +693,8 @@ func (stub *controlStub) BrightnessSet(value int) error {
 	return stub.err
 }
 
-func (stub *controlStub) ToggleControlCenter(page string) error {
-	stub.controlPages = append(stub.controlPages, page)
+func (stub *controlStub) ToggleSettings(page string) error {
+	stub.settingsPages = append(stub.settingsPages, page)
 	return stub.err
 }
 
@@ -720,10 +751,6 @@ func (stub shellStub) ToggleNotifications() error {
 
 func (stub shellStub) OpenPowerMenu() error {
 	return stub.powerErr
-}
-
-func (stub shellStub) OpenSettings() error {
-	return stub.settingsErr
 }
 
 type powerStub struct {
@@ -871,15 +898,19 @@ func TestNotificationsDndTogglesThroughShell(t *testing.T) {
 func TestSettingsOpensWindow(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	dependencies := cli.Dependencies{Shell: shellStub{}}
+	settings := &controlStub{}
+	dependencies := cli.Dependencies{SettingsSurface: settings}
 
 	exitCode := cli.Run([]string{"settings"}, &stdout, &stderr, dependencies)
 
 	if exitCode != 0 {
 		t.Fatalf("Run() exit code = %d, stderr = %q", exitCode, stderr.String())
 	}
-	if got := stdout.String(); got != "settings opened\n" {
+	if got := stdout.String(); got != "settings toggled\n" {
 		t.Fatalf("stdout = %q", got)
+	}
+	if !slices.Equal(settings.settingsPages, []string{"overview"}) {
+		t.Fatalf("pages = %v", settings.settingsPages)
 	}
 }
 
@@ -887,7 +918,7 @@ func TestSettingsReportsUnavailableAction(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	dependencies := cli.Dependencies{
-		Shell: shellStub{settingsErr: errors.New("IPC open failed")},
+		SettingsSurface: &controlStub{err: errors.New("IPC open failed")},
 	}
 
 	exitCode := cli.Run([]string{"settings"}, &stdout, &stderr, dependencies)
@@ -961,7 +992,7 @@ func TestConfigValidateReportsInvalidFile(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	path := filepath.Join(t.TempDir(), "config.json")
-	if err := os.WriteFile(path, []byte(`{"version":2}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"version":3}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	dependencies := cli.Dependencies{ConfigPath: path, Shell: shellStub{}}
@@ -1026,7 +1057,7 @@ func TestInternalConfigResolveReturnsDefaultsForInvalidColdStart(t *testing.T) {
 	if exitCode == 0 {
 		t.Fatal("Run() did not report fallback from invalid config")
 	}
-	if !strings.Contains(stdout.String(), `"version":1`) {
+	if !strings.Contains(stdout.String(), `"version":2`) {
 		t.Fatalf("stdout does not contain normalized defaults: %q", stdout.String())
 	}
 	if !strings.Contains(stderr.String(), "using defaults") {
@@ -1409,16 +1440,16 @@ func TestInternalDisplaySetRejectsInvalidValue(t *testing.T) {
 	}
 }
 
-func TestControlActionTogglesWithPage(t *testing.T) {
+func TestSettingsActionTogglesWithPage(t *testing.T) {
 	cases := []struct {
 		name string
 		args []string
 		page string
 	}{
-		{name: "defaults to home", args: []string{"control"}, page: "home"},
-		{name: "opens audio page", args: []string{"control", "audio"}, page: "audio"},
-		{name: "opens display page", args: []string{"control", "display"}, page: "display"},
-		{name: "opens settings page", args: []string{"control", "settings"}, page: "settings"},
+		{name: "defaults to overview", args: []string{"settings"}, page: "overview"},
+		{name: "opens audio page", args: []string{"settings", "audio"}, page: "audio"},
+		{name: "opens display page", args: []string{"settings", "display"}, page: "display"},
+		{name: "opens system page", args: []string{"settings", "system"}, page: "system"},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -1426,28 +1457,28 @@ func TestControlActionTogglesWithPage(t *testing.T) {
 			var stderr bytes.Buffer
 			stub := &controlStub{}
 
-			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{ControlCenter: stub})
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{SettingsSurface: stub})
 
 			if exitCode != 0 {
 				t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
 			}
-			if got := stdout.String(); got != "control center toggled\n" {
+			if got := stdout.String(); got != "settings toggled\n" {
 				t.Fatalf("stdout = %q", got)
 			}
-			if len(stub.controlPages) != 1 || stub.controlPages[0] != testCase.page {
-				t.Fatalf("pages = %v, want %q", stub.controlPages, testCase.page)
+			if len(stub.settingsPages) != 1 || stub.settingsPages[0] != testCase.page {
+				t.Fatalf("pages = %v, want %q", stub.settingsPages, testCase.page)
 			}
 		})
 	}
 }
 
-func TestControlActionRejectsInvalidUsage(t *testing.T) {
+func TestSettingsActionRejectsInvalidUsage(t *testing.T) {
 	cases := []struct {
 		name string
 		args []string
 	}{
-		{"unknown page", []string{"control", "teleport"}},
-		{"extra argument", []string{"control", "audio", "now"}},
+		{"unknown page", []string{"settings", "teleport"}},
+		{"extra argument", []string{"settings", "audio", "now"}},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -1455,28 +1486,42 @@ func TestControlActionRejectsInvalidUsage(t *testing.T) {
 			var stderr bytes.Buffer
 			stub := &controlStub{}
 
-			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{ControlCenter: stub})
+			exitCode := cli.Run(testCase.args, &stdout, &stderr, cli.Dependencies{SettingsSurface: stub})
 
 			if exitCode != 2 {
 				t.Fatalf("exit code = %d, want usage failure", exitCode)
 			}
-			if len(stub.controlPages) != 0 {
-				t.Fatalf("toggle should not run, got %v", stub.controlPages)
+			if len(stub.settingsPages) != 0 {
+				t.Fatalf("toggle should not run, got %v", stub.settingsPages)
 			}
 		})
 	}
 }
 
-func TestControlActionReportsUnavailableCenter(t *testing.T) {
+func TestSettingsActionReportsUnavailableSurface(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	exitCode := cli.Run([]string{"control"}, &stdout, &stderr, cli.Dependencies{})
+	exitCode := cli.Run([]string{"settings"}, &stdout, &stderr, cli.Dependencies{})
 
 	if exitCode != 1 {
 		t.Fatalf("exit code = %d, want unavailable failure", exitCode)
 	}
-	if !strings.Contains(stderr.String(), "control center unavailable") {
+	if !strings.Contains(stderr.String(), "settings unavailable") {
 		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestLegacyControlNamesMapToSettingsPages(t *testing.T) {
+	settings := &controlStub{}
+	for _, args := range [][]string{{"control"}, {"control", "home"}, {"control", "settings"}} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		if code := cli.Run(args, &stdout, &stderr, cli.Dependencies{SettingsSurface: settings}); code != 0 {
+			t.Fatalf("Run(%v) code = %d, stderr = %q", args, code, stderr.String())
+		}
+	}
+	if !slices.Equal(settings.settingsPages, []string{"overview", "overview", "system"}) {
+		t.Fatalf("pages = %v", settings.settingsPages)
 	}
 }

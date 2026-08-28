@@ -29,6 +29,18 @@ Each tag ships one useful slice.
 - [x] matched sound popover space and type with the system view
 - [x] replaced the plain tray list with tray icons users can press
 - [x] fixed the post-use audit batch: shared hover shading, a wifi scan trigger with clearer rows, a weather refresh button, control island padding, dividers between every bar island, a fresher media track length, a bluetooth bar island, orange notification accents, popups pinned to the screen edge, and a fallback bar screen when outputs vanish
+- [x] refreshed update counts as soon as the terminal update process exits
+- [x] exposed reminder, do-not-disturb, night-light, and muted-microphone actions in a compact status group
+- [x] stopped the Settings button from highlighting for the Bluetooth quick popover
+- [x] added bounded quick popovers for Audio, Network, Bluetooth, Display, and Reminders with same-output routing to deeper views
+- [x] resynced focused-window titles on every relevant Hyprland window event
+- [x] hid the focused-window title completely when no window has focus
+- [x] selected a real CPU package sensor instead of assuming thermal zone zero
+- [x] placed temperature before load average in the system metrics popover
+- [x] replaced bar islands with one continuous floating bar and configurable left, center, right, and hidden sections
+- [x] renamed the combined operational surface to Settings, with Overview and System replacing Home and the previous Settings page
+- [x] set night light to 4800 K when enabled
+- [x] grouped temporary controls into Quick Settings while keeping audio and Bluetooth separate and brightness in Quick Settings and Settings
 
 ## Planned after v1
 

@@ -36,10 +36,10 @@ QtObject {
     readonly property color hoverFill: alpha(overlay, 0.42)
     readonly property color pressedFill: alpha(overlay, 0.68)
 
-    readonly property int radiusSmall: 6
-    readonly property int radiusMedium: 10
-    readonly property int radiusLarge: 14
-    readonly property int radiusPill: 999
+    readonly property int radiusSmall: 0
+    readonly property int radiusMedium: 0
+    readonly property int radiusLarge: 0
+    readonly property int radiusPill: 0
 
     readonly property int spaceXs: 4
     readonly property int spaceSm: 8

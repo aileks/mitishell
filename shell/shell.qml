@@ -141,9 +141,17 @@ ShellRoot {
             if (screen === null) {
                 return "settings unavailable";
             }
-            Control.selectPage("settings");
-            SurfaceCoordinator.open("control", screen);
+            Control.selectPage("overview");
+            SurfaceCoordinator.open("settings", screen);
             return "settings opened";
+        }
+
+        function toggle(page: string): string {
+            const screen = root.focusedScreen();
+            if (screen === null) return "settings unavailable";
+            Control.selectPage(page);
+            SurfaceCoordinator.toggle("settings", screen);
+            return "settings toggled";
         }
     }
 
@@ -258,8 +266,10 @@ ShellRoot {
             if (target === null) {
                 return "control center unavailable";
             }
-            Control.selectPage(page);
-            SurfaceCoordinator.toggle("control", target);
+            const renamed = page === "home" ? "overview"
+                : (page === "settings" ? "system" : page);
+            Control.selectPage(renamed);
+            SurfaceCoordinator.toggle("settings", target);
             return "control center toggled";
         }
     }

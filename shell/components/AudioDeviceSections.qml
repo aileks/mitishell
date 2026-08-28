@@ -2,7 +2,7 @@ import QtQuick
 import "../core"
 
 // The output and input device sections shared by the bar's audio popover
-// and the control center's audio page.
+// and the Settings surface's Audio page.
 Item {
     id: root
 

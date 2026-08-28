@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -113,15 +114,23 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
 	}
 
 	want := config.Config{
-		Version: 1,
+		Version: 2,
 		Bar: config.Bar{
 			Outputs:          []string{"DP-4"},
 			Height:           40,
 			MarginTop:        4,
 			MarginHorizontal: 10,
-			ShowMedia:        true,
 			SystemMetrics:    "combined",
-			Islands:          config.DefaultIslands(),
+			Layout: config.BarLayout{
+				Left:   []string{"workspaces"},
+				Center: []string{"media"},
+				Right: []string{
+					"system", "audio", "keyboardLayout", "updates", "clock", "tray",
+					"network", "bluetooth", "quickSettings", "notifications",
+					"weather", "status", "power",
+				},
+				Hidden: []string{"windowTitle"},
+			},
 		},
 		Clock: config.Clock{
 			Format:    "24h-seconds",
@@ -142,6 +151,70 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Load() = %#v, want %#v", got, want)
+	}
+}
+
+func TestLegacyMigrationPreservesFileAndUsesDeterministicInsertions(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	contents := `{
+  "version": 1,
+  "bar": {"outputs":["*"],"height":36,"marginTop":6,"marginHorizontal":8,"showWindowTitle":true,"showMedia":true,"systemMetrics":"separate","islands":["clock","bluetooth","control","weather","power"]},
+  "clock": {"format":"24h","showDate":false,"timezones":[]},
+  "calendar": {"showWeekNumbers":false},
+  "weather": {"enabled":false,"units":"auto"},
+  "motion": {"enabled":true,"reduced":false}
+}`
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	loaded, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	right := loaded.Bar.Layout.Right
+	wantPrefix := []string{"clock", "network", "bluetooth", "quickSettings", "weather", "status", "power"}
+	if !reflect.DeepEqual(right[:len(wantPrefix)], wantPrefix) {
+		t.Fatalf("right prefix = %#v, want %#v", right[:len(wantPrefix)], wantPrefix)
+	}
+	unchanged, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(unchanged) != contents {
+		t.Fatal("Load rewrote the legacy config")
+	}
+}
+
+func TestLoadRepairsMalformedV2CenterWithoutRejectingWholeConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	malformed := config.Defaults()
+	malformed.Bar.Layout = config.BarLayout{
+		Left:   []string{"workspaces", "unknown"},
+		Center: []string{"media", "clock", "weather", "audio"},
+		Right:  []string{"power", "audio"},
+		Hidden: []string{},
+	}
+	contents, err := json.Marshal(malformed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, contents, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	loaded, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(loaded.Bar.Layout.Center, []string{"media", "clock", "weather"}) {
+		t.Fatalf("center = %#v", loaded.Bar.Layout.Center)
+	}
+	if len(loaded.Bar.Layout.Hidden) == 0 || loaded.Bar.Layout.Hidden[0] != "audio" {
+		t.Fatalf("hidden = %#v", loaded.Bar.Layout.Hidden)
+	}
+	if !reflect.DeepEqual(loaded.Bar.Layout.Right, []string{"power"}) {
+		t.Fatalf("right = %#v", loaded.Bar.Layout.Right)
 	}
 }
 
@@ -206,7 +279,7 @@ func TestValidateRejectsWildcardMixedWithExplicitOutputs(t *testing.T) {
 
 func TestValidateRejectsInvalidValues(t *testing.T) {
 	tests := map[string]func(*config.Config){
-		"unsupported version": func(cfg *config.Config) { cfg.Version = 2 },
+		"unsupported version": func(cfg *config.Config) { cfg.Version = 3 },
 		"empty outputs":       func(cfg *config.Config) { cfg.Bar.Outputs = nil },
 		"blank output":        func(cfg *config.Config) { cfg.Bar.Outputs = []string{""} },
 		"duplicate output":    func(cfg *config.Config) { cfg.Bar.Outputs = []string{"DP-4", "DP-4"} },
@@ -291,51 +364,110 @@ func TestSetFieldUpdatesOnlyKnownTypedSetting(t *testing.T) {
 	}
 }
 
-func TestNormalizeIslandsDropsUnknownAndAppendsMissing(t *testing.T) {
-	got := config.NormalizeIslands([]string{"weather", "bogus", "clock", "weather"})
+func TestNormalizeBarLayoutMovesMalformedEntriesToHidden(t *testing.T) {
+	got := config.NormalizeBarLayout(config.BarLayout{
+		Left:   []string{"workspaces", "bogus", "workspaces"},
+		Center: []string{"media", "clock", "weather", "audio"},
+		Right:  []string{"audio", "power"},
+	})
+	if !reflect.DeepEqual(got.Left, []string{"workspaces"}) {
+		t.Fatalf("left = %#v", got.Left)
+	}
+	if !reflect.DeepEqual(got.Center, []string{"media", "clock", "weather"}) {
+		t.Fatalf("center = %#v", got.Center)
+	}
+	if len(got.Hidden) == 0 || got.Hidden[0] != "audio" {
+		t.Fatalf("center excess did not lead hidden = %#v", got.Hidden)
+	}
+	if !reflect.DeepEqual(got.Right, []string{"power"}) {
+		t.Fatalf("right = %#v", got.Right)
+	}
+}
 
-	want := append(
-		[]string{"weather", "clock"},
-		config.DefaultIslands()[3:]...,
+func TestDefaultBarLayoutKeepsDedicatedWidgetsSeparateFromQuickSettings(t *testing.T) {
+	got := config.DefaultBarLayout()
+	wantRight := []string{
+		"system", "audio", "keyboardLayout", "updates", "clock", "tray",
+		"bluetooth", "quickSettings", "notifications", "weather", "status", "power",
+	}
+	wantHidden := []string{"network"}
+	if !reflect.DeepEqual(got.Right, wantRight) {
+		t.Fatalf("right = %#v, want %#v", got.Right, wantRight)
+	}
+	if !reflect.DeepEqual(got.Hidden, wantHidden) {
+		t.Fatalf("hidden = %#v, want %#v", got.Hidden, wantHidden)
+	}
+}
+
+func TestNormalizeBarLayoutMovesVisibleSettingsAliasToQuickSettings(t *testing.T) {
+	got := config.NormalizeBarLayout(config.BarLayout{
+		Left:   []string{"workspaces"},
+		Center: []string{"media"},
+		Right:  []string{"clock", "settings", "power"},
+		Hidden: []string{"quickSettings", "display"},
+	})
+	wantRight := []string{"clock", "quickSettings", "power"}
+	if !reflect.DeepEqual(got.Right, wantRight) {
+		t.Fatalf("right = %#v, want %#v", got.Right, wantRight)
+	}
+	if slicesContains(got.Hidden, "settings") || slicesContains(got.Hidden, "display") {
+		t.Fatalf("obsolete widgets survived normalization: %#v", got.Hidden)
+	}
+}
+
+func TestNormalizeBarLayoutKeepsConfiguredQuickSettingsWhenBothNamesAreVisible(t *testing.T) {
+	got := config.NormalizeBarLayout(config.BarLayout{
+		Left:   []string{"workspaces"},
+		Center: []string{"media"},
+		Right:  []string{"quickSettings", "settings", "power"},
+	})
+	if !reflect.DeepEqual(got.Right, []string{"quickSettings", "power"}) {
+		t.Fatalf("right = %#v", got.Right)
+	}
+}
+
+func slicesContains(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
+}
+
+func TestSetFieldRejectsFourthInteractiveCenterWidget(t *testing.T) {
+	_, err := config.SetField(config.Defaults(), "bar.layout.center", `["media","clock","weather","audio"]`)
+	if err == nil {
+		t.Fatal("SetField() accepted a fourth center widget")
+	}
+}
+
+func TestSetFieldRejectsMalformedWholeLayout(t *testing.T) {
+	_, err := config.SetField(
+		config.Defaults(),
+		"bar.layout",
+		`{"left":["workspaces"],"center":["media","clock","weather","audio"],"right":[],"hidden":[]}`,
 	)
-	// DefaultIslands minus clock/weather, appended in default order.
-	want = []string{"weather", "clock", "system", "audio", "keyboardLayout",
-		"updates", "tray", "bluetooth", "control", "notifications",
-		"reminders", "power"}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("NormalizeIslands() = %#v, want %#v", got, want)
+	if err == nil {
+		t.Fatal("SetField() accepted a malformed interactive layout")
 	}
 }
 
-func TestNormalizeIslandsEmptyBecomesDefault(t *testing.T) {
-	got := config.NormalizeIslands(nil)
-	if !reflect.DeepEqual(got, config.DefaultIslands()) {
-		t.Fatalf("NormalizeIslands(nil) = %#v", got)
+func TestSetAndGetWholeBarLayout(t *testing.T) {
+	layoutBytes, err := json.Marshal(config.DefaultBarLayout())
+	if err != nil {
+		t.Fatal(err)
 	}
-}
-
-func TestSetFieldNormalizesIslands(t *testing.T) {
-	updated, err := config.SetField(
-		config.Defaults(), "bar.islands", `["power","nope","clock"]`)
+	layout := string(layoutBytes)
+	updated, err := config.SetField(config.Defaults(), "bar.layout", layout)
 	if err != nil {
 		t.Fatalf("SetField() error = %v", err)
 	}
-
-	first := updated.Bar.Islands[0]
-	second := updated.Bar.Islands[1]
-	if first != "power" || second != "clock" {
-		t.Fatalf("islands order = %#v", updated.Bar.Islands)
-	}
-	if len(updated.Bar.Islands) != len(config.DefaultIslands()) {
-		t.Fatalf("islands count = %d, want %d",
-			len(updated.Bar.Islands), len(config.DefaultIslands()))
-	}
-
-	encoded, err := config.GetField(updated, "bar.islands")
+	encoded, err := config.GetField(updated, "bar.layout")
 	if err != nil {
 		t.Fatalf("GetField() error = %v", err)
 	}
-	if !strings.Contains(encoded, `"power"`) || !strings.Contains(encoded, `"clock"`) {
+	if !strings.Contains(encoded, `"workspaces"`) || !strings.Contains(encoded, `"power"`) {
 		t.Fatalf("GetField() = %q", encoded)
 	}
 }
@@ -349,9 +481,8 @@ func TestSetAndGetKnownFields(t *testing.T) {
 		{key: "bar.height", value: "44", want: "44"},
 		{key: "bar.marginTop", value: "12", want: "12"},
 		{key: "bar.marginHorizontal", value: "14", want: "14"},
-		{key: "bar.showWindowTitle", value: "false", want: "false"},
-		{key: "bar.showMedia", value: "false", want: "false"},
 		{key: "bar.systemMetrics", value: "combined", want: `"combined"`},
+		{key: "bar.layout.center", value: `["clock","media"]`, want: `["clock","media"]`},
 		{key: "weather.enabled", value: "true", want: "true"},
 		{key: "weather.units", value: "celsius", want: `"celsius"`},
 		{key: "clock.format", value: "12h-seconds", want: `"12h-seconds"`},

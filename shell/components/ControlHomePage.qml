@@ -5,6 +5,7 @@ import "../lib/WeatherModel.js" as WeatherModel
 Flickable {
     id: root
 
+    acceptedButtons: Qt.NoButton
     contentWidth: width
     contentHeight: content.implicitHeight
     clip: true
@@ -18,7 +19,7 @@ Flickable {
 
         SurfaceHeader {
             width: parent.width
-            title: "Home"
+            title: "Overview"
             accent: Theme.orange
         }
 
@@ -27,78 +28,10 @@ Flickable {
             title: "Quick controls"
             accent: Theme.orange
 
-            Column {
+            QuickControls {
                 id: quickContent
 
                 width: parent.width
-                spacing: Theme.spaceSm
-
-                AudioSlider {
-                    width: parent.width
-                    label: "Volume"
-                    iconSource: Audio.outputMuted
-                        ? "../assets/icons/volume-x.svg"
-                        : "../assets/icons/volume-2.svg"
-                    currentValue: Audio.outputVolume
-                    onVolumeChanged: function(value) { Audio.setOutputVolume(value); }
-                    onMuteRequested: Audio.toggleOutputMute()
-                }
-
-                Item {
-                    width: parent.width
-                    implicitHeight: 58
-                    visible: Display.available
-
-                    Text {
-                        id: brightnessLabel
-
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        text: "Brightness"
-                        color: Theme.textMuted
-                        font.family: Theme.fontSans
-                        font.pixelSize: Theme.fontSizeCaption
-                        font.weight: Font.DemiBold
-                    }
-
-                    Text {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: brightnessLabel.verticalCenter
-                        text: Display.brightness + "%"
-                        color: Theme.text
-                        font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
-
-                    ShellSlider {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        from: 1
-                        to: 100
-                        stepSize: 1
-                        value: Display.brightness
-                        Accessible.name: "Brightness"
-                        onMoved: Display.setBrightness(value)
-                    }
-                }
-
-                ToggleRow {
-                    width: parent.width
-                    label: "Do not disturb"
-                    checked: Notifications.doNotDisturb
-                    onToggled: Notifications.toggleDoNotDisturb()
-                }
-
-                ToggleRow {
-                    width: parent.width
-                    visible: NightLight.available
-                    label: "Night light"
-                    description: NightLight.description
-                    checked: NightLight.enabled
-                    enabled: !NightLight.busy
-                    onToggled: NightLight.toggle()
-                }
             }
         }
 

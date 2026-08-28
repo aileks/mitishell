@@ -93,13 +93,13 @@ Item {
                 anchors.top: parent.top
                 anchors.topMargin: 2
                 height: 4
-                radius: 2
+                radius: 0
                 color: Theme.overlay
 
                 Rectangle {
                     width: parent.width * root.progress
                     height: parent.height
-                    radius: parent.radius
+                    radius: 0
                     color: Theme.purple
                 }
             }

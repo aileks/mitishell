@@ -163,16 +163,16 @@ fi
 	return path
 }
 
-func TestToggleControlCenterPassesPagePositionally(t *testing.T) {
-	client := ipc.NewClient(fakeQSCheckingArg(t, "audio", "control center toggled"), "/tmp/mitishell-shell")
-	if err := client.ToggleControlCenter("audio"); err != nil {
-		t.Fatalf("ToggleControlCenter() error = %v", err)
+func TestToggleSettingsPassesPagePositionally(t *testing.T) {
+	client := ipc.NewClient(fakeQSCheckingArg(t, "audio", "settings toggled"), "/tmp/mitishell-shell")
+	if err := client.ToggleSettings("audio"); err != nil {
+		t.Fatalf("ToggleSettings() error = %v", err)
 	}
 }
 
-func TestToggleControlCenterRejectsUnexpectedResponse(t *testing.T) {
-	client := ipc.NewClient(fakeQS(t, "control center unavailable"), "/tmp/mitishell-shell")
-	if err := client.ToggleControlCenter("home"); err == nil {
-		t.Fatal("ToggleControlCenter() accepted an unexpected response")
+func TestToggleSettingsRejectsUnexpectedResponse(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "settings unavailable"), "/tmp/mitishell-shell")
+	if err := client.ToggleSettings("overview"); err == nil {
+		t.Fatal("ToggleSettings() accepted an unexpected response")
 	}
 }
