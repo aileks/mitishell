@@ -7,16 +7,7 @@ Item {
     required property var screen
     implicitHeight: content.implicitHeight
 
-    readonly property bool wifiAvailable: Network.wifi !== null && Network.wifi.available
     readonly property bool ethernetAvailable: Network.ethernet !== null && Network.ethernet.available
-    readonly property var activeStation: {
-        if (!wifiAvailable) return null;
-        const stations = Network.wifi.stations || [];
-        for (let index = 0; index < stations.length; index += 1) {
-            if (stations[index].inUse) return stations[index];
-        }
-        return null;
-    }
 
     onVisibleChanged: if (visible) Network.refresh()
 
@@ -35,8 +26,8 @@ Item {
 
         Text {
             width: parent.width
-            text: root.activeStation !== null
-                ? root.activeStation.ssid + " · " + root.activeStation.signal + "%"
+            text: Network.activeStation !== null
+                ? Network.activeStation.ssid + " · " + Network.activeStation.signal + "%"
                 : (root.ethernetAvailable && Network.ethernet.state === "connected"
                     ? "Ethernet connected" : "Disconnected")
             color: Theme.text
@@ -47,13 +38,13 @@ Item {
 
         ToggleRow {
             width: parent.width
-            visible: root.wifiAvailable
+            visible: Network.wifiAvailable
             accent: Theme.cyan
             label: "Wi-Fi"
             description: Network.wifiBusy
                 ? "Changing Wi-Fi state"
-                : (root.wifiAvailable ? NetworkModel.stateLabel(Network.wifi.state) : "")
-            checked: root.wifiAvailable && Network.wifi.enabled
+                : (Network.wifiAvailable ? NetworkModel.stateLabel(Network.wifi.state) : "")
+            checked: Network.wifiAvailable && Network.wifi.enabled
             enabled: !Network.wifiBusy
             onToggled: Network.setWifiEnabled(!checked)
         }

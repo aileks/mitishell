@@ -4,16 +4,7 @@ import "../core"
 Item {
     id: root
 
-    readonly property var activeStation: {
-        if (Network.wifi === null) return null;
-        const stations = Network.wifi.stations || [];
-        for (let index = 0; index < stations.length; index += 1) {
-            if (stations[index].inUse) return stations[index];
-        }
-        return null;
-    }
-
-    implicitWidth: content.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
 
     Row {
@@ -32,7 +23,7 @@ Item {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.activeStation !== null ? root.activeStation.signal + "%" : ""
+            text: Network.activeStation !== null ? Network.activeStation.signal + "%" : ""
             color: Theme.text
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption

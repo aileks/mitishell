@@ -2,6 +2,13 @@ const sectionNames = ["left", "center", "right", "hidden"];
 const essentialIds = new Set([
     "workspaces", "clock", "quickSettings", "notifications", "status", "power",
 ]);
+// Raw Qt key codes so node tests can check them without Qt.
+const keyDirections = {
+    0x01000012: "previous",         // Qt.Key_Left
+    0x01000013: "next",             // Qt.Key_Right
+    0x01000014: "previous-section", // Qt.Key_Up
+    0x01000015: "next-section",     // Qt.Key_Down
+};
 const widgetSurfaceKeys = {
     media: "media",
     system: "system",
@@ -76,6 +83,10 @@ function moveKeyboard(layout, id, direction) {
     return moveTo(layout, id, section, target);
 }
 
+function moveDirection(key) {
+    return keyDirections[key] || "";
+}
+
 function priority(id) {
     return essentialIds.has(id) ? 100 : 10;
 }
@@ -97,6 +108,36 @@ function widthFor(ids, widths, spacing) {
     return ids.reduce(function(total, id) {
         return total + Math.max(0, Number(widths[id]) || 0);
     }, 0) + spacing * (ids.length - 1);
+}
+
+function essentialWidthFor(ids, widths, spacing, overflowButtonWidth) {
+    const essentials = ids.filter(function(id) { return priority(id) >= 100; });
+    const base = widthFor(essentials, widths, spacing);
+    // Once low-priority widgets hide, the overflow button joins the row.
+    return essentials.length === ids.length ? base : base + spacing + overflowButtonWidth;
+}
+
+// Left and right rows share the space beside the center row. A crowded side
+// may use the other side's unused space, but never past that side's
+// essential widgets, so overflow hides low-priority widgets instead of
+// letting rows overlap.
+function overflowBudgets(leftIds, rightIds, widths, totalSides, spacing, overflowButtonWidth) {
+    const share = totalSides / 2;
+    const leftNeed = widthFor(leftIds, widths, spacing);
+    const rightNeed = widthFor(rightIds, widths, spacing);
+    const leftFloor = essentialWidthFor(leftIds, widths, spacing, overflowButtonWidth);
+    const rightFloor = essentialWidthFor(rightIds, widths, spacing, overflowButtonWidth);
+    if (leftFloor + rightFloor > totalSides) {
+        // Essentials alone overfill the bar; overlap is unavoidable, so keep
+        // the even split rather than hide essential access.
+        return { left: share, right: share };
+    }
+    if (leftNeed > share && rightNeed > share) {
+        return { left: share, right: share };
+    }
+    const left = Math.min(Math.max(share, leftNeed), totalSides - rightFloor);
+    const right = Math.min(Math.max(share, rightNeed), totalSides - left);
+    return { left, right };
 }
 
 // Overflow is responsive presentation state only. Returned ids retain their
@@ -128,9 +169,11 @@ if (typeof module !== "undefined") module.exports = {
     moveTo,
     moveAtDrop,
     moveKeyboard,
+    moveDirection,
     overflowOpen,
     popoverActive,
     overflowFor,
+    overflowBudgets,
     priority,
     widthFor,
 };

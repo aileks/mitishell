@@ -14,7 +14,7 @@ FocusScope {
     readonly property bool menuOpen: SurfaceCoordinator.activeKey === "tray"
         && SurfaceCoordinator.originScreen === screen
 
-    implicitWidth: trayRow.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: trayRow.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     activeFocusOnTab: true
 

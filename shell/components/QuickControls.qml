@@ -5,8 +5,7 @@ Column {
     id: root
 
     property bool showVolume: true
-    readonly property bool wifiAvailable: Network.wifi !== null
-        && Network.wifi.available
+    readonly property bool wifiAvailable: Network.wifiAvailable
 
     spacing: Theme.spaceSm
 

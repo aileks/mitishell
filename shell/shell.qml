@@ -266,6 +266,7 @@ ShellRoot {
             if (target === null) {
                 return "control center unavailable";
             }
+            // Legacy aliases must match runLegacyControlAction in cli.go.
             const renamed = page === "home" ? "overview"
                 : (page === "settings" ? "system" : page);
             Control.selectPage(renamed);

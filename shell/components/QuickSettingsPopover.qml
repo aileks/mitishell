@@ -7,12 +7,6 @@ Item {
     required property var screen
     implicitHeight: content.implicitHeight
 
-    onVisibleChanged: {
-        if (!visible) return;
-        Network.refresh();
-        Display.refresh();
-    }
-
     Column {
         id: content
 

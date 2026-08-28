@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -82,7 +83,6 @@ func knownWidget(id string) bool {
 // unexpectedly visible. The first placement wins; excess center widgets and
 // every missing known widget move to hidden.
 func NormalizeBarLayout(layout BarLayout) BarLayout {
-	layout = normalizeQuickSettingsAlias(layout)
 	seen := make(map[string]struct{}, len(knownWidgets))
 	result := BarLayout{Left: []string{}, Center: []string{}, Right: []string{}, Hidden: []string{}}
 	centerExcess := []string{}
@@ -122,53 +122,6 @@ func NormalizeBarLayout(layout BarLayout) BarLayout {
 		if _, exists := seen[id]; !exists {
 			result.Hidden = append(result.Hidden, id)
 		}
-	}
-	return result
-}
-
-// Configs from the short-lived dual-widget layout may contain both names.
-// Preserve a visible Settings placement when Quick Settings was only hidden.
-func normalizeQuickSettingsAlias(layout BarLayout) BarLayout {
-	result := BarLayout{
-		Left:   append([]string(nil), layout.Left...),
-		Center: append([]string(nil), layout.Center...),
-		Right:  append([]string(nil), layout.Right...),
-		Hidden: append([]string(nil), layout.Hidden...),
-	}
-	sections := []*[]string{&result.Left, &result.Center, &result.Right, &result.Hidden}
-	settingsSection := -1
-	settingsIndex := -1
-	quickSettingsSection := -1
-	for sectionIndex, values := range sections {
-		for widgetIndex, id := range *values {
-			if id == "settings" && settingsSection == -1 {
-				settingsSection = sectionIndex
-				settingsIndex = widgetIndex
-			}
-			if id == "quickSettings" && quickSettingsSection == -1 {
-				quickSettingsSection = sectionIndex
-			}
-		}
-	}
-	if settingsSection == -1 {
-		return result
-	}
-
-	moveSettingsPlacement := quickSettingsSection == -1 ||
-		(quickSettingsSection == len(sections)-1 && settingsSection != len(sections)-1)
-	for _, values := range sections {
-		*values = slicesWithout(*values, "settings")
-		if moveSettingsPlacement {
-			*values = slicesWithout(*values, "quickSettings")
-		}
-	}
-	if moveSettingsPlacement {
-		values := *sections[settingsSection]
-		settingsIndex = min(settingsIndex, len(values))
-		values = append(values, "")
-		copy(values[settingsIndex+1:], values[settingsIndex:])
-		values[settingsIndex] = "quickSettings"
-		*sections[settingsSection] = values
 	}
 	return result
 }
@@ -373,7 +326,7 @@ func normalizeLegacyIslands(islands []string) []string {
 	seen := make(map[string]struct{}, len(known))
 	result := make([]string, 0, len(known))
 	for _, id := range islands {
-		if !slicesContains(known, id) {
+		if !slices.Contains(known, id) {
 			continue
 		}
 		if _, exists := seen[id]; exists {
@@ -409,15 +362,6 @@ func slicesWithout(values []string, unwanted string) []string {
 		}
 	}
 	return result
-}
-
-func slicesContains(values []string, target string) bool {
-	for _, value := range values {
-		if value == target {
-			return true
-		}
-	}
-	return false
 }
 
 func Validate(cfg Config) error {

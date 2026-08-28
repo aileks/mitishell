@@ -6,7 +6,7 @@ Item {
 
     required property string mode
 
-    implicitWidth: content.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
 
     Row {

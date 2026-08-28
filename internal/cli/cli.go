@@ -1022,6 +1022,8 @@ func runLegacyControlAction(
 	}
 	page := "overview"
 	if len(args) == 2 {
+		// Legacy aliases must match the renames in shell.qml's control
+		// toggle handler; direct IPC callers rely on that side too.
 		page = map[string]string{"home": "overview", "settings": "system"}[args[1]]
 		if page == "" {
 			page = args[1]

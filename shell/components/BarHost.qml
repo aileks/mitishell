@@ -133,12 +133,14 @@ PanelWindow {
         const widths = {};
         collectWidths(leftRepeater, localLayout.left, widths);
         collectWidths(rightRepeater, localLayout.right, widths);
-        const budget = Math.max(0,
-            width / 2 - Math.min(centerRow.implicitWidth, 420) / 2 - Theme.spaceXl * 2);
         const left = localLayout.left.filter(function(id) { return widths[id] !== undefined; });
         const right = localLayout.right.filter(function(id) { return widths[id] !== undefined; });
-        overflowIds = BarModel.overflowFor(left, widths, budget, Theme.spaceXs, 28)
-            .concat(BarModel.overflowFor(right, widths, budget, Theme.spaceXs, 28));
+        const totalSides = Math.max(0,
+            width - Math.min(centerRow.implicitWidth, 420) - Theme.spaceXl * 4);
+        const budgets = BarModel.overflowBudgets(
+            left, right, widths, totalSides, Theme.spaceXs, 28);
+        overflowIds = BarModel.overflowFor(left, widths, budgets.left, Theme.spaceXs, 28)
+            .concat(BarModel.overflowFor(right, widths, budgets.right, Theme.spaceXs, 28));
     }
 
     screen: modelData
@@ -296,11 +298,9 @@ PanelWindow {
             Keys.onPressed: function(event) {
                 if (!(event.modifiers & Qt.ControlModifier)
                         || !(event.modifiers & Qt.ShiftModifier)) return;
-                if (event.key === Qt.Key_Left) root.keyboardMove(modelData, "previous");
-                else if (event.key === Qt.Key_Right) root.keyboardMove(modelData, "next");
-                else if (event.key === Qt.Key_Up) root.keyboardMove(modelData, "previous-section");
-                else if (event.key === Qt.Key_Down) root.keyboardMove(modelData, "next-section");
-                else return;
+                const direction = BarModel.moveDirection(event.key);
+                if (direction === "") return;
+                root.keyboardMove(modelData, direction);
                 event.accepted = true;
             }
 

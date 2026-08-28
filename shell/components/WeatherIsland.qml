@@ -3,7 +3,7 @@ import "../core"
 import "../lib/WeatherModel.js" as WeatherModel
 
 Item {
-    implicitWidth: content.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
 
     Row {

@@ -8,14 +8,50 @@ Item {
 
     required property string widgetId
     required property var screen
-    readonly property bool available: widgetId === "media" ? Media.meaningful
-        : widgetId === "keyboardLayout" ? KeyboardLayout.available
-        : widgetId === "updates" ? Updates.visible
-        : widgetId === "tray" ? Tray.available
-        : widgetId === "network" ? Network.useful
-        : widgetId === "bluetooth" ? Bluetooth.state === "ready"
-        : widgetId === "weather" ? Weather.visible
-        : true
+    readonly property var widgets: ({
+        workspaces: { component: workspacesComponent },
+        windowTitle: { component: titleComponent },
+        media: {
+            component: mediaComponent,
+            available: function() { return Media.meaningful; },
+        },
+        system: { component: systemComponent },
+        audio: { component: audioComponent },
+        keyboardLayout: {
+            component: keyboardComponent,
+            available: function() { return KeyboardLayout.available; },
+        },
+        updates: {
+            component: updatesComponent,
+            available: function() { return Updates.visible; },
+        },
+        clock: { component: clockComponent },
+        tray: {
+            component: trayComponent,
+            available: function() { return Tray.available; },
+        },
+        network: {
+            component: networkComponent,
+            available: function() { return Network.available; },
+        },
+        bluetooth: {
+            component: bluetoothComponent,
+            available: function() { return Bluetooth.state === "ready"; },
+        },
+        quickSettings: { component: quickSettingsComponent },
+        notifications: { component: notificationsComponent },
+        weather: {
+            component: weatherComponent,
+            available: function() { return Weather.visible; },
+        },
+        status: { component: statusComponent },
+        power: { component: powerComponent },
+    })
+    readonly property bool available: {
+        const rule = widgets[widgetId];
+        return rule !== undefined && rule.available !== undefined
+            ? rule.available() : true;
+    }
     readonly property var dragVisual: widgetLoader.item
 
     implicitWidth: available ? widgetLoader.implicitWidth : 0
@@ -25,22 +61,10 @@ Item {
     Loader {
         id: widgetLoader
         anchors.centerIn: parent
-        sourceComponent: root.widgetId === "workspaces" ? workspacesComponent
-            : root.widgetId === "windowTitle" ? titleComponent
-            : root.widgetId === "media" ? mediaComponent
-            : root.widgetId === "system" ? systemComponent
-            : root.widgetId === "audio" ? audioComponent
-            : root.widgetId === "keyboardLayout" ? keyboardComponent
-            : root.widgetId === "updates" ? updatesComponent
-            : root.widgetId === "clock" ? clockComponent
-            : root.widgetId === "tray" ? trayComponent
-            : root.widgetId === "network" ? networkComponent
-            : root.widgetId === "bluetooth" ? bluetoothComponent
-            : root.widgetId === "quickSettings" ? quickSettingsComponent
-            : root.widgetId === "notifications" ? notificationsComponent
-            : root.widgetId === "weather" ? weatherComponent
-            : root.widgetId === "status" ? statusComponent
-            : root.widgetId === "power" ? powerComponent : null
+        sourceComponent: {
+            const rule = root.widgets[root.widgetId];
+            return rule !== undefined ? rule.component : null;
+        }
     }
 
     Component {
@@ -61,7 +85,7 @@ Item {
         id: mediaComponent
         Item {
             implicitWidth: Math.min(
-                272,
+                200,
                 playbackButton.width + Theme.spaceSm + mediaContent.implicitWidth,
             )
             implicitHeight: 30

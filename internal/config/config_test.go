@@ -399,42 +399,6 @@ func TestDefaultBarLayoutKeepsDedicatedWidgetsSeparateFromQuickSettings(t *testi
 	}
 }
 
-func TestNormalizeBarLayoutMovesVisibleSettingsAliasToQuickSettings(t *testing.T) {
-	got := config.NormalizeBarLayout(config.BarLayout{
-		Left:   []string{"workspaces"},
-		Center: []string{"media"},
-		Right:  []string{"clock", "settings", "power"},
-		Hidden: []string{"quickSettings", "display"},
-	})
-	wantRight := []string{"clock", "quickSettings", "power"}
-	if !reflect.DeepEqual(got.Right, wantRight) {
-		t.Fatalf("right = %#v, want %#v", got.Right, wantRight)
-	}
-	if slicesContains(got.Hidden, "settings") || slicesContains(got.Hidden, "display") {
-		t.Fatalf("obsolete widgets survived normalization: %#v", got.Hidden)
-	}
-}
-
-func TestNormalizeBarLayoutKeepsConfiguredQuickSettingsWhenBothNamesAreVisible(t *testing.T) {
-	got := config.NormalizeBarLayout(config.BarLayout{
-		Left:   []string{"workspaces"},
-		Center: []string{"media"},
-		Right:  []string{"quickSettings", "settings", "power"},
-	})
-	if !reflect.DeepEqual(got.Right, []string{"quickSettings", "power"}) {
-		t.Fatalf("right = %#v", got.Right)
-	}
-}
-
-func slicesContains(values []string, target string) bool {
-	for _, value := range values {
-		if value == target {
-			return true
-		}
-	}
-	return false
-}
-
 func TestSetFieldRejectsFourthInteractiveCenterWidget(t *testing.T) {
 	_, err := config.SetField(config.Defaults(), "bar.layout.center", `["media","clock","weather","audio"]`)
 	if err == nil {

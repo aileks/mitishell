@@ -8,7 +8,7 @@ FocusScope {
 
     property bool open: false
 
-    implicitWidth: content.implicitWidth + Theme.spaceSm * 2
+    implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     Accessible.name: Notifications.unread > 0
         ? "Notifications, " + Notifications.unread + " unread" : "Notifications"

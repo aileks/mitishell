@@ -11,7 +11,7 @@ QtObject {
     property string error: ""
     property string launchError: ""
     readonly property bool updating: updateProcess.running
-    readonly property bool visible: result !== null && result.supported
+    readonly property bool visible: result !== null && result.supported && count > 0
     readonly property int count: result === null ? 0 : result.system.count + result.aur.count
 
     function refresh() {
@@ -65,15 +65,15 @@ QtObject {
     }
 
     property Timer refreshTimer: Timer {
-        interval: 30 * 60 * 1000
+        interval: 8 * 60 * 60 * 1000
         repeat: true
         running: true
         onTriggered: root.refresh()
     }
 
     // A failed check usually means the shell started before the package
-    // tools or network were ready; retry gently instead of sitting in the
-    // error state for half an hour.
+    // tools or network were ready; retry gently instead of waiting for the
+    // next scheduled check.
     property Timer retryTimer: Timer {
         interval: 5 * 60 * 1000
         repeat: true

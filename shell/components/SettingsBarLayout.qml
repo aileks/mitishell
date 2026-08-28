@@ -192,11 +192,7 @@ Column {
                         Keys.onPressed: function(event) {
                             if (!(event.modifiers & Qt.ControlModifier)
                                     || !(event.modifiers & Qt.ShiftModifier)) return;
-                            let direction = "";
-                            if (event.key === Qt.Key_Left) direction = "previous";
-                            else if (event.key === Qt.Key_Right) direction = "next";
-                            else if (event.key === Qt.Key_Up) direction = "previous-section";
-                            else if (event.key === Qt.Key_Down) direction = "next-section";
+                            const direction = BarModel.moveDirection(event.key);
                             if (direction === "") return;
                             root.save(BarModel.moveKeyboard(root.localLayout, pill.modelData, direction));
                             event.accepted = true;

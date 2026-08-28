@@ -30,6 +30,14 @@ test("keyboard movement crosses sections and respects center capacity", () => {
     assert.deepEqual(moved.center, ["media", "windowTitle"]);
 });
 
+test("arrow keys map to the four keyboard move directions", () => {
+    assert.equal(model.moveDirection(0x01000012), "previous");
+    assert.equal(model.moveDirection(0x01000013), "next");
+    assert.equal(model.moveDirection(0x01000014), "previous-section");
+    assert.equal(model.moveDirection(0x01000015), "next-section");
+    assert.equal(model.moveDirection(0x41), "");
+});
+
 test("responsive overflow is non-mutating and preserves configured order", () => {
     const ids = ["audio", "clock", "weather", "status", "power"];
     const before = ids.slice();
@@ -49,6 +57,52 @@ test("essential access remains visible when low-priority widgets can overflow", 
     assert.equal(model.priority("power"), 100);
     assert.equal(model.priority("quickSettings"), 100);
     assert.equal(model.priority("audio"), 10);
+});
+
+test("light sides keep an even budget split", () => {
+    const widths = { workspaces: 100, power: 60 };
+    assert.deepEqual(
+        model.overflowBudgets(["workspaces"], ["power"], widths, 400, 4, 28),
+        { left: 200, right: 200 },
+    );
+});
+
+test("a crowded side uses the other side's unused space", () => {
+    const widths = { workspaces: 100, media: 200, power: 60 };
+    const budgets = model.overflowBudgets(
+        ["workspaces", "media"],
+        ["power"],
+        widths,
+        400,
+        4,
+        28,
+    );
+    assert.deepEqual(budgets, { left: 304, right: 96 });
+    assert.deepEqual(model.overflowFor(["workspaces", "media"], widths, budgets.left, 4, 28), []);
+    assert.deepEqual(model.overflowFor(["power"], widths, budgets.right, 4, 28), []);
+});
+
+test("sides over their share fall back to an even split", () => {
+    const widths = { workspaces: 100, media: 200, clock: 100, updates: 200 };
+    assert.deepEqual(
+        model.overflowBudgets(
+            ["workspaces", "media"],
+            ["clock", "updates"],
+            widths,
+            400,
+            4,
+            28,
+        ),
+        { left: 200, right: 200 },
+    );
+});
+
+test("essential-heavy sides keep the even split rather than hiding access", () => {
+    const widths = { workspaces: 300, power: 300 };
+    assert.deepEqual(
+        model.overflowBudgets(["workspaces"], ["power"], widths, 400, 4, 28),
+        { left: 200, right: 200 },
+    );
 });
 
 test("a disabled hidden popover copy cannot activate", () => {

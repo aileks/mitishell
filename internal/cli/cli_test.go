@@ -1131,7 +1131,7 @@ func TestDoctorReportsRequiredFailuresAndOptionalWarnings(t *testing.T) {
 		Shell:      shellStub{},
 		Doctor: doctorStub{checks: []cli.Check{
 			{Name: "quickshell", Status: cli.StatusOK, Detail: "0.3.0"},
-			{Name: "missioncenter", Status: cli.StatusWarning, Detail: "not found"},
+			{Name: "ddcutil", Status: cli.StatusWarning, Detail: "not found"},
 			{Name: "hyprland", Status: cli.StatusFailure, Detail: "session unavailable"},
 		}},
 	}
@@ -1141,7 +1141,7 @@ func TestDoctorReportsRequiredFailuresAndOptionalWarnings(t *testing.T) {
 	if exitCode == 0 {
 		t.Fatal("Run() returned success despite required doctor failure")
 	}
-	want := "[ok] quickshell: 0.3.0\n[warn] missioncenter: not found\n[fail] hyprland: session unavailable\n"
+	want := "[ok] quickshell: 0.3.0\n[warn] ddcutil: not found\n[fail] hyprland: session unavailable\n"
 	if got := stdout.String(); got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
 	}

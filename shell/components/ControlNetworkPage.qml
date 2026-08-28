@@ -13,7 +13,7 @@ Flickable {
         && Network.ethernet.available
     readonly property string ethernetState: ethernetAvailable
         ? Network.ethernet.state : "unavailable"
-    readonly property bool wifiAvailable: Network.wifi !== null && Network.wifi.available
+    readonly property bool wifiAvailable: Network.wifiAvailable
     readonly property bool wifiEnabled: wifiAvailable && Network.wifi.enabled
     readonly property string wifiState: wifiAvailable
         ? Network.wifi.state : "unavailable"

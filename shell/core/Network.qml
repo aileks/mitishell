@@ -18,9 +18,18 @@ QtObject {
 
     readonly property var wifi: snapshot !== null ? snapshot.wifi : null
     readonly property var ethernet: snapshot !== null ? snapshot.ethernet : null
-    readonly property bool useful: state === "ready"
+    readonly property bool available: state === "ready"
         && ((wifi !== null && wifi.available)
             || (ethernet !== null && ethernet.available))
+    readonly property bool wifiAvailable: wifi !== null && wifi.available
+    readonly property var activeStation: {
+        if (!wifiAvailable) return null;
+        const stations = wifi.stations || [];
+        for (let index = 0; index < stations.length; index += 1) {
+            if (stations[index].inUse) return stations[index];
+        }
+        return null;
+    }
 
     function refresh() {
         if (!snapshotProcess.running) {

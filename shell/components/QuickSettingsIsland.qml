@@ -2,7 +2,7 @@ import QtQuick
 import "../core"
 
 Item {
-    implicitWidth: 16 + Theme.spaceSm * 2
+    implicitWidth: 16 + Theme.islandPadding
     implicitHeight: 24
 
     Image {

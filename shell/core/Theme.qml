@@ -47,6 +47,9 @@ QtObject {
     readonly property int spaceLg: 16
     readonly property int spaceXl: 24
 
+    // Horizontal padding inside a bar island, on both sides of its content.
+    readonly property int islandPadding: spaceSm * 2
+
     readonly property int controlHeightSm: 28
     readonly property int controlHeight: 36
     readonly property int controlHeightLg: 44
