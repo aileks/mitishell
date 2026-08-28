@@ -1,105 +1,62 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import "../core"
 
 Item {
     id: root
 
-    readonly property bool marqueeNeeded: Config.motion.enabled
-        && !Config.motion.reduced
-        && metadataStrip.implicitWidth > metadataViewport.width
-
-    implicitWidth: metadataStrip.implicitWidth
+    implicitWidth: metadataViewport.implicitWidth
     implicitHeight: 30
 
-    function restartMarquee() {
-        marquee.stop();
-        metadataStrip.x = 0;
-        if (marqueeNeeded) {
-            Qt.callLater(function() {
-                if (root.marqueeNeeded) {
-                    marquee.start();
-                }
-            });
-        }
-    }
-
-    onMarqueeNeededChanged: restartMarquee()
-
-    Item {
+    OverflowRow {
         id: metadataViewport
 
         anchors.fill: parent
-        clip: true
-
-        onWidthChanged: root.restartMarquee()
-
-        Row {
-            id: metadataStrip
-
+        animationsEnabled: Config.motion.enabled
+        reducedMotion: Config.motion.reduced
+        initialPauseDuration: Motion.duration(1200)
+        endPauseDuration: Motion.duration(900)
+        returnDuration: Motion.duration(Motion.normal)
+        fallback: Text {
+            objectName: "staticMetadata"
             anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceXs
-
-            onImplicitWidthChanged: root.restartMarquee()
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Media.title
-                color: Media.available ? Theme.textBright : Theme.textMuted
-                font.family: Theme.fontSans
-                font.pixelSize: Theme.fontSizeBody
-                font.weight: Font.DemiBold
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: Media.artist !== ""
-                text: "•"
-                color: Theme.purple
-                font.family: Theme.fontSans
-                font.pixelSize: Theme.fontSizeCaption
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: Media.artist !== ""
-                text: Media.artist
-                color: Theme.textMuted
-                font.family: Theme.fontSans
-                font.pixelSize: Theme.fontSizeCaption
-            }
-        }
-    }
-
-    SequentialAnimation {
-        id: marquee
-
-        loops: Animation.Infinite
-
-        PauseAnimation {
-            duration: Motion.duration(1200)
+            width: metadataViewport.width
+            text: Media.title + (Media.artist !== "" ? " • " + Media.artist : "")
+            elide: Text.ElideRight
+            color: Media.available ? Theme.textBright : Theme.textMuted
+            font.family: Theme.fontSans
+            font.pixelSize: Theme.fontSizeBody
+            font.weight: Font.DemiBold
         }
 
-        NumberAnimation {
-            target: metadataStrip
-            property: "x"
-            to: metadataViewport.width - metadataStrip.implicitWidth
-            duration: Motion.duration(Math.max(
-                1200,
-                (metadataStrip.implicitWidth - metadataViewport.width) * 32,
-            ))
-            easing.type: Easing.Linear
+        spacing: Theme.spaceXs
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Media.title
+            color: Media.available ? Theme.textBright : Theme.textMuted
+            font.family: Theme.fontSans
+            font.pixelSize: Theme.fontSizeBody
+            font.weight: Font.DemiBold
         }
 
-        PauseAnimation {
-            duration: Motion.duration(900)
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: Media.artist !== ""
+            text: "•"
+            color: Theme.purple
+            font.family: Theme.fontSans
+            font.pixelSize: Theme.fontSizeCaption
         }
 
-        NumberAnimation {
-            target: metadataStrip
-            property: "x"
-            to: 0
-            duration: Motion.duration(Motion.normal)
-            easing.type: Motion.easingStandard
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: Media.artist !== ""
+            text: Media.artist
+            color: Theme.textMuted
+            font.family: Theme.fontSans
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }
