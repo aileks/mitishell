@@ -14,7 +14,6 @@ Item {
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
             value: Icons.packageIcon
-            size: Theme.iconMd
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter

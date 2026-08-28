@@ -34,7 +34,6 @@ FocusScope {
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
             value: Icons.bluetooth
-            size: Theme.iconMd
         }
 
         Text {

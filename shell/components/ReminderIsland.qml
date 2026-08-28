@@ -23,7 +23,6 @@ FocusScope {
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
             value: Icons.alarmClock
-            size: Theme.iconSm
         }
 
         Text {

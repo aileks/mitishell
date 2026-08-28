@@ -15,7 +15,6 @@ Item {
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
             value: Icons.wifi
-            size: Theme.iconMd
         }
 
         Text {

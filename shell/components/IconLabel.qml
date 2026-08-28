@@ -5,7 +5,7 @@ Item {
     id: root
 
     property string value: ""
-    property int size: Theme.iconMd
+    property int size: Theme.barIconSize
 
     implicitWidth: size
     implicitHeight: size

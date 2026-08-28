@@ -33,7 +33,6 @@ FocusScope {
         IconLabel {
             anchors.centerIn: parent
             value: Icons.power
-            size: Theme.iconMd
         }
 
         HoverHandler {

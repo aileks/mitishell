@@ -17,7 +17,6 @@ Item {
 
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
-            size: Theme.iconMd
             value: root.mode === "combined"
                 ? Icons.computer
                 : Icons.cpu
@@ -43,7 +42,7 @@ Item {
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.mode === "separate"
-            size: visible ? Theme.iconMd : 0
+            size: visible ? Theme.barIconSize : 0
             value: Icons.memory
         }
 

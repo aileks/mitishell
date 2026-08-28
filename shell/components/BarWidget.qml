@@ -113,7 +113,6 @@ Item {
 
                     IconLabel {
                         anchors.centerIn: parent
-                        size: Theme.iconSm
                         value: Media.activePlayer !== null && Media.activePlayer.isPlaying
                             ? Icons.pause
                             : Icons.play

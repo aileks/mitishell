@@ -73,7 +73,6 @@ FocusScope {
                     value: root.expanded
                         ? Icons.chevronRight
                         : Icons.chevronLeft
-                    size: Theme.iconMd
                 }
                 HoverHandler { id: chevronHover; cursorShape: Qt.PointingHandCursor }
             }

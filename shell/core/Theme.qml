@@ -47,7 +47,7 @@ QtObject {
     readonly property int spaceLg: 16
     readonly property int spaceXl: 24
 
-    // Horizontal padding inside a bar island, on both sides of its content.
+    // Horizontal padding inside a bar widget, on both sides of its content.
     readonly property int islandPadding: spaceSm * 2
 
     readonly property int controlHeightSm: 28
@@ -56,6 +56,10 @@ QtObject {
     readonly property int iconSm: 16
     readonly property int iconMd: 20
     readonly property int iconLg: 28
+    readonly property int barIconSize: Math.max(
+        fontSizeCaption,
+        Math.min(iconLg, Math.round(Config.bar.height * 4 / 9)),
+    )
     readonly property int floatingOffset: 5
 
     readonly property string fontSans: "Adwaita Sans"

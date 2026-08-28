@@ -8,6 +8,5 @@ Item {
     IconLabel {
         anchors.centerIn: parent
         value: Icons.settings
-        size: Theme.iconMd
     }
 }

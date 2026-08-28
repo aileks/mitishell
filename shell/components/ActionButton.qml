@@ -45,7 +45,6 @@ FocusScope {
                 visible: root.iconSource !== ""
                 anchors.verticalCenter: parent.verticalCenter
                 value: root.iconSource
-                size: Theme.iconSm
             }
 
             Text {

@@ -23,7 +23,6 @@ FocusScope {
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
             value: Notifications.doNotDisturb ? Icons.bellOff : Icons.bell
-            size: Theme.iconMd
         }
 
         Text {

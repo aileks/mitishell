@@ -189,7 +189,6 @@ PanelWindow {
                             IconLabel {
                                 anchors.verticalCenter: parent.verticalCenter
                                 value: railButton.modelData.icon
-                                size: Theme.iconSm
                             }
 
                             Text {

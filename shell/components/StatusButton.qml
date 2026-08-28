@@ -29,7 +29,6 @@ FocusScope {
             anchors.centerIn: parent
             visible: root.iconSource !== ""
             value: root.iconSource
-            size: Theme.iconSm
         }
 
         HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

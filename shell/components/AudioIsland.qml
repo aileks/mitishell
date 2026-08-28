@@ -17,7 +17,6 @@ Item {
         IconLabel {
             anchors.verticalCenter: parent.verticalCenter
             value: Audio.outputMuted ? Icons.volumeOff : Icons.volumeHigh
-            size: Theme.iconMd
             opacity: Audio.ready ? 1 : 0.5
         }
 
