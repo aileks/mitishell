@@ -108,7 +108,7 @@ mitishell osd --message "Syncing" --progress 65 --duration 2000
 mitishell osd --icon '󰔛' --message "Nerd Font glyph"
 ```
 
-At least one of `--icon`, `--message`, or `--progress` is required. Progress accepts 0 through 100, duration accepts 250 through 30000 milliseconds, and the default duration is 1200 milliseconds. Icons resolve through Mitishell aliases, readable local files, bundled icons, freedesktop theme icons, then Nerd Font glyphs or text. Remote image URLs are rejected.
+At least one of `--icon`, `--message`, or `--progress` is required. Progress accepts 0 through 100, duration accepts 250 through 30000 milliseconds, and the default duration is 1200 milliseconds. Icons resolve through Mitishell's Nerd Font aliases, readable local files, freedesktop theme icons, then literal glyphs or text. Remote image URLs are rejected.
 
 ## Emoji picker
 
@@ -150,11 +150,11 @@ Timers are transient user-systemd units. Their private metadata lives under `$XD
 
 ## Prebuilt installation
 
-Each release includes Linux archives for amd64 and arm64. The archive contains the Mitishell binary, QML shell, desktop entry, license, and third-party notices.
+Each release includes Linux archives for amd64 and arm64. The archive contains the Mitishell binary, QML shell, desktop entry, required third-party notices, and license files.
 
 ```bash
-tar -xzf mitishell-v1.0.0-linux-amd64.tar.gz
-cd mitishell-v1.0.0-linux-amd64
+tar -xzf mitishell-v1.0.1-linux-amd64.tar.gz
+cd mitishell-v1.0.1-linux-amd64
 make install-prebuilt
 quickshell -n -p ~/.local/share/mitishell/shell
 ```
