@@ -4,7 +4,7 @@ import QtQuick
 import "../core"
 
 // The bell popover: recent history with actions, quick dismiss, and the
-// do-not-disturb switch, anchored under the island.
+// do-not-disturb switch, anchored under the bar widget.
 Flickable {
     id: root
 
@@ -72,7 +72,6 @@ Flickable {
         ToggleRow {
             width: parent.width
             label: "Do not disturb"
-            description: "Popups pause; critical notifications and history keep working."
             checked: Notifications.doNotDisturb
             onToggled: Notifications.toggleDoNotDisturb()
         }
@@ -81,7 +80,6 @@ Flickable {
             width: parent.width
             visible: Notifications.history.length === 0
             title: "No notifications"
-            description: "New activity will appear here."
             accent: Theme.orange
         }
 

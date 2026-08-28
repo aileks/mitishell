@@ -4,10 +4,10 @@ import QtQuick
 import Quickshell
 import "../core"
 
-// Toast popups anchored under the bar's bell island, right-aligned with it.
+// Toast popups anchored under the bar's bell widget, right-aligned with it.
 // Passive by design: no keyboard focus and no grab, so the rest of the
 // screen stays live while cards come and go. The popup inherits its screen
-// from the parent bar window; only that bar's island shows toasts.
+// from the parent bar window; only that bar's widget shows toasts.
 PopupWindow {
     id: root
 
@@ -34,7 +34,7 @@ PopupWindow {
     implicitHeight: stack.implicitHeight
 
     // The stack grows and shrinks as cards expire; keep the anchor pinned
-    // to the island instead of letting the compositor re-slide it.
+    // to the widget instead of letting the compositor re-slide it.
     // qmllint disable unresolved-type
     onImplicitHeightChanged: root.anchor.updateAnchor()
     // qmllint enable unresolved-type
@@ -55,8 +55,8 @@ PopupWindow {
             }
 
             // The stack hugs the output's right edge, wherever the bell
-            // island sits in the configured order; only the vertical anchor
-            // follows the island.
+            // widget sits in the configured order; only the vertical anchor
+            // follows the widget.
             const localY = root.anchorItem.height + Theme.spaceSm;
             const point = root.anchorWindow.contentItem.mapFromItem(
                 root.anchorItem,
