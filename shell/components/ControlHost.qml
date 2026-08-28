@@ -164,20 +164,19 @@ PanelWindow {
                         height: Theme.controlHeightLg
                         radius: Theme.radiusPill
                         color: Control.page === modelData.key
-                            ? Theme.alpha(modelData.accent, 0.22)
+                            ? Theme.alpha(modelData.accent, 0.14)
                             : (activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised)
-                        border.width: activeFocus ? 2 : 1
-                        border.color: activeFocus ? Theme.blue
-                            : (Control.page === modelData.key ? modelData.accent : Theme.borderStrong)
+                        border.width: Control.page === modelData.key ? 1 : (activeFocus ? 2 : 1)
+                        border.color: Control.page === modelData.key ? modelData.accent
+                            : (activeFocus ? Theme.blue : Theme.borderStrong)
                         activeFocusOnTab: true
                         Accessible.name: modelData.label
                         Accessible.role: Accessible.Button
                         Accessible.onPressAction: selectPage()
 
-                        function selectPage() {
-                            forceActiveFocus(Qt.MouseFocusReason);
-                            Control.selectPage(modelData.key);
-                        }
+                    function selectPage() {
+                        Control.selectPage(modelData.key);
+                    }
 
                         Row {
                             anchors.left: parent.left

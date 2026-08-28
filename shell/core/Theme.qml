@@ -62,8 +62,12 @@ QtObject {
     )
     readonly property int floatingOffset: 5
 
-    readonly property string fontSans: "Adwaita Sans"
-    readonly property string fontMono: "Adwaita Mono"
+    // The user-chosen Nerd Font family drives every text slot; an empty
+    // family keeps the shipped Adwaita defaults.
+    readonly property string fontSans: Config.font.family !== ""
+        ? Config.font.family : "Adwaita Sans"
+    readonly property string fontMono: Config.font.family !== ""
+        ? Config.font.family : "Adwaita Mono"
     readonly property int fontSizeCaption: 12
     readonly property int fontSizeBodySmall: 13
     readonly property int fontSizeBody: 14

@@ -17,7 +17,7 @@ Brightness control additionally needs `ddcutil` and read access to the monitors'
 
 Reminders additionally need a working user systemd session with `systemd-run` and `systemctl`. Missing reminder dependencies disable reminders without affecting the rest of the shell.
 
-The update widget needs `checkupdates` from `pacman-contrib`. AUR counts and upgrades additionally use `paru` or `yay`, preferring `paru`. Missing optional update tools hide or reduce the widget without affecting the shell. Launching an update also needs `xdg-terminal-exec`, `$TERMINAL`, foot, Alacritty, kitty, or Ghostty. Mitishell only shows the command and launches it after explicit activation.
+The update widget needs `checkupdates` from `pacman-contrib`. AUR counts and upgrades additionally use `paru` or `yay`. Missing optional update tools hide or reduce the widget without affecting the shell. Launching an update also needs `xdg-terminal-exec`, `$TERMINAL`, foot, Alacritty, kitty, or Ghostty. Mitishell only shows the command and launches it after explicit activation. Checks run when the shell starts and daily at 09:00 local time; a failed check retries every few minutes until it succeeds.
 
 Night-light controls need a user-managed `hyprsunset` process. Mitishell reads and switches its live state through `hyprctl`, setting 4800 K when it turns night light on. It does not start, supervise, or persist configuration for the outside tool. The control stays hidden when `hyprsunset` is not running.
 
@@ -56,6 +56,8 @@ bin/mitishell night-light status
 The default layout keeps Audio and Bluetooth separate and groups Wi-Fi, brightness, do-not-disturb, night light, and reminder access behind one Quick Settings cog. A separate Network widget remains available in bar configuration and defaults to Hidden. Brightness lives in Quick Settings and Settings > Display. The compact reminder indicator appears only while a reminder is active.
 
 The clock defaults to 24-hour time. Right-click its bar label to cycle persisted 24-hour, 12-hour, and seconds variants. `clock.showDate`, `clock.timezones`, and `calendar.showWeekNumbers` control the remaining clock and calendar details.
+
+`font.family` picks one shell-wide font family used for both text and icons. An empty value keeps the shipped Adwaita Sans and Adwaita Mono split. Only Nerd Font families are valid: the shell's icons are Nerd Font glyphs, so an unpatched family would leave the bar without icons. Settings > System lists every installed Nerd Font family under Font, and invalid values are rejected with the same validation as any other key.
 
 ## Weather
 

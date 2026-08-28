@@ -11,8 +11,8 @@ QtObject {
     property int temperatureKelvin: 0
     property string error: ""
     readonly property bool busy: actionProcess.running
-    readonly property string description: available
-        ? (enabled ? "On" : "Off") + " · " + temperatureKelvin + " K"
+    readonly property string description: available && enabled
+        ? "On · " + temperatureKelvin + " K"
         : ""
 
     function applySnapshot(snapshot) {

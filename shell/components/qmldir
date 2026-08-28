@@ -50,6 +50,7 @@ ReminderIsland 1.0 ReminderIsland.qml
 ReminderPopover 1.0 ReminderPopover.qml
 ShellSlider 1.0 ShellSlider.qml
 SettingsChoiceRow 1.0 SettingsChoiceRow.qml
+SettingsFontRow 1.0 SettingsFontRow.qml
 SettingsBarLayout 1.0 SettingsBarLayout.qml
 SettingsPage 1.0 SettingsPage.qml
 SettingsNumberRow 1.0 SettingsNumberRow.qml

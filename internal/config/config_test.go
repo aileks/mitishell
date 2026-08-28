@@ -74,6 +74,30 @@ func TestWeatherLocationNormalizesAndValidates(t *testing.T) {
 	}
 }
 
+func TestFontFamilyNormalizesAndValidates(t *testing.T) {
+	cfg := config.Defaults()
+	updated, err := config.SetField(cfg, "font.family", "  JetBrainsMono Nerd Font  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.Font.Family != "JetBrainsMono Nerd Font" {
+		t.Fatalf("family = %q", updated.Font.Family)
+	}
+	if got, err := config.GetField(updated, "font.family"); err != nil || got != `"JetBrainsMono Nerd Font"` {
+		t.Fatalf("get = %q, %v", got, err)
+	}
+	// The empty family is the shipped Adwaita default and must stay valid.
+	if _, err := config.SetField(updated, "font.family", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := config.SetField(cfg, "font.family", "bad\nfamily"); err == nil {
+		t.Fatal("accepted control character")
+	}
+	if _, err := config.SetField(cfg, "font.family", strings.Repeat("é", 81)); err == nil {
+		t.Fatal("accepted more than 80 Unicode code points")
+	}
+}
+
 func TestLoadReturnsValidatedConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	contents := `{

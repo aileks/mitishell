@@ -39,6 +39,9 @@ QtObject {
         "motion": {
             "enabled": true,
             "reduced": false
+        },
+        "font": {
+            "family": ""
         }
     })
     property var value: defaults
@@ -50,6 +53,7 @@ QtObject {
     readonly property var clock: value.clock
     readonly property var calendar: value.calendar
     readonly property var motion: value.motion
+    readonly property var font: value.font
     readonly property string binary: Quickshell.env("MITISHELL_BIN") || "mitishell"
     readonly property string configRoot: Quickshell.env("XDG_CONFIG_HOME")
         || (Quickshell.env("HOME") + "/.config")

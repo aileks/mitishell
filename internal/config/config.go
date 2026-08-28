@@ -24,6 +24,14 @@ type Config struct {
 	Calendar Calendar `json:"calendar"`
 	Weather  Weather  `json:"weather"`
 	Motion   Motion   `json:"motion"`
+	Font     Font     `json:"font"`
+}
+
+// Font selects the shell-wide font family. An empty family keeps the
+// shipped Adwaita defaults. Only Nerd Font families are supported because
+// the shell's icons are Nerd Font glyphs.
+type Font struct {
+	Family string `json:"family"`
 }
 
 type Bar struct {
@@ -169,6 +177,7 @@ func Defaults() Config {
 		Motion: Motion{
 			Enabled: true,
 		},
+		Font: Font{},
 	}
 }
 
@@ -227,6 +236,7 @@ func Load(path string) (Config, error) {
 		result.Clock.Timezones = []string{}
 	}
 	result.Weather.Location = strings.TrimSpace(result.Weather.Location)
+	result.Font.Family = strings.TrimSpace(result.Font.Family)
 	result.Bar.Layout = NormalizeBarLayout(result.Bar.Layout)
 	if err := Validate(result); err != nil {
 		return Config{}, fmt.Errorf("validate config: %w", err)
@@ -418,6 +428,14 @@ func Validate(cfg Config) error {
 			return errors.New("weather.location must not contain control characters")
 		}
 	}
+	if utf8.RuneCountInString(cfg.Font.Family) > 80 {
+		return errors.New("font.family must contain at most 80 characters")
+	}
+	for _, character := range cfg.Font.Family {
+		if unicode.IsControl(character) {
+			return errors.New("font.family must not contain control characters")
+		}
+	}
 	switch cfg.Clock.Format {
 	case "auto", "24h", "12h", "24h-seconds", "12h-seconds":
 	default:
@@ -595,6 +613,8 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 		result.Weather.Units = parseString(value)
 	case "weather.location":
 		result.Weather.Location = strings.TrimSpace(parseString(value))
+	case "font.family":
+		result.Font.Family = strings.TrimSpace(parseString(value))
 	case "clock.format":
 		result.Clock.Format = parseString(value)
 	case "clock.showDate":
@@ -668,6 +688,8 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Weather.Units
 	case "weather.location":
 		value = cfg.Weather.Location
+	case "font.family":
+		value = cfg.Font.Family
 	case "clock.format":
 		value = cfg.Clock.Format
 	case "clock.showDate":

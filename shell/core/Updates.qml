@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell.Io
+import "../lib/UpdatesModel.js" as UpdatesModel
 
 QtObject {
     id: root
@@ -64,11 +65,17 @@ QtObject {
         }
     }
 
+    // Checks run when the shell starts and daily at 09:00 local. A failed
+    // check retries gently instead of waiting for the next scheduled one.
     property Timer refreshTimer: Timer {
-        interval: 8 * 60 * 60 * 1000
-        repeat: true
+        repeat: false
         running: true
-        onTriggered: root.refresh()
+        interval: UpdatesModel.nextDailyDelayMs(9, new Date())
+        onTriggered: {
+            root.refresh();
+            interval = UpdatesModel.nextDailyDelayMs(9, new Date());
+            restart();
+        }
     }
 
     // A failed check usually means the shell started before the package
