@@ -111,15 +111,11 @@ Item {
                     Accessible.role: Accessible.Button
                     Accessible.onPressAction: Media.togglePlaying()
 
-                    Image {
+                    IconLabel {
                         anchors.centerIn: parent
-                        width: 16
-                        height: 16
-                        source: Media.activePlayer !== null && Media.activePlayer.isPlaying
-                            ? "../assets/icons/pause.svg"
-                            : "../assets/icons/play.svg"
-                        sourceSize.width: 16
-                        sourceSize.height: 16
+                        value: Media.activePlayer !== null && Media.activePlayer.isPlaying
+                            ? Icons.pause
+                            : Icons.play
                         opacity: playbackButton.enabled ? 1 : 0.5
                     }
 

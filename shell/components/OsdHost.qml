@@ -19,9 +19,6 @@ PanelWindow {
         if (iconLayout.kind === "image") {
             return iconLayout.value;
         }
-        if (iconLayout.kind === "bundled") {
-            return "../assets/icons/" + iconLayout.value + ".svg";
-        }
         if (themeIconAvailable) {
             return Quickshell.iconPath(iconLayout.value, true);
         }
@@ -103,8 +100,8 @@ PanelWindow {
                     width: Theme.iconLg
                     height: Theme.iconLg
                     source: root.iconImageSource
-                    sourceSize.width: Theme.iconLg
-                    sourceSize.height: Theme.iconLg
+                    sourceSize.width: Theme.iconLg * 2
+                    sourceSize.height: Theme.iconLg * 2
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                 }
@@ -119,7 +116,7 @@ PanelWindow {
                         ? root.iconLayout.value
                         : root.iconLayout.fallback
                     elide: Text.ElideRight
-                    color: Osd.accent
+                    color: Theme.text
                     font.family: Theme.fontMono
                     font.pixelSize: text.length > 2
                         ? Theme.fontSizeBody

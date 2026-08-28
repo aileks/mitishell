@@ -18,18 +18,27 @@ test("osd icons map by kind", () => {
     assert.equal(OsdModel.iconFor("brightness", 20, false), "sun");
 });
 
-test("icon resolution follows aliases, local files, bundled icons, and themes", () => {
+test("icon resolution follows aliases, local files, and themes", () => {
     assert.deepEqual(OsdModel.resolveIcon("reminder", false), {
-        kind: "bundled", value: "bell", fallback: "reminder",
+        kind: "text", value: "󰔛", fallback: "reminder",
+    });
+    assert.deepEqual(OsdModel.resolveIcon("error", false), {
+        kind: "text", value: "󰅚", fallback: "error",
+    });
+    assert.deepEqual(OsdModel.resolveIcon("success", false), {
+        kind: "text", value: "󰄬", fallback: "success",
+    });
+    assert.deepEqual(OsdModel.resolveIcon("warning", false), {
+        kind: "text", value: "󰀪", fallback: "warning",
     });
     assert.deepEqual(OsdModel.resolveIcon("file:///tmp/icon.png", false), {
         kind: "image", value: "file:///tmp/icon.png", fallback: "file:///tmp/icon.png",
     });
     assert.deepEqual(OsdModel.resolveIcon("settings", false), {
-        kind: "bundled", value: "settings", fallback: "settings",
+        kind: "text", value: "󰒓", fallback: "settings",
     });
     assert.deepEqual(OsdModel.resolveIcon("moon", false), {
-        kind: "bundled", value: "moon", fallback: "moon",
+        kind: "text", value: "󰖔", fallback: "moon",
     });
     assert.deepEqual(OsdModel.resolveIcon("network-wireless", true), {
         kind: "theme", value: "network-wireless", fallback: "network-wireless",

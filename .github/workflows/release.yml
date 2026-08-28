@@ -53,6 +53,6 @@ jobs:
           test -f "${notes_file}"
           gh release create "${GITHUB_REF_NAME}" \
             --verify-tag \
-            --title "Mitishell ${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
             --notes-file "${notes_file}" \
             dist/*.tar.gz dist/SHA256SUMS

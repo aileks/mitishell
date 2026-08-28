@@ -160,13 +160,6 @@ PanelWindow {
                         font.pixelSize: Theme.fontSizeHeading
                         font.weight: Font.DemiBold
                     }
-
-                    Text {
-                        text: "Review active timers or start a new one."
-                        color: Theme.textMuted
-                        font.family: Theme.fontSans
-                        font.pixelSize: Theme.fontSizeBodySmall
-                    }
                 }
 
                 Rectangle {
@@ -394,7 +387,6 @@ PanelWindow {
                             visible: Reminders.count === 0
                             width: parent.width
                             title: "No active reminders"
-                            description: "Create one above. It will appear here while its timer runs."
                             accent: Theme.textMuted
                         }
 

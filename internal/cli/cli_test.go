@@ -1525,3 +1525,67 @@ func TestLegacyControlNamesMapToSettingsPages(t *testing.T) {
 		t.Fatalf("pages = %v", settings.settingsPages)
 	}
 }
+
+func TestHelpCommandsPrintCommandList(t *testing.T) {
+	dependencies := cli.Dependencies{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Shell:      shellStub{},
+	}
+	for _, argument := range []string{"help", "--help", "-h"} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		exitCode := cli.Run([]string{argument}, &stdout, &stderr, dependencies)
+
+		if exitCode != 0 {
+			t.Fatalf("Run(%q) exit code = %d, stderr = %q", argument, exitCode, stderr.String())
+		}
+		output := stdout.String()
+		for _, command := range []string{"config", "doctor", "night-light", "reminder", "volume"} {
+			if !strings.Contains(output, command) {
+				t.Fatalf("help output missing %q:\n%s", command, output)
+			}
+		}
+	}
+}
+
+func TestVersionCommandsPrintReleaseVersion(t *testing.T) {
+	dependencies := cli.Dependencies{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Shell:      shellStub{},
+	}
+	for _, argument := range []string{"version", "--version"} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		exitCode := cli.Run([]string{argument}, &stdout, &stderr, dependencies)
+
+		if exitCode != 0 {
+			t.Fatalf("Run(%q) exit code = %d, stderr = %q", argument, exitCode, stderr.String())
+		}
+		if got := stdout.String(); got != "mitishell v"+cli.Version+"\n" {
+			t.Fatalf("Run(%q) stdout = %q, want %q", argument, got, "mitishell v"+cli.Version)
+		}
+	}
+}
+
+func TestUnknownCommandPointsToHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	dependencies := cli.Dependencies{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Shell:      shellStub{},
+	}
+
+	exitCode := cli.Run([]string{"bogus"}, &stdout, &stderr, dependencies)
+
+	if exitCode != 2 {
+		t.Fatalf("exit code = %d, want usage failure", exitCode)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if got := stderr.String(); !strings.Contains(got, `"bogus"`) || !strings.Contains(got, "mitishell help") {
+		t.Fatalf("stderr = %q, want unknown command with help pointer", got)
+	}
+}

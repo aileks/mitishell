@@ -1,7 +1,7 @@
 import QtQuick
 import "../core"
 
-// The power island opens the native power menu on this output.
+// The power widget opens the native power menu on this output.
 FocusScope {
     id: root
 
@@ -30,13 +30,9 @@ FocusScope {
         border.width: root.activeFocus ? 2 : (root.active ? 1 : 0)
         border.color: root.activeFocus ? Theme.blue : Theme.orange
 
-        Image {
+        IconLabel {
             anchors.centerIn: parent
-            width: 16
-            height: 16
-            source: "../assets/icons/power.svg"
-            sourceSize.width: 16
-            sourceSize.height: 16
+            value: Icons.power
         }
 
         HoverHandler {

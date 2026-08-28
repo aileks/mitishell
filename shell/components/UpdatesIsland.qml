@@ -11,12 +11,9 @@ Item {
         id: content
         anchors.centerIn: parent
         spacing: Theme.spaceXs
-        Text {
+        IconLabel {
             anchors.verticalCenter: parent.verticalCenter
-            text: "󰏔"
-            color: Updates.state === "error" ? Theme.red : Theme.text
-            font.family: Theme.fontSans
-            font.pixelSize: Theme.fontSizeBody
+            value: Icons.packageIcon
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter

@@ -34,7 +34,7 @@ QtObject {
 
     readonly property int unread: NotificationModel.unreadCount(history, lastSeenAt)
 
-    // Popups anchor under the bell island, so they need an output that has
+    // Popups anchor under the bell widget, so they need an output that has
     // a bar: the focused one when it qualifies, otherwise the first that does.
     readonly property var screenNames: {
         const screens = Quickshell.screens !== undefined ? Quickshell.screens : [];

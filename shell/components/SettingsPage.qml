@@ -116,7 +116,6 @@ Flickable {
                     width: parent.width
                     accent: Theme.blue
                     label: "Date"
-                    description: "Show the date beside the clock."
                     checked: Config.clock.showDate
                     onToggled: Settings.setField(
                         "clock.showDate", checked ? "false" : "true")
@@ -126,7 +125,6 @@ Flickable {
                     width: parent.width
                     accent: Theme.blue
                     label: "Week numbers"
-                    description: "Show ISO week numbers in the calendar."
                     checked: Config.calendar.showWeekNumbers
                     onToggled: Settings.setField(
                         "calendar.showWeekNumbers", checked ? "false" : "true")
@@ -151,7 +149,6 @@ Flickable {
                     width: parent.width
                     accent: Theme.blue
                     label: "Enabled"
-                    description: "Fetches forecasts from wttr.in using automatic or manual location."
                     checked: Config.weather.enabled
                     onToggled: Settings.setField(
                         "weather.enabled", checked ? "false" : "true")
@@ -188,7 +185,6 @@ Flickable {
                     width: parent.width
                     accent: Theme.blue
                     label: "Animations"
-                    description: "Animate popovers, popups, and island changes."
                     checked: Config.motion.enabled
                     onToggled: Settings.setField(
                         "motion.enabled", checked ? "false" : "true")
@@ -198,7 +194,6 @@ Flickable {
                     width: parent.width
                     accent: Theme.blue
                     label: "Reduced motion"
-                    description: "Shortens animations when they stay enabled."
                     checked: Config.motion.reduced
                     onToggled: Settings.setField(
                         "motion.reduced", checked ? "false" : "true")

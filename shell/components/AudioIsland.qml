@@ -14,17 +14,9 @@ Item {
         anchors.centerIn: parent
         spacing: Theme.spaceXs
 
-        Image {
+        IconLabel {
             anchors.verticalCenter: parent.verticalCenter
-            width: 16
-            height: 16
-            source: Audio.outputMuted
-                ? "../assets/icons/volume-x.svg"
-                : "../assets/icons/volume-2.svg"
-            // Raster at twice the drawn size; the filtered downscale keeps
-            // the thin arcs crisp at bar scale.
-            sourceSize.width: 32
-            sourceSize.height: 32
+            value: Audio.outputMuted ? Icons.volumeOff : Icons.volumeHigh
             opacity: Audio.ready ? 1 : 0.5
         }
 

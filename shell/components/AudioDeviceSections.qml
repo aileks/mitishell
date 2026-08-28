@@ -20,8 +20,8 @@ Item {
             width: parent.width
             label: "Output"
             iconSource: Audio.outputMuted
-                ? "../assets/icons/volume-x.svg"
-                : "../assets/icons/volume-2.svg"
+                ? Icons.volumeOff
+                : Icons.volumeHigh
             currentValue: Audio.outputVolume
             devices: Audio.sinks
             selectedDevice: Audio.output
@@ -35,8 +35,8 @@ Item {
             width: parent.width
             label: "Input"
             iconSource: Audio.inputMuted
-                ? "../assets/icons/mic-off.svg"
-                : "../assets/icons/mic.svg"
+                ? Icons.microphoneOff
+                : Icons.microphone
             currentValue: Audio.inputVolume
             devices: Audio.sources
             selectedDevice: Audio.input

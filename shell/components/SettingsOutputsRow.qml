@@ -25,15 +25,6 @@ Column {
         font.pixelSize: Theme.fontSizeBody
     }
 
-    Text {
-        width: parent.width
-        text: "Screens that get a bar. All follows every connected monitor."
-        wrapMode: Text.Wrap
-        color: Theme.textMuted
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeCaption
-    }
-
     Flow {
         width: parent.width
         spacing: Theme.spaceSm

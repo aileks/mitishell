@@ -22,17 +22,17 @@ PanelWindow {
 
     readonly property var actions: {
         const entries = [
-            { key: "lock", label: "Lock", icon: "../assets/icons/lock.svg" },
-            { key: "logout", label: "Log out", icon: "../assets/icons/log-out.svg" },
+            { key: "lock", label: "Lock", icon: Icons.lock },
+            { key: "logout", label: "Log out", icon: Icons.logOut },
         ];
         if (Power.suspendAvailable) {
-            entries.push({ key: "suspend", label: "Suspend", icon: "../assets/icons/moon.svg" });
+            entries.push({ key: "suspend", label: "Suspend", icon: Icons.moon });
         }
         if (Power.hibernateAvailable) {
-            entries.push({ key: "hibernate", label: "Hibernate", icon: "../assets/icons/snowflake.svg" });
+            entries.push({ key: "hibernate", label: "Hibernate", icon: Icons.snowflake });
         }
-        entries.push({ key: "reboot", label: "Reboot", icon: "../assets/icons/rotate-ccw.svg" });
-        entries.push({ key: "shutdown", label: "Shut down", icon: "../assets/icons/power.svg" });
+        entries.push({ key: "reboot", label: "Reboot", icon: Icons.refresh });
+        entries.push({ key: "shutdown", label: "Shut down", icon: Icons.power });
         return entries;
     }
 
@@ -184,13 +184,10 @@ PanelWindow {
                         anchors.centerIn: parent
                         spacing: Theme.spaceSm
 
-                        Image {
+                        IconLabel {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 20
-                            height: 20
-                            source: actionTile.modelData.icon
-                            sourceSize.width: 20
-                            sourceSize.height: 20
+                            value: actionTile.modelData.icon
+                            size: 20
                         }
 
                         Text {
@@ -251,13 +248,10 @@ PanelWindow {
                 return null;
             }
 
-            Image {
+            IconLabel {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 28
-                height: 28
-                source: confirmColumn.pending !== null ? confirmColumn.pending.icon : ""
-                sourceSize.width: 28
-                sourceSize.height: 28
+                value: confirmColumn.pending !== null ? confirmColumn.pending.icon : ""
+                size: 28
             }
 
             Text {

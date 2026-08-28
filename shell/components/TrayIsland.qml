@@ -68,12 +68,11 @@ FocusScope {
                 color: parent.activeFocus || chevronHover.hovered ? Theme.hoverFill : "transparent"
                 border.width: parent.activeFocus ? 2 : 0
                 border.color: Theme.blue
-                Text {
+                IconLabel {
                     anchors.centerIn: parent
-                    text: root.expanded ? "›" : "‹"
-                    color: Theme.textBright
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeTitle
+                    value: root.expanded
+                        ? Icons.chevronRight
+                        : Icons.chevronLeft
                 }
                 HoverHandler { id: chevronHover; cursorShape: Qt.PointingHandCursor }
             }

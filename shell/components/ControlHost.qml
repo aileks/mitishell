@@ -146,12 +146,12 @@ PanelWindow {
                     id: railRepeater
 
                     model: [
-                        { key: "overview", label: "Overview", icon: "../assets/icons/home.svg", accent: Theme.orange },
-                        { key: "audio", label: "Audio", icon: "../assets/icons/volume-2.svg", accent: Theme.orange },
-                        { key: "display", label: "Display", icon: "../assets/icons/sun.svg", accent: Theme.blue },
-                        { key: "network", label: "Network", icon: "../assets/icons/wifi.svg", accent: Theme.cyan },
-                        { key: "bluetooth", label: "Bluetooth", icon: "../assets/icons/bluetooth.svg", accent: Theme.cyan },
-                        { key: "system", label: "System", icon: "../assets/icons/settings.svg", accent: Theme.blue },
+                        { key: "overview", label: "Overview", icon: Icons.home, accent: Theme.orange },
+                        { key: "audio", label: "Audio", icon: Icons.volumeHigh, accent: Theme.orange },
+                        { key: "display", label: "Display", icon: Icons.sun, accent: Theme.blue },
+                        { key: "network", label: "Network", icon: Icons.wifi, accent: Theme.cyan },
+                        { key: "bluetooth", label: "Bluetooth", icon: Icons.bluetooth, accent: Theme.cyan },
+                        { key: "system", label: "System", icon: Icons.settings, accent: Theme.blue },
                     ]
 
                     delegate: Rectangle {
@@ -186,13 +186,9 @@ PanelWindow {
                             anchors.margins: Theme.spaceMd
                             spacing: Theme.spaceSm
 
-                            Image {
+                            IconLabel {
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: Theme.iconSm
-                                height: Theme.iconSm
-                                source: railButton.modelData.icon
-                                sourceSize.width: 18
-                                sourceSize.height: 18
+                                value: railButton.modelData.icon
                             }
 
                             Text {

@@ -12,13 +12,9 @@ Item {
         anchors.centerIn: parent
         spacing: Theme.spaceXs
 
-        Image {
+        IconLabel {
             anchors.verticalCenter: parent.verticalCenter
-            width: 16
-            height: 16
-            source: "../assets/icons/wifi.svg"
-            sourceSize.width: 32
-            sourceSize.height: 32
+            value: Icons.wifi
         }
 
         Text {

@@ -39,6 +39,7 @@ NotificationMediaCache 1.0 NotificationMediaCache.qml
 NotificationPopups 1.0 NotificationPopups.qml
 NotificationsPopover 1.0 NotificationsPopover.qml
 OsdHost 1.0 OsdHost.qml
+OverflowRow 1.0 OverflowRow.qml
 PowerHost 1.0 PowerHost.qml
 PowerIsland 1.0 PowerIsland.qml
 QuickControls 1.0 QuickControls.qml

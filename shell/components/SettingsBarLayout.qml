@@ -88,15 +88,6 @@ Column {
         dragGhostSize = Qt.size(0, 0);
     }
 
-    Text {
-        width: parent.width
-        text: "Drag built-in widgets between sections. The center accepts up to three."
-        wrapMode: Text.Wrap
-        color: Theme.textMuted
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeCaption
-    }
-
     LayoutSection { id: leftSection; sectionName: "left"; title: "Left"; widgets: root.localLayout.left }
     LayoutSection { id: centerSection; sectionName: "center"; title: "Center · " + root.localLayout.center.length + "/3"; widgets: root.localLayout.center }
     LayoutSection { id: rightSection; sectionName: "right"; title: "Right"; widgets: root.localLayout.right }

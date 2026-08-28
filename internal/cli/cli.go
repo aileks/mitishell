@@ -87,6 +87,32 @@ type DisplayService interface {
 	Set(ctx context.Context, connector string, value int) display.Result
 }
 
+// Version tracks the release tag. Bump it when a release ships.
+const Version = "1.0.1"
+
+const helpText = `Usage: mitishell <command>
+
+  ping                              check the running shell
+  reload                            reload the shell
+  doctor                            run environment checks
+  config path|validate|get|set      manage the config file
+  weather location <place...|auto>  set the weather location
+  settings [page]                   toggle Settings, optionally on a page
+  network                           open the network settings page
+  bluetooth                         open the bluetooth settings page
+  osd [flags]                       show a custom OSD
+  reminder [minutes|list|clear]     manage reminders
+  night-light on|off|toggle|status  control the night light
+  emoji                             toggle the emoji picker
+  volume up|down|mute|set <0-150>   control the volume
+  mic up|down|mute|set <0-150>      control the microphone
+  brightness up|down|set <0-100>    control the brightness
+  notifications dnd                 toggle do not disturb
+  power menu                        open the power menu
+  help                              show this help
+  version                           show the version
+`
+
 type Status string
 
 const (
@@ -674,9 +700,15 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		return 0
+	case "help", "--help", "-h":
+		fmt.Fprint(stdout, helpText)
+		return 0
+	case "version", "--version":
+		fmt.Fprintf(stdout, "mitishell v%s\n", Version)
+		return 0
 	}
 
-	fmt.Fprintln(stderr, "mitishell: usage: mitishell <command>")
+	fmt.Fprintf(stderr, "mitishell: unknown command %q, run \"mitishell help\"\n", args[0])
 	return 2
 }
 

@@ -386,13 +386,12 @@ PanelWindow {
                         spacing: Theme.spaceSm
                         visible: root.results.length === 0
 
-                        Text {
-                            width: parent.width
-                            horizontalAlignment: Text.AlignHCenter
-                            text: Emoji.catalogError !== "" ? "󰅚" : "󰈉"
-                            color: Emoji.catalogError !== "" ? Theme.red : Theme.orange
-                            font.family: Theme.fontMono
-                            font.pixelSize: 32
+                        IconLabel {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            value: Emoji.catalogError !== ""
+                                ? Icons.circleAlert
+                                : Icons.searchOff
+                            size: 32
                         }
 
                         Text {

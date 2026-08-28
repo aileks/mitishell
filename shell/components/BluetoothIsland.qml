@@ -1,7 +1,7 @@
 import QtQuick
 import "../core"
 
-// The bluetooth island: connected device count. The surrounding bar trigger
+// The bluetooth widget: connected device count. The surrounding bar trigger
 // owns activation; this only renders the state.
 FocusScope {
     id: root
@@ -31,15 +31,9 @@ FocusScope {
         anchors.centerIn: parent
         spacing: Theme.spaceXs
 
-        Image {
+        IconLabel {
             anchors.verticalCenter: parent.verticalCenter
-            width: 16
-            height: 16
-            source: "../assets/icons/bluetooth.svg"
-            // Raster at twice the drawn size; the filtered downscale keeps
-            // the glyph crisp at bar scale.
-            sourceSize.width: 32
-            sourceSize.height: 32
+            value: Icons.bluetooth
         }
 
         Text {

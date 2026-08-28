@@ -7,7 +7,7 @@ Rectangle {
     id: root
 
     required property string label
-    required property url iconSource
+    required property string iconSource
     required property real currentValue
     required property var devices
     required property var selectedDevice
