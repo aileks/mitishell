@@ -230,6 +230,8 @@ PanelWindow {
                 id: trigger
                 popoverKey: "barOverflow"
                 screen: root.modelData
+                accent: Theme.orange
+                contentHandlesHover: true
                 StatusButton {
                     iconSource: Icons.ellipsis
                     accessibleName: "More bar items"

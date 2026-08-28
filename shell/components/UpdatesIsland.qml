@@ -2,7 +2,6 @@ import QtQuick
 import "../core"
 
 Item {
-    property bool open: false
     implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     Accessible.name: Updates.state === "error" ? "Update check failed" : Updates.count + " available updates"
@@ -23,14 +22,5 @@ Item {
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
         }
-    }
-    Rectangle {
-        anchors.fill: parent
-        z: -1
-        radius: Theme.radiusPill
-        color: parent.open || hover.hovered ? Theme.hoverFill : "transparent"
-        border.width: parent.open ? 1 : 0
-        border.color: Theme.yellow
-        HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     }
 }

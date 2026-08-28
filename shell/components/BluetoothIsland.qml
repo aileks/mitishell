@@ -6,8 +6,6 @@ import "../core"
 FocusScope {
     id: root
 
-    property bool open: false
-
     readonly property int connectedCount: {
         let count = 0;
         for (let index = 0; index < Bluetooth.devices.length; index += 1) {
@@ -44,21 +42,5 @@ FocusScope {
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
         }
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        radius: Theme.radiusPill
-        color: root.open || root.activeFocus || hover.hovered
-            ? Theme.hoverFill
-            : "transparent"
-        border.width: root.activeFocus ? 2 : (root.open ? 1 : 0)
-        border.color: root.activeFocus ? Theme.blue : Theme.cyan
-        z: -1
-    }
-
-    HoverHandler {
-        id: hover
-        cursorShape: Qt.PointingHandCursor
     }
 }

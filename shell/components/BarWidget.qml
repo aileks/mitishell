@@ -143,6 +143,7 @@ Item {
                     height: parent.height
                     popoverKey: "media"
                     screen: root.screen
+                    accent: Theme.purple
                     clip: true
                     MediaIsland { id: mediaContent; width: trigger.width }
                 }
@@ -165,6 +166,7 @@ Item {
                 id: trigger
                 popoverKey: "system"
                 screen: root.screen
+                accent: Theme.blue
                 Accessible.name: "System monitor, CPU " + SystemMetrics.cpuPercent
                     + " percent, memory " + SystemMetrics.memoryPercent + " percent"
                 SystemMetricsIsland { mode: Config.bar.systemMetrics }
@@ -183,7 +185,7 @@ Item {
         id: audioComponent
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
-            BarPopoverTrigger { id: trigger; popoverKey: "audio"; screen: root.screen; AudioIsland {} }
+            BarPopoverTrigger { id: trigger; popoverKey: "audio"; screen: root.screen; accent: Theme.orange; AudioIsland {} }
             AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 420; contentHeight: Math.min(520, popover.implicitHeight + Theme.spaceLg * 2); AudioPopover { id: popover; anchors.fill: parent; screen: root.screen } }
         }
     }
@@ -194,7 +196,7 @@ Item {
         id: updatesComponent
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
-            BarPopoverTrigger { id: trigger; popoverKey: "updates"; screen: root.screen; UpdatesIsland { open: trigger.active } }
+            BarPopoverTrigger { id: trigger; popoverKey: "updates"; screen: root.screen; accent: Theme.yellow; UpdatesIsland {} }
             AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 392; contentHeight: Math.min(520, popover.implicitHeight + Theme.spaceLg * 2); UpdatesPopover { id: popover; anchors.fill: parent } }
         }
     }
@@ -203,7 +205,7 @@ Item {
         id: clockComponent
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
-            BarPopoverTrigger { id: trigger; popoverKey: "calendar"; screen: root.screen; ClockIsland {} }
+            BarPopoverTrigger { id: trigger; popoverKey: "calendar"; screen: root.screen; accent: Theme.blue; ClockIsland {} }
             AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: popover.implicitWidth + Theme.spaceLg * 2; contentHeight: popover.implicitHeight + Theme.spaceLg * 2; CalendarPopover { id: popover; anchors.fill: parent } }
         }
     }
@@ -214,7 +216,7 @@ Item {
         id: networkComponent
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
-            BarPopoverTrigger { id: trigger; popoverKey: "networkQuick"; screen: root.screen; NetworkIsland {} }
+            BarPopoverTrigger { id: trigger; popoverKey: "networkQuick"; screen: root.screen; accent: Theme.cyan; NetworkIsland {} }
             AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 380; contentHeight: popover.implicitHeight + Theme.spaceLg * 2; NetworkPopover { id: popover; anchors.fill: parent; screen: root.screen } }
         }
     }
@@ -223,7 +225,7 @@ Item {
         id: bluetoothComponent
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
-            BarPopoverTrigger { id: trigger; popoverKey: "bluetoothQuick"; screen: root.screen; BluetoothIsland { open: trigger.active } }
+            BarPopoverTrigger { id: trigger; popoverKey: "bluetoothQuick"; screen: root.screen; accent: Theme.cyan; BluetoothIsland {} }
             AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 400; contentHeight: Math.min(480, popover.implicitHeight + Theme.spaceLg * 2); BluetoothPopover { id: popover; anchors.fill: parent; screen: root.screen } }
         }
     }
@@ -237,6 +239,7 @@ Item {
                 id: trigger
                 popoverKey: "quickSettings"
                 screen: root.screen
+                accent: Theme.orange
                 Accessible.name: "Open Quick Settings"
                 QuickSettingsIsland {}
             }
@@ -261,7 +264,7 @@ Item {
         id: notificationsComponent
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
-            BarPopoverTrigger { id: trigger; popoverKey: "notifications"; screen: root.screen; NotificationIsland { open: trigger.active } }
+            BarPopoverTrigger { id: trigger; popoverKey: "notifications"; screen: root.screen; accent: Theme.orange; NotificationIsland {} }
             AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 380; contentHeight: 460; NotificationsPopover { anchors.fill: parent } }
             NotificationPopups { anchorItem: trigger }
         }
@@ -271,7 +274,7 @@ Item {
         id: weatherComponent
         Item {
             implicitWidth: trigger.implicitWidth; implicitHeight: trigger.implicitHeight
-            BarPopoverTrigger { id: trigger; popoverKey: "weather"; screen: root.screen; WeatherIsland {} }
+            BarPopoverTrigger { id: trigger; popoverKey: "weather"; screen: root.screen; accent: Theme.cyan; WeatherIsland {} }
             AnchoredPopover { anchorItem: trigger; open: trigger.active; contentWidth: 380; contentHeight: Math.min(680, popover.implicitHeight + Theme.spaceLg * 2); WeatherPopover { id: popover; anchors.fill: parent } }
         }
     }

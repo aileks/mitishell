@@ -24,9 +24,8 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: root.active || root.activeFocus || hover.hovered
-            ? Theme.hoverFill
-            : "transparent"
+        color: root.active ? Theme.alpha(Theme.orange, 0.14)
+            : (root.activeFocus || hover.hovered ? Theme.hoverFill : "transparent")
         border.width: root.activeFocus ? 2 : (root.active ? 1 : 0)
         border.color: root.activeFocus ? Theme.blue : Theme.orange
 

@@ -22,7 +22,7 @@ Column {
 
     readonly property var labels: ({
         workspaces: "Workspaces", windowTitle: "Window title", media: "Media",
-        system: "System monitor", audio: "Audio", keyboardLayout: "Keyboard layout",
+        system: "System Monitor", audio: "Audio", keyboardLayout: "Keyboard Layout",
         updates: "Updates", clock: "Clock", tray: "Tray", network: "Network",
         bluetooth: "Bluetooth", quickSettings: "Quick Settings",
         notifications: "Notifications", weather: "Weather", status: "Status",

@@ -43,10 +43,11 @@ Row {
             id: reminderTrigger
             popoverKey: "reminderQuick"
             screen: root.screen
+            accent: Theme.pink
             Accessible.name: Reminders.count === 1
                 ? "1 active reminder" : Reminders.count + " active reminders"
 
-            ReminderIsland { open: reminderTrigger.active }
+            ReminderIsland {}
         }
 
         AnchoredPopover {

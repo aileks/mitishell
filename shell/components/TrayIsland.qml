@@ -18,6 +18,17 @@ FocusScope {
     implicitHeight: 24
     activeFocusOnTab: true
 
+    // Selected look while this island's tray menu is open.
+    Rectangle {
+        anchors.fill: parent
+        z: -1
+        radius: Theme.radiusPill
+        visible: root.menuOpen
+        color: Theme.alpha(Theme.blue, 0.14)
+        border.width: 1
+        border.color: Theme.blue
+    }
+
     function showMenu(item, anchor) {
         if (!item.hasMenu) {
             return;

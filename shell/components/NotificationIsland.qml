@@ -6,8 +6,6 @@ import "../core"
 FocusScope {
     id: root
 
-    property bool open: false
-
     implicitWidth: content.implicitWidth + Theme.islandPadding
     implicitHeight: 24
     Accessible.name: Notifications.unread > 0
@@ -33,21 +31,5 @@ FocusScope {
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
         }
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        radius: Theme.radiusPill
-        color: root.open || root.activeFocus || hover.hovered
-            ? Theme.hoverFill
-            : "transparent"
-        border.width: root.activeFocus ? 2 : (root.open ? 1 : 0)
-        border.color: root.activeFocus ? Theme.blue : Theme.orange
-        z: -1
-    }
-
-    HoverHandler {
-        id: hover
-        cursorShape: Qt.PointingHandCursor
     }
 }
