@@ -1,8 +1,5 @@
 # Mitishell
 
-> [!WARNING]  
-> This project is under active development.
-
 Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
 
 ## Requirements
@@ -151,6 +148,19 @@ Messages are optional. An omitted message becomes `Your N minutes are up`. Remin
 
 Timers are transient user-systemd units. Their private metadata lives under `$XDG_RUNTIME_DIR/mitishell/reminders`, so active and pending reminders end with the login session and don't survive logout or reboot. Fired reminders become normal-urgency Mitishell notifications, bypass do-not-disturb, and remain in notification history. If the notification server is absent when a timer fires, Mitishell retains that delivery until it returns during the same login.
 
+## Prebuilt installation
+
+Each release includes Linux archives for amd64 and arm64. The archive contains the Mitishell binary, QML shell, desktop entry, license, and third-party notices.
+
+```bash
+tar -xzf mitishell-v1.0.0-linux-amd64.tar.gz
+cd mitishell-v1.0.0-linux-amd64
+make install-prebuilt
+quickshell -n -p ~/.local/share/mitishell/shell
+```
+
+Use the arm64 archive on an arm64 system. Verify downloads with the release's `SHA256SUMS` file before installing.
+
 ## Source installation
 
 > [!IMPORTANT]  
@@ -166,3 +176,5 @@ make uninstall
 ## License
 
 Mitishell is licensed under the GPLv3 or later. See [LICENSE](LICENSE).
+
+The prebuilt binary includes third-party software. See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
