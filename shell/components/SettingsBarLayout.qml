@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import "../core"
 import "../lib/BarModel.js" as BarModel
 
@@ -10,7 +11,14 @@ Column {
     property var localLayout: BarModel.clone(Config.bar.layout)
     property string dragId: ""
     property string targetSection: ""
+    property point dragPointerGlobal: Qt.point(0, 0)
+    property point dragPressOffset: Qt.point(0, 0)
+    property size dragGhostSize: Qt.size(0, 0)
+    property url dragImageSource
     spacing: Theme.spaceSm
+
+    readonly property var anchorWindow: root.QsWindow.window
+    readonly property bool dragging: dragId !== ""
 
     readonly property var labels: ({
         workspaces: "Workspaces", windowTitle: "Window title", media: "Media",
@@ -38,11 +46,46 @@ Column {
         return "";
     }
 
+    function beginDrag(pill, pressScenePosition, scenePosition) {
+        dragId = pill.modelData;
+        dragPressOffset = pill.mapFromItem(null, pressScenePosition);
+        dragGhostSize = Qt.size(Math.ceil(pill.width), Math.ceil(pill.height));
+        updateDrag(scenePosition);
+        const sourceId = dragId;
+        pill.grabToImage(function(result) {
+            if (root.dragId === sourceId) root.dragImageSource = result.url;
+        }, dragGhostSize);
+    }
+
+    function updateDrag(scenePosition) {
+        if (!dragging) return;
+        targetSection = sectionAt(scenePosition);
+        if (anchorWindow !== null) {
+            dragPointerGlobal = anchorWindow.contentItem.mapToGlobal(
+                scenePosition.x,
+                scenePosition.y,
+            );
+        }
+    }
+
     function finishDrag(scenePosition) {
-        const section = sectionAt(scenePosition);
-        if (section !== "") save(BarModel.moveTo(localLayout, dragId, section, localLayout[section].length));
+        updateDrag(scenePosition);
+        if (targetSection !== "") {
+            save(BarModel.moveTo(
+                localLayout,
+                dragId,
+                targetSection,
+                localLayout[targetSection].length,
+            ));
+        }
+        clearDrag();
+    }
+
+    function clearDrag() {
         dragId = "";
         targetSection = "";
+        dragImageSource = "";
+        dragGhostSize = Qt.size(0, 0);
     }
 
     Text {
@@ -63,6 +106,16 @@ Column {
         width: parent.width
         visible: Settings.fieldErrors["bar.layout"] !== undefined
         message: Settings.fieldErrors["bar.layout"] || ""
+    }
+
+    BarDragGhost {
+        ghostScreen: root.anchorWindow === null ? null : root.anchorWindow.screen
+        active: root.dragging && root.anchorWindow !== null
+        imageSource: root.dragImageSource
+        pointerGlobal: root.dragPointerGlobal
+        pressOffset: root.dragPressOffset
+        ghostSize: root.dragGhostSize
+        markerVisible: false
     }
 
     component LayoutSection: Rectangle {
@@ -110,6 +163,7 @@ Column {
                         color: activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised
                         border.width: activeFocus ? 2 : 1
                         border.color: activeFocus ? Theme.blue : Theme.borderStrong
+                        opacity: root.dragId === modelData ? 0.24 : 1
                         activeFocusOnTab: true
                         Accessible.name: root.labels[modelData] || modelData
                         Accessible.description: "Control Shift arrows rearrange this bar widget"
@@ -128,12 +182,11 @@ Column {
                         BarReorderGesture {
                             verticalEnabled: true
                             onDragStarted: function(pressScenePosition, scenePosition) {
-                                root.dragId = pill.modelData;
-                                root.targetSection = root.sectionAt(scenePosition);
+                                root.beginDrag(pill, pressScenePosition, scenePosition);
                             }
-                            onDragMoved: function(scenePosition) { root.targetSection = root.sectionAt(scenePosition); }
+                            onDragMoved: function(scenePosition) { root.updateDrag(scenePosition); }
                             onDragFinished: function(scenePosition) { root.finishDrag(scenePosition); }
-                            onDragCanceled: { root.dragId = ""; root.targetSection = ""; }
+                            onDragCanceled: root.clearDrag()
                         }
 
                         Keys.onPressed: function(event) {
