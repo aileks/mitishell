@@ -133,7 +133,7 @@ QtObject {
     function showReminder(message) {
         showState({
             kind: "reminder",
-            icon: "󰔛",
+            icon: "reminder",
             message: String(message || "Reminder updated"),
             hasProgress: false,
             progress: 0,

@@ -36,13 +36,11 @@ Item {
                     asynchronous: true
                 }
 
-                Text {
+                IconLabel {
                     anchors.centerIn: parent
                     visible: root.player === null || root.player.trackArtUrl === ""
-                    text: "music"
-                    color: Theme.textMuted
-                    font.family: Theme.fontSans
-                    font.pixelSize: Theme.fontSizeBody
+                    value: Icons.music
+                    size: Theme.iconLg
                 }
             }
 
@@ -131,7 +129,7 @@ Item {
             spacing: Theme.spaceMd
 
             IconButton {
-                iconSource: "../assets/icons/skip-back.svg"
+                iconSource: Icons.skipBack
                 accessibleName: "Previous track"
                 enabled: root.player !== null && root.player.canGoPrevious
                 onClicked: Media.previous()
@@ -139,8 +137,8 @@ Item {
 
             IconButton {
                 iconSource: root.player !== null && root.player.isPlaying
-                    ? "../assets/icons/pause.svg"
-                    : "../assets/icons/play.svg"
+                    ? Icons.pause
+                    : Icons.play
                 accessibleName: root.player !== null && root.player.isPlaying
                     ? "Pause" : "Play"
                 enabled: root.player !== null && (root.player.canTogglePlaying
@@ -149,7 +147,7 @@ Item {
             }
 
             IconButton {
-                iconSource: "../assets/icons/skip-forward.svg"
+                iconSource: Icons.skipForward
                 accessibleName: "Next track"
                 enabled: root.player !== null && root.player.canGoNext
                 onClicked: Media.next()

@@ -9,7 +9,8 @@ Item {
     Row {
         id: content
 
-        anchors.centerIn: parent
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
         spacing: Theme.spaceSm
 
         Text {
@@ -18,6 +19,7 @@ Item {
             color: Theme.text
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
+            renderType: Text.NativeRendering
         }
 
         Text {
@@ -27,6 +29,7 @@ Item {
             color: Theme.textMuted
             font.family: Theme.fontMono
             font.pixelSize: Theme.fontSizeCaption
+            renderType: Text.NativeRendering
         }
     }
 

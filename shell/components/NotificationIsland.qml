@@ -1,7 +1,7 @@
 import QtQuick
 import "../core"
 
-// The bell island: unread count badge. The surrounding bar popover trigger
+// The bell widget: unread count badge. The surrounding bar popover trigger
 // owns activation; this only renders the state.
 FocusScope {
     id: root
@@ -20,15 +20,10 @@ FocusScope {
         anchors.centerIn: parent
         spacing: Theme.spaceXs
 
-        Image {
+        IconLabel {
             anchors.verticalCenter: parent.verticalCenter
-            width: 16
-            height: 16
-            source: Notifications.doNotDisturb
-                ? "../assets/icons/bell-off.svg"
-                : "../assets/icons/bell.svg"
-            sourceSize.width: 16
-            sourceSize.height: 16
+            value: Notifications.doNotDisturb ? Icons.bellOff : Icons.bell
+            size: Theme.iconMd
         }
 
         Text {

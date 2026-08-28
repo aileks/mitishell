@@ -52,8 +52,8 @@ Rectangle {
 
             IconButton {
                 iconSource: root.muted
-                    ? "../assets/icons/volume-x.svg"
-                    : "../assets/icons/volume-2.svg"
+                    ? Icons.volumeOff
+                    : Icons.volumeHigh
                 accessibleName: "Toggle " + root.stream.label + " mute"
                 onClicked: Audio.setStreamMuted(root.stream, !root.muted)
             }

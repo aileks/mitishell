@@ -6,7 +6,7 @@ Item {
     id: root
 
     required property string label
-    required property url iconSource
+    required property string iconSource
     required property real currentValue
     signal volumeChanged(real value)
     signal muteRequested

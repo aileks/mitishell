@@ -49,7 +49,7 @@ Flickable {
             IconButton {
                 id: refreshButton
 
-                iconSource: "../assets/icons/rotate-ccw.svg"
+                iconSource: Icons.refresh
                 accessibleName: "Refresh weather"
                 enabled: Weather.state !== "locating"
                 onClicked: Weather.refresh()

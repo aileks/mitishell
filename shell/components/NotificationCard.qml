@@ -74,13 +74,11 @@ SurfaceFrame {
                     asynchronous: true
                 }
 
-                Text {
+                IconLabel {
                     visible: root.avatarSource === "" || avatar.status === Image.Error
                     anchors.centerIn: parent
-                    text: "󰂚"
-                    color: Theme.orange
-                    font.family: Theme.fontMono
-                    font.pixelSize: Theme.iconMd
+                    value: Icons.bell
+                    size: Theme.iconMd
                 }
             }
 
@@ -167,12 +165,10 @@ SurfaceFrame {
                     border.width: dismissButton.activeFocus ? 2 : 0
                     border.color: Theme.blue
 
-                    Text {
+                    IconLabel {
                         anchors.centerIn: parent
-                        text: "×"
-                        color: Theme.textMuted
-                        font.family: Theme.fontSans
-                        font.pixelSize: Theme.fontSizeTitle
+                        value: Icons.close
+                        size: Theme.iconSm
                     }
                 }
 

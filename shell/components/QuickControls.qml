@@ -20,8 +20,8 @@ Column {
         visible: root.showVolume
         label: "Volume"
         iconSource: Audio.outputMuted
-            ? "../assets/icons/volume-x.svg"
-            : "../assets/icons/volume-2.svg"
+            ? Icons.volumeOff
+            : Icons.volumeHigh
         currentValue: Audio.outputVolume
         onVolumeChanged: function(value) { Audio.setOutputVolume(value); }
         onMuteRequested: Audio.toggleOutputMute()

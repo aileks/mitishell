@@ -125,12 +125,10 @@ FocusScope {
                 Accessible.role: Accessible.Button
                 Accessible.onPressAction: root.showMonth(-1)
 
-                Text {
+                IconLabel {
                     anchors.centerIn: parent
-                    text: "‹"
-                    color: Theme.textBright
-                    font.family: Theme.fontSans
-                    font.pixelSize: 20
+                    value: Icons.chevronLeft
+                    size: 20
                 }
                 HoverHandler { id: previousHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: root.showMonth(-1) }
@@ -168,12 +166,10 @@ FocusScope {
                 Accessible.role: Accessible.Button
                 Accessible.onPressAction: root.showMonth(1)
 
-                Text {
+                IconLabel {
                     anchors.centerIn: parent
-                    text: "›"
-                    color: Theme.textBright
-                    font.family: Theme.fontSans
-                    font.pixelSize: 20
+                    value: Icons.chevronRight
+                    size: 20
                 }
                 HoverHandler { id: nextHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: root.showMonth(1) }
@@ -399,7 +395,6 @@ FocusScope {
             width: parent.width
             accent: Theme.blue
             label: "Week numbers"
-            description: "Show ISO week numbers beside the month grid."
             checked: Config.calendar.showWeekNumbers
             onToggled: Settings.setField(
                 "calendar.showWeekNumbers", checked ? "false" : "true")

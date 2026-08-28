@@ -4,7 +4,7 @@ import "../core"
 FocusScope {
     id: root
 
-    required property url iconSource
+    required property string iconSource
     required property string accessibleName
     signal clicked
 
@@ -30,13 +30,10 @@ FocusScope {
         border.color: root.activeFocus ? Theme.blue : Theme.borderStrong
         opacity: root.enabled ? 1 : 0.35
 
-        Image {
+        IconLabel {
             anchors.centerIn: parent
-            width: Theme.iconSm
-            height: Theme.iconSm
-            source: root.iconSource
-            sourceSize.width: 18
-            sourceSize.height: 18
+            value: root.iconSource
+            size: Theme.iconSm
         }
 
         HoverHandler {

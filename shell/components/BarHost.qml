@@ -230,7 +230,10 @@ PanelWindow {
                 id: trigger
                 popoverKey: "barOverflow"
                 screen: root.modelData
-                StatusButton { glyph: "•••"; accessibleName: "More bar items" }
+                StatusButton {
+                    iconSource: Icons.ellipsis
+                    accessibleName: "More bar items"
+                }
             }
 
             AnchoredPopover {

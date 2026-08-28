@@ -46,7 +46,7 @@ Flickable {
                 spacing: Theme.spaceMd
 
                 IconButton {
-                    iconSource: "../assets/icons/skip-back.svg"
+                    iconSource: Icons.skipBack
                     accessibleName: "Previous track"
                     enabled: Media.activePlayer !== null && Media.activePlayer.canGoPrevious
                     onClicked: Media.previous()
@@ -54,8 +54,8 @@ Flickable {
 
                 IconButton {
                     iconSource: Media.activePlayer !== null && Media.activePlayer.isPlaying
-                        ? "../assets/icons/pause.svg"
-                        : "../assets/icons/play.svg"
+                        ? Icons.pause
+                        : Icons.play
                     accessibleName: Media.activePlayer !== null && Media.activePlayer.isPlaying
                         ? "Pause" : "Play"
                     enabled: Media.activePlayer !== null
@@ -63,7 +63,7 @@ Flickable {
                 }
 
                 IconButton {
-                    iconSource: "../assets/icons/skip-forward.svg"
+                    iconSource: Icons.skipForward
                     accessibleName: "Next track"
                     enabled: Media.activePlayer !== null && Media.activePlayer.canGoNext
                     onClicked: Media.next()

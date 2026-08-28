@@ -5,7 +5,7 @@ FocusScope {
     id: root
 
     property string label: ""
-    property url iconSource: ""
+    property string iconSource: ""
     property color accent: Theme.orange
     property bool selected: false
     property bool destructive: false
@@ -41,14 +41,11 @@ FocusScope {
             anchors.centerIn: parent
             spacing: Theme.spaceSm
 
-            Image {
-                visible: root.iconSource.toString() !== ""
+            IconLabel {
+                visible: root.iconSource !== ""
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.iconSm
-                height: Theme.iconSm
-                source: root.iconSource
-                sourceSize.width: width
-                sourceSize.height: height
+                value: root.iconSource
+                size: Theme.iconSm
             }
 
             Text {

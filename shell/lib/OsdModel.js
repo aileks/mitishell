@@ -1,35 +1,30 @@
-const bundledIcons = [
-    "bell",
-    "bell-off",
-    "mic",
-    "mic-off",
-    "moon",
-    "play",
-    "power",
-    "settings",
-    "sun",
-    "volume-1",
-    "volume-2",
-    "volume-x",
-    "wifi",
-];
-
 const aliases = {
-    "brightness": { kind: "bundled", value: "sun" },
-    "connectivity": { kind: "bundled", value: "wifi" },
+    "bell": { kind: "text", value: "󰂚" },
+    "bell-off": { kind: "text", value: "󰂛" },
+    "brightness": { kind: "text", value: "󰖙" },
+    "connectivity": { kind: "text", value: "󰖩" },
     "error": { kind: "text", value: "󰅚" },
-    "media": { kind: "bundled", value: "play" },
-    "microphone": { kind: "bundled", value: "mic" },
-    "microphone-muted": { kind: "bundled", value: "mic-off" },
-    "notification": { kind: "bundled", value: "bell" },
-    "power": { kind: "bundled", value: "power" },
-    "reminder": { kind: "bundled", value: "bell" },
-    "settings": { kind: "bundled", value: "settings" },
+    "media": { kind: "text", value: "󰐊" },
+    "mic": { kind: "text", value: "󰍬" },
+    "mic-off": { kind: "text", value: "󰍭" },
+    "microphone": { kind: "text", value: "󰍬" },
+    "microphone-muted": { kind: "text", value: "󰍭" },
+    "moon": { kind: "text", value: "󰖔" },
+    "notification": { kind: "text", value: "󰂚" },
+    "play": { kind: "text", value: "󰐊" },
+    "power": { kind: "text", value: "󰐥" },
+    "reminder": { kind: "text", value: "󰔛" },
+    "settings": { kind: "text", value: "󰒓" },
     "success": { kind: "text", value: "󰄬" },
-    "volume": { kind: "bundled", value: "volume-2" },
-    "volume-low": { kind: "bundled", value: "volume-1" },
-    "volume-muted": { kind: "bundled", value: "volume-x" },
+    "sun": { kind: "text", value: "󰖙" },
+    "volume": { kind: "text", value: "󰕾" },
+    "volume-1": { kind: "text", value: "󰕿" },
+    "volume-2": { kind: "text", value: "󰕾" },
+    "volume-low": { kind: "text", value: "󰕿" },
+    "volume-muted": { kind: "text", value: "󰝟" },
+    "volume-x": { kind: "text", value: "󰝟" },
     "warning": { kind: "text", value: "󰀪" },
+    "wifi": { kind: "text", value: "󰖩" },
 };
 
 function volumeIcon(percent, muted) {
@@ -68,9 +63,6 @@ function iconCandidate(value) {
     if (value.indexOf("/") === 0 || value.indexOf("file:") === 0) {
         return { kind: "image", value: value, fallback: value };
     }
-    if (bundledIcons.indexOf(value) !== -1) {
-        return { kind: "bundled", value: value, fallback: value };
-    }
     // Private-use glyphs and strings that cannot be icon names are
     // unambiguously literal, so they do not need a theme lookup.
     if (!/^[A-Za-z0-9._-]+$/.test(value)) {
@@ -106,7 +98,6 @@ function genericLayout(message, progress) {
 
 if (typeof module !== "undefined") {
     module.exports = {
-        bundledIcons,
         genericLayout,
         iconCandidate,
         iconFor,

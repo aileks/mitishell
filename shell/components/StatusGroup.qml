@@ -9,7 +9,7 @@ Row {
 
     StatusButton {
         visible: Notifications.doNotDisturb
-        iconSource: "../assets/icons/bell-off.svg"
+        iconSource: Icons.bellOff
         accessibleName: "Disable do not disturb"
         accent: Theme.orange
         onActivated: Notifications.toggleDoNotDisturb()
@@ -17,7 +17,7 @@ Row {
 
     StatusButton {
         visible: NightLight.available && NightLight.enabled
-        iconSource: "../assets/icons/moon.svg"
+        iconSource: Icons.moon
         accessibleName: "Disable night light"
         accent: Theme.yellow
         onActivated: NightLight.toggle()
@@ -25,7 +25,7 @@ Row {
 
     StatusButton {
         visible: Audio.ready && Audio.inputMuted
-        iconSource: "../assets/icons/mic-off.svg"
+        iconSource: Icons.microphoneOff
         accessibleName: "Unmute microphone"
         accent: Theme.red
         onActivated: {

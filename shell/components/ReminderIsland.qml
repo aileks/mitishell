@@ -20,12 +20,10 @@ FocusScope {
         anchors.centerIn: parent
         spacing: Theme.spaceXs
 
-        Text {
+        IconLabel {
             anchors.verticalCenter: parent.verticalCenter
-            text: "󰔛"
-            color: Theme.pink
-            font.family: Theme.fontMono
-            font.pixelSize: Theme.iconSm
+            value: Icons.alarmClock
+            size: Theme.iconSm
         }
 
         Text {

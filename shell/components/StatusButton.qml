@@ -4,8 +4,7 @@ import "../core"
 FocusScope {
     id: root
 
-    property url iconSource
-    property string glyph: ""
+    property string iconSource: ""
     property color accent: Theme.orange
     required property string accessibleName
     signal activated
@@ -26,23 +25,11 @@ FocusScope {
         border.width: root.activeFocus ? 2 : 0
         border.color: Theme.blue
 
-        Image {
+        IconLabel {
             anchors.centerIn: parent
-            visible: root.iconSource.toString() !== ""
-            width: 16
-            height: 16
-            source: root.iconSource
-            sourceSize.width: 32
-            sourceSize.height: 32
-        }
-
-        Text {
-            anchors.centerIn: parent
-            visible: root.glyph !== ""
-            text: root.glyph
-            color: root.accent
-            font.family: Theme.fontMono
-            font.pixelSize: Theme.iconSm
+            visible: root.iconSource !== ""
+            value: root.iconSource
+            size: Theme.iconSm
         }
 
         HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

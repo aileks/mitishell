@@ -23,7 +23,7 @@ Column {
 
     Text {
         width: parent.width
-        text: "Extra clocks under the calendar. Add an IANA zone like Europe/Berlin; click a zone to remove it."
+        text: "e.g. Europe/Berlin"
         wrapMode: Text.Wrap
         color: Theme.textMuted
         font.family: Theme.fontSans
@@ -75,12 +75,10 @@ Column {
                         font.pixelSize: Theme.fontSizeCaption
                     }
 
-                    Text {
+                    IconLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "×"
-                        color: zonePillHover.hovered ? Theme.red : Theme.textMuted
-                        font.family: Theme.fontSans
-                        font.pixelSize: Theme.fontSizeBody
+                        value: Icons.close
+                        size: 14
                     }
                 }
 
@@ -128,7 +126,7 @@ Column {
             Text {
                 anchors.fill: parent
                 visible: zoneInput.text === ""
-                text: "Add IANA zone, then press Enter"
+                text: "Europe/Berlin"
                 color: Theme.textMuted
                 font.family: Theme.fontMono
                 font.pixelSize: Theme.fontSizeCaption

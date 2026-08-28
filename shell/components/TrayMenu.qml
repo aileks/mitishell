@@ -256,14 +256,12 @@ FocusScope {
             Accessible.role: Accessible.Button
             Accessible.onPressAction: root.leaveSubmenu()
 
-            Text {
+            IconLabel {
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.spaceSm
                 anchors.verticalCenter: parent.verticalCenter
-                text: "‹"
-                color: Theme.textBright
-                font.family: Theme.fontSans
-                font.pixelSize: Theme.fontSizeHeading
+                value: Icons.chevronLeft
+                size: Theme.iconMd
             }
 
             Text {
@@ -386,15 +384,12 @@ FocusScope {
                             color: menuRow.accent
                         }
 
-                        Text {
+                        IconLabel {
                             anchors.centerIn: parent
                             visible: menuRow.modelData.buttonType === QsMenuButtonType.CheckBox
                                 && menuRow.checked
-                            text: "✓"
-                            color: Theme.background
-                            font.family: Theme.fontSans
-                            font.pixelSize: 11
-                            font.weight: Font.Bold
+                            value: Icons.check
+                            size: 10
                         }
 
                         Rectangle {
@@ -445,17 +440,15 @@ FocusScope {
                         font.pixelSize: Theme.fontSizeBody
                     }
 
-                    Text {
+                    IconLabel {
                         id: submenuMarker
 
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spaceSm
                         anchors.verticalCenter: parent.verticalCenter
                         visible: menuRow.isEntry && menuRow.modelData.hasChildren
-                        text: "›"
-                        color: menuRow.accent
-                        font.family: Theme.fontSans
-                        font.pixelSize: Theme.fontSizeHeading
+                        value: Icons.chevronRight
+                        size: Theme.iconMd
                     }
 
                     HoverHandler {
