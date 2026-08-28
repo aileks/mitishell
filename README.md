@@ -57,6 +57,8 @@ The default layout keeps Audio and Bluetooth separate and groups Wi-Fi, brightne
 
 The clock defaults to 24-hour time. Right-click its bar label to cycle persisted 24-hour, 12-hour, and seconds variants. `clock.showDate`, `clock.timezones`, and `calendar.showWeekNumbers` control the remaining clock and calendar details.
 
+`font.family` picks one shell-wide font family used for both text and icons. An empty value keeps the shipped Adwaita Sans and Adwaita Mono split. Only Nerd Font families are valid: the shell's icons are Nerd Font glyphs, so an unpatched family would leave the bar without icons. Settings > System lists every installed Nerd Font family under Font, and invalid values are rejected with the same validation as any other key.
+
 ## Weather
 
 Weather is opt-in. When enabled, Mitishell sends either the configured place name or an automatic-location request to [wttr.in](https://wttr.in/) and caches the last successful three-day forecast. Automatic mode allows wttr.in to infer a rough location from the request's network address. A manual place avoids that inference request but still sends the place text to wttr.in.

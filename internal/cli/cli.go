@@ -174,6 +174,10 @@ type UpdateService interface {
 	Snapshot(context.Context) updates.Result
 }
 
+type FontService interface {
+	Families(context.Context) ([]string, error)
+}
+
 type NightLightService interface {
 	Snapshot(context.Context) nightlight.Snapshot
 	Apply(context.Context, nightlight.Action) (nightlight.Snapshot, error)
@@ -202,6 +206,7 @@ type Dependencies struct {
 	EmojiUI             EmojiUI
 	EmojiRecents        EmojiRecents
 	Updates             UpdateService
+	Fonts               FontService
 	NightLight          NightLightService
 	SystemTemperature   SystemTemperature
 	Stdin               io.Reader
@@ -413,6 +418,22 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		fmt.Fprintln(stdout, mediaURL)
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_fonts" {
+		if dependencies.Fonts == nil {
+			fmt.Fprintln(stderr, "mitishell: font enumeration unavailable")
+			return 1
+		}
+		families, err := dependencies.Fonts.Families(context.Background())
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: list fonts: %v\n", err)
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(families); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode fonts: %v\n", err)
+			return 1
+		}
 		return 0
 	}
 	if len(args) == 1 && args[0] == "_config-resolve" {

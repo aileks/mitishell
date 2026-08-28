@@ -200,5 +200,22 @@ Flickable {
                 }
             }
         }
+
+        SectionCard {
+            width: parent.width
+            title: "Font"
+            accent: Theme.blue
+
+            Column {
+                width: parent.width
+                spacing: Theme.spaceMd
+
+                SettingsFontRow {
+                    width: parent.width
+                    label: "Shell font"
+                    value: Config.font.family
+                }
+            }
+        }
     }
 }

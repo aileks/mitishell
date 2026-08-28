@@ -9,6 +9,7 @@ Rectangle {
     id: root
 
     property string label: ""
+    property string fontFamily: Theme.fontSans
     property bool checked: false
     signal chosen
 
@@ -31,7 +32,7 @@ Rectangle {
         anchors.centerIn: parent
         text: root.label
         color: root.checked ? Theme.textBright : Theme.text
-        font.family: Theme.fontSans
+        font.family: root.fontFamily
         font.pixelSize: Theme.fontSizeCaption
         font.weight: root.checked ? Font.DemiBold : Font.Normal
     }

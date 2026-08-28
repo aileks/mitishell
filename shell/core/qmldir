@@ -5,6 +5,7 @@ singleton Config 1.0 Config.qml
 singleton Control 1.0 Control.qml
 singleton Display 1.0 Display.qml
 singleton Emoji 1.0 Emoji.qml
+singleton Fonts 1.0 Fonts.qml
 singleton HyprlandSync 1.0 HyprlandSync.qml
 singleton Icons 1.0 Icons.qml
 singleton Media 1.0 Media.qml

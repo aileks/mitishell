@@ -16,6 +16,7 @@ import (
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
+	"github.com/aileks/mitishell/internal/fonts"
 	"github.com/aileks/mitishell/internal/ipc"
 	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/nightlight"
@@ -138,6 +139,7 @@ func main() {
 		EmojiUI:             shell,
 		EmojiRecents:        emoji.NewFileRecents(emojiRecentsPath),
 		Updates:             updates.NewService(updates.SystemRunner{}),
+		Fonts:               fonts.NewService(fonts.SystemRunner{}),
 		NightLight:          nightlight.NewService(nightlight.SystemRunner{}),
 		SystemTemperature: systemmetrics.NewTemperatureService(
 			"/sys/class/hwmon",
