@@ -41,7 +41,8 @@ QtObject {
             "reduced": false
         },
         "font": {
-            "family": ""
+            "family": "",
+            "monoFamily": ""
         }
     })
     property var value: defaults

@@ -44,6 +44,9 @@ FocusScope {
     TapHandler {
         id: press
         enabled: root.enabled
+        // Exclusive grab on press: a tap must never also reach controls
+        // stacked beneath this surface.
+        gesturePolicy: TapHandler.ReleaseWithinBounds
         onTapped: root.activate()
     }
 

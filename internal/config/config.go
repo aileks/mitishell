@@ -13,6 +13,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/aileks/mitishell/internal/fonts"
 )
 
 const CurrentVersion = 2
@@ -27,11 +29,14 @@ type Config struct {
 	Font     Font     `json:"font"`
 }
 
-// Font selects the shell-wide font family. An empty family keeps the
-// shipped Adwaita defaults. Only Nerd Font families are supported because
-// the shell's icons are Nerd Font glyphs.
+// Font selects the shell's font families. Family styles standard text and
+// follows the system UI font when empty. MonoFamily styles data and icon
+// text and keeps the shipped AdwaitaMono Nerd Font Propo when empty.
+// MonoFamily must name a Nerd Font family because the shell's icons are
+// Nerd Font glyphs.
 type Font struct {
-	Family string `json:"family"`
+	Family     string `json:"family"`
+	MonoFamily string `json:"monoFamily"`
 }
 
 type Bar struct {
@@ -237,6 +242,7 @@ func Load(path string) (Config, error) {
 	}
 	result.Weather.Location = strings.TrimSpace(result.Weather.Location)
 	result.Font.Family = strings.TrimSpace(result.Font.Family)
+	result.Font.MonoFamily = strings.TrimSpace(result.Font.MonoFamily)
 	result.Bar.Layout = NormalizeBarLayout(result.Bar.Layout)
 	if err := Validate(result); err != nil {
 		return Config{}, fmt.Errorf("validate config: %w", err)
@@ -428,13 +434,14 @@ func Validate(cfg Config) error {
 			return errors.New("weather.location must not contain control characters")
 		}
 	}
-	if utf8.RuneCountInString(cfg.Font.Family) > 80 {
-		return errors.New("font.family must contain at most 80 characters")
+	if err := validateFontName("font.family", cfg.Font.Family); err != nil {
+		return err
 	}
-	for _, character := range cfg.Font.Family {
-		if unicode.IsControl(character) {
-			return errors.New("font.family must not contain control characters")
-		}
+	if err := validateFontName("font.monoFamily", cfg.Font.MonoFamily); err != nil {
+		return err
+	}
+	if cfg.Font.MonoFamily != "" && !fonts.IsNerd(cfg.Font.MonoFamily) {
+		return errors.New("font.monoFamily must name a Nerd Font family")
 	}
 	switch cfg.Clock.Format {
 	case "auto", "24h", "12h", "24h-seconds", "12h-seconds":
@@ -458,6 +465,18 @@ func Validate(cfg Config) error {
 		}
 	}
 
+	return nil
+}
+
+func validateFontName(field string, value string) error {
+	if utf8.RuneCountInString(value) > 80 {
+		return fmt.Errorf("%s must contain at most 80 characters", field)
+	}
+	for _, character := range value {
+		if unicode.IsControl(character) {
+			return fmt.Errorf("%s must not contain control characters", field)
+		}
+	}
 	return nil
 }
 
@@ -615,6 +634,8 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 		result.Weather.Location = strings.TrimSpace(parseString(value))
 	case "font.family":
 		result.Font.Family = strings.TrimSpace(parseString(value))
+	case "font.monoFamily":
+		result.Font.MonoFamily = strings.TrimSpace(parseString(value))
 	case "clock.format":
 		result.Clock.Format = parseString(value)
 	case "clock.showDate":
@@ -690,6 +711,8 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Weather.Location
 	case "font.family":
 		value = cfg.Font.Family
+	case "font.monoFamily":
+		value = cfg.Font.MonoFamily
 	case "clock.format":
 		value = cfg.Clock.Format
 	case "clock.showDate":

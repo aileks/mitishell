@@ -57,7 +57,7 @@ The default layout keeps Audio and Bluetooth separate and groups Wi-Fi, brightne
 
 The clock defaults to 24-hour time. Right-click its bar label to cycle persisted 24-hour, 12-hour, and seconds variants. `clock.showDate`, `clock.timezones`, and `calendar.showWeekNumbers` control the remaining clock and calendar details.
 
-`font.family` picks one shell-wide font family used for both text and icons. An empty value keeps the shipped Adwaita Sans and Adwaita Mono split. Only Nerd Font families are valid: the shell's icons are Nerd Font glyphs, so an unpatched family would leave the bar without icons. Settings > System lists every installed Nerd Font family under Font, and invalid values are rejected with the same validation as any other key.
+`font.family` picks the standard font family used for labels and titles; an empty value follows the system UI font. `font.monoFamily` picks the monospace family used for data text and icons; an empty value keeps the shipped AdwaitaMono Nerd Font Propo. Monospace accepts only Nerd Font families: the shell's icons are Nerd Font glyphs, so an unpatched family would leave the bar without icons. Settings > System offers both pickers under Font, and invalid values are rejected with the same validation as any other key.
 
 ## Weather
 
