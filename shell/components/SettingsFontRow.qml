@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import "../core"
+import "../lib/FontModel.js" as FontModel
 
 // One clickable font setting: opens the font picker layered over the
 // settings card. The value shows the active family or its default.
@@ -13,7 +14,7 @@ Column {
     required property string slot
     required property string value
 
-    readonly property string fieldKey: slot === "mono" ? "font.monoFamily" : "font.family"
+    readonly property string fieldKey: FontModel.slotDescriptor(slot).fieldKey
     readonly property string error: Settings.fieldErrors[fieldKey] || ""
 
     width: parent ? parent.width : 320

@@ -1,13 +1,30 @@
-// FontModel builds the Settings font picker's choice list: a default
-// entry plus one entry per installed family, searchable by name. Pure
-// functions so node --test can run without QML.
+// FontModel describes the font picker's slots and builds each slot's
+// choice list: a default entry plus one entry per installed family,
+// searchable by name. Pure functions so node --test can run without QML.
 
-function standardChoices(families) {
-    return withDefault(families, "System default");
+const slotDescriptors = {
+    standard: {
+        fieldKey: "font.family",
+        title: "Standard font",
+        defaultLabel: "System default",
+        nerdOnly: false,
+    },
+    mono: {
+        fieldKey: "font.monoFamily",
+        title: "Monospace font",
+        defaultLabel: "Default (Adwaita Mono Propo)",
+        nerdOnly: true,
+    },
+};
+
+// Resolves a picker slot ("standard" or "mono"). The standard descriptor
+// doubles as the closed-state fallback so bindings stay null-safe.
+function slotDescriptor(slot) {
+    return slotDescriptors[slot] || slotDescriptors.standard;
 }
 
-function monoChoices(nerdFamilies) {
-    return withDefault(nerdFamilies, "Default (Adwaita Mono)");
+function choicesFor(slot, families) {
+    return withDefault(families, slotDescriptor(slot).defaultLabel);
 }
 
 function filterChoices(choices, query) {
@@ -29,5 +46,5 @@ function withDefault(families, defaultLabel) {
 }
 
 if (typeof module !== "undefined") {
-    module.exports = { filterChoices, monoChoices, standardChoices };
+    module.exports = { choicesFor, filterChoices, slotDescriptor };
 }

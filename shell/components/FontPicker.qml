@@ -12,6 +12,7 @@ Rectangle {
 
     readonly property string slot: Fonts.pickerSlot
     readonly property bool active: slot !== ""
+    readonly property var descriptor: FontModel.slotDescriptor(slot)
 
     property string query: ""
     property var choices: []
@@ -31,18 +32,14 @@ Rectangle {
     }
 
     function rebuild() {
-        const families = root.slot === "mono" ? Fonts.nerdFamilies : Fonts.families;
-        const built = root.slot === "mono"
-            ? FontModel.monoChoices(families)
-            : FontModel.standardChoices(families);
-        choices = FontModel.filterChoices(built, query);
+        const families = descriptor.nerdOnly ? Fonts.nerdFamilies : Fonts.families;
+        choices = FontModel.filterChoices(
+            FontModel.choicesFor(root.slot, families), query);
     }
 
     function choose(index) {
         if (index < 0 || index >= choices.length) return;
-        Settings.setField(
-            root.slot === "mono" ? "font.monoFamily" : "font.family",
-            choices[index].value);
+        Settings.setField(descriptor.fieldKey, choices[index].value);
         Fonts.closePicker();
     }
 
@@ -99,7 +96,7 @@ Rectangle {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - parent.spacing - backButton.width
-                text: root.slot === "mono" ? "Monospace font" : "Standard font"
+                text: root.descriptor.title
                 color: Theme.textBright
                 font.family: Theme.fontSans
                 font.pixelSize: Theme.fontSizeTitle
@@ -195,12 +192,12 @@ Rectangle {
                     required property var modelData
                     required property int index
 
-                    readonly property bool active: root.slot === "mono"
+                    readonly property bool active: root.descriptor.nerdOnly
                         ? Config.font.monoFamily === modelData.value
                         : Config.font.family === modelData.value
                     readonly property string previewFamily: modelData.value !== ""
                         ? modelData.value
-                        : (root.slot === "mono" ? "Adwaita Mono" : Theme.systemFont)
+                        : (root.descriptor.nerdOnly ? Theme.monoDefault : Theme.systemFont)
 
                     width: list.width
                     height: Theme.controlHeightLg
