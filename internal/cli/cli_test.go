@@ -74,6 +74,55 @@ func TestInternalSystemTemperatureSnapshotEncodesResult(t *testing.T) {
 	}
 }
 
+type fontCatalogStub struct {
+	families     []string
+	nerdFamilies []string
+	err          error
+}
+
+func (stub fontCatalogStub) Catalog(context.Context) ([]string, []string, error) {
+	return stub.families, stub.nerdFamilies, stub.err
+}
+
+func TestInternalFontsEncodesStandardAndNerdFamilies(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	exitCode := cli.Run(
+		[]string{"_fonts"},
+		&stdout,
+		&stderr,
+		cli.Dependencies{Fonts: fontCatalogStub{
+			families:     []string{"Adwaita Sans", "DejaVu Sans"},
+			nerdFamilies: []string{"AdwaitaMono Nerd Font"},
+		}},
+	)
+	if exitCode != 0 || stderr.Len() != 0 {
+		t.Fatalf("exitCode=%d stderr=%q", exitCode, stderr.String())
+	}
+	var catalog struct {
+		Families     []string `json:"families"`
+		NerdFamilies []string `json:"nerdFamilies"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &catalog); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(catalog.Families, []string{"Adwaita Sans", "DejaVu Sans"}) {
+		t.Fatalf("families = %#v", catalog.Families)
+	}
+	if !slices.Equal(catalog.NerdFamilies, []string{"AdwaitaMono Nerd Font"}) {
+		t.Fatalf("nerdFamilies = %#v", catalog.NerdFamilies)
+	}
+}
+
+func TestInternalFontsReportsUnavailableService(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	exitCode := cli.Run([]string{"_fonts"}, &stdout, &stderr, cli.Dependencies{})
+	if exitCode != 1 || !strings.Contains(stderr.String(), "font enumeration unavailable") {
+		t.Fatalf("exitCode=%d stderr=%q", exitCode, stderr.String())
+	}
+}
+
 type osdStub struct {
 	requests []osd.Request
 	err      error

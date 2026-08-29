@@ -3,75 +3,93 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../core"
 
-// The shell font picker: the shipped Adwaita default plus every installed
-// Nerd Font family, each previewed in its own family. Choosing one saves
-// immediately; the active entry carries the blue config accent.
+// One clickable font setting: opens the font picker layered over the
+// settings card. The value shows the active family or its default.
 Column {
     id: root
 
     required property string label
-    readonly property string fieldKey: "font.family"
+    // Which picker this row opens: "standard" or "mono".
+    required property string slot
     required property string value
 
+    readonly property string fieldKey: slot === "mono" ? "font.monoFamily" : "font.family"
     readonly property string error: Settings.fieldErrors[fieldKey] || ""
-    readonly property var choices: {
-        const list = [{ value: "", label: "Default (Adwaita)" }];
-        for (let index = 0; index < Fonts.families.length; index++) {
-            const family = Fonts.families[index];
-            list.push({ value: family, label: family });
-        }
-        return list;
-    }
 
     width: parent ? parent.width : 320
     spacing: Theme.spaceXs
 
-    onVisibleChanged: {
-        if (visible) Fonts.refresh();
+    function open() {
+        Fonts.openPicker(root.slot);
     }
 
-    Text {
-        text: root.label
-        color: Theme.text
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeBody
-    }
+    Rectangle {
+        id: row
 
-    Text {
-        visible: Fonts.error !== ""
-        text: Fonts.error
-        color: Theme.textMuted
-        font.family: Theme.fontSans
-        font.pixelSize: Theme.fontSizeCaption
-    }
-
-    Flickable {
         width: parent.width
-        height: Math.min(contentHeight, 6 * Theme.controlHeightSm + 5 * Theme.spaceXs)
-        contentWidth: width
-        contentHeight: fontColumn.implicitHeight
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
+        height: Theme.controlHeight
+        radius: Theme.radiusMedium
+        color: rowPress.pressed ? Theme.pressedFill
+            : (row.activeFocus || rowHover.hovered ? Theme.hoverFill : "transparent")
+        border.width: row.activeFocus ? 2 : 0
+        border.color: Theme.blue
+        activeFocusOnTab: true
+        Accessible.name: root.label + ": " + root.value
+        Accessible.role: Accessible.Button
+        Accessible.onPressAction: root.open()
 
-        Column {
-            id: fontColumn
+        Text {
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spaceMd
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.label
+            color: Theme.text
+            font.family: Theme.fontSans
+            font.pixelSize: Theme.fontSizeBody
+        }
 
-            width: parent.width
-            spacing: Theme.spaceXs
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceMd
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceSm
 
-            Repeater {
-                model: root.choices
-
-                delegate: SettingsPill {
-                    required property var modelData
-
-                    width: parent.width
-                    label: modelData.label
-                    fontFamily: modelData.value !== "" ? modelData.value : Theme.fontSans
-                    checked: root.value === modelData.value
-                    onChosen: Settings.setField(root.fieldKey, modelData.value)
-                }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, row.width * 0.45)
+                text: root.value
+                color: Theme.textMuted
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignRight
+                font.family: Theme.fontSans
+                font.pixelSize: Theme.fontSizeBodySmall
             }
+
+            IconLabel {
+                anchors.verticalCenter: parent.verticalCenter
+                value: Icons.chevronRight
+            }
+        }
+
+        HoverHandler {
+            id: rowHover
+
+            cursorShape: Qt.PointingHandCursor
+        }
+
+        TapHandler {
+            id: rowPress
+
+            onTapped: root.open()
+        }
+
+        Keys.onReturnPressed: function(event) {
+            root.open();
+            event.accepted = true;
+        }
+        Keys.onSpacePressed: function(event) {
+            root.open();
+            event.accepted = true;
         }
     }
 

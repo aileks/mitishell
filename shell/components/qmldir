@@ -24,6 +24,7 @@ ControlHomePage 1.0 ControlHomePage.qml
 ControlHost 1.0 ControlHost.qml
 ControlNetworkPage 1.0 ControlNetworkPage.qml
 EmojiHost 1.0 EmojiHost.qml
+FontPicker 1.0 FontPicker.qml
 IconButton 1.0 IconButton.qml
 IconLabel 1.0 IconLabel.qml
 InlineStatus 1.0 InlineStatus.qml

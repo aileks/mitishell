@@ -27,11 +27,13 @@ type Config struct {
 	Font     Font     `json:"font"`
 }
 
-// Font selects the shell-wide font family. An empty family keeps the
-// shipped Adwaita defaults. Only Nerd Font families are supported because
-// the shell's icons are Nerd Font glyphs.
+// Font selects the shell's font families. Family styles standard text and
+// follows the system UI font when empty. MonoFamily styles data and icon
+// text and keeps Adwaita Mono when empty. Only Nerd Font families are
+// valid for MonoFamily because the shell's icons are Nerd Font glyphs.
 type Font struct {
-	Family string `json:"family"`
+	Family     string `json:"family"`
+	MonoFamily string `json:"monoFamily"`
 }
 
 type Bar struct {
@@ -237,6 +239,7 @@ func Load(path string) (Config, error) {
 	}
 	result.Weather.Location = strings.TrimSpace(result.Weather.Location)
 	result.Font.Family = strings.TrimSpace(result.Font.Family)
+	result.Font.MonoFamily = strings.TrimSpace(result.Font.MonoFamily)
 	result.Bar.Layout = NormalizeBarLayout(result.Bar.Layout)
 	if err := Validate(result); err != nil {
 		return Config{}, fmt.Errorf("validate config: %w", err)
@@ -436,6 +439,14 @@ func Validate(cfg Config) error {
 			return errors.New("font.family must not contain control characters")
 		}
 	}
+	if utf8.RuneCountInString(cfg.Font.MonoFamily) > 80 {
+		return errors.New("font.monoFamily must contain at most 80 characters")
+	}
+	for _, character := range cfg.Font.MonoFamily {
+		if unicode.IsControl(character) {
+			return errors.New("font.monoFamily must not contain control characters")
+		}
+	}
 	switch cfg.Clock.Format {
 	case "auto", "24h", "12h", "24h-seconds", "12h-seconds":
 	default:
@@ -615,6 +626,8 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 		result.Weather.Location = strings.TrimSpace(parseString(value))
 	case "font.family":
 		result.Font.Family = strings.TrimSpace(parseString(value))
+	case "font.monoFamily":
+		result.Font.MonoFamily = strings.TrimSpace(parseString(value))
 	case "clock.format":
 		result.Clock.Format = parseString(value)
 	case "clock.showDate":
@@ -690,6 +703,8 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Weather.Location
 	case "font.family":
 		value = cfg.Font.Family
+	case "font.monoFamily":
+		value = cfg.Font.MonoFamily
 	case "clock.format":
 		value = cfg.Clock.Format
 	case "clock.showDate":

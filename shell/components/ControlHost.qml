@@ -57,6 +57,8 @@ PanelWindow {
     onOpenChanged: {
         if (open) {
             focusSelectedPage();
+        } else {
+            Fonts.closePicker();
         }
     }
 
@@ -99,7 +101,8 @@ PanelWindow {
 
     Shortcut {
         sequence: "Escape"
-        enabled: root.open
+        // While the font picker is open, Escape closes only the picker.
+        enabled: root.open && Fonts.pickerSlot === ""
         onActivated: SurfaceCoordinator.close()
     }
 
@@ -298,6 +301,10 @@ PanelWindow {
                     }
                 }
             }
+        }
+
+        FontPicker {
+            anchors.fill: parent
         }
     }
 }

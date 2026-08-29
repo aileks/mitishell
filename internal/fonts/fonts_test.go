@@ -65,3 +65,30 @@ func TestFamiliesHandlesEmptyOutput(t *testing.T) {
 		t.Fatalf("Families() = %#v, want empty", got)
 	}
 }
+
+func TestAllFamiliesKeepsUnpatchedFamilies(t *testing.T) {
+	output := strings.Join([]string{
+		"Adwaita Sans",
+		"AdwaitaMono Nerd Font,AdwaitaMono",
+		"DejaVu Sans",
+		"Adwaita Sans",
+		"",
+	}, "\n")
+
+	got := fonts.AllFamilies(output)
+	want := []string{
+		"Adwaita Sans",
+		"AdwaitaMono",
+		"AdwaitaMono Nerd Font",
+		"DejaVu Sans",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("AllFamilies() = %#v, want %#v", got, want)
+	}
+}
+
+func TestAllFamiliesHandlesEmptyOutput(t *testing.T) {
+	if got := fonts.AllFamilies(""); len(got) != 0 {
+		t.Fatalf("AllFamilies() = %#v, want empty", got)
+	}
+}

@@ -88,7 +88,7 @@ type DisplayService interface {
 }
 
 // Version tracks the release tag. Bump it when a release ships.
-const Version = "1.0.1"
+const Version = "1.1.1"
 
 const helpText = `Usage: mitishell <command>
 
@@ -175,7 +175,7 @@ type UpdateService interface {
 }
 
 type FontService interface {
-	Families(context.Context) ([]string, error)
+	Catalog(context.Context) (families []string, nerdFamilies []string, err error)
 }
 
 type NightLightService interface {
@@ -425,12 +425,16 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			fmt.Fprintln(stderr, "mitishell: font enumeration unavailable")
 			return 1
 		}
-		families, err := dependencies.Fonts.Families(context.Background())
+		families, nerdFamilies, err := dependencies.Fonts.Catalog(context.Background())
 		if err != nil {
 			fmt.Fprintf(stderr, "mitishell: list fonts: %v\n", err)
 			return 1
 		}
-		if err := json.NewEncoder(stdout).Encode(families); err != nil {
+		catalog := struct {
+			Families     []string `json:"families"`
+			NerdFamilies []string `json:"nerdFamilies"`
+		}{Families: families, NerdFamilies: nerdFamilies}
+		if err := json.NewEncoder(stdout).Encode(catalog); err != nil {
 			fmt.Fprintf(stderr, "mitishell: encode fonts: %v\n", err)
 			return 1
 		}

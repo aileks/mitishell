@@ -45,6 +45,30 @@ func isNerdFamily(family string) bool {
 	return strings.Contains(family, "Nerd Font") || strings.Contains(family, "NerdFont")
 }
 
+// AllFamilies returns the deduplicated, sorted list of every installed
+// family, keeping comma-separated aliases as distinct entries. Standard
+// text renders no icon glyphs, so the standard font picker can offer
+// unpatched families.
+func AllFamilies(fcListOutput string) []string {
+	seen := make(map[string]struct{})
+	for _, line := range strings.Split(fcListOutput, "\n") {
+		for _, family := range strings.Split(line, ",") {
+			family = strings.TrimSpace(family)
+			if family == "" {
+				continue
+			}
+			seen[family] = struct{}{}
+		}
+	}
+
+	families := make([]string, 0, len(seen))
+	for family := range seen {
+		families = append(families, family)
+	}
+	sort.Strings(families)
+	return families
+}
+
 // plainVariant maps a variant family name to its plain family, for example
 // "JetBrainsMono Nerd Font Mono" to "JetBrainsMono Nerd Font" and
 // "JetBrainsMono NerdFontPropo" to "JetBrainsMono NerdFont". The second
@@ -87,4 +111,14 @@ func (s *Service) Families(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return Families(output), nil
+}
+
+// Catalog lists every installed family alongside the Nerd Font subset
+// through one fontconfig query.
+func (s *Service) Catalog(ctx context.Context) (families []string, nerdFamilies []string, err error) {
+	output, err := s.runner.Output(ctx, "fc-list", "--format", "%{family}\n")
+	if err != nil {
+		return nil, nil, err
+	}
+	return AllFamilies(output), Families(output), nil
 }

@@ -34,6 +34,31 @@ Flickable {
 
         SectionCard {
             width: parent.width
+            title: "Font"
+            accent: Theme.blue
+
+            Column {
+                width: parent.width
+                spacing: Theme.spaceMd
+
+                SettingsFontRow {
+                    width: parent.width
+                    label: "Standard font"
+                    slot: "standard"
+                    value: Config.font.family !== "" ? Config.font.family : "System default"
+                }
+
+                SettingsFontRow {
+                    width: parent.width
+                    label: "Monospace font"
+                    slot: "mono"
+                    value: Config.font.monoFamily !== "" ? Config.font.monoFamily : "Adwaita Mono"
+                }
+            }
+        }
+
+        SectionCard {
+            width: parent.width
             title: "Bar"
             accent: Theme.orange
 
@@ -197,23 +222,6 @@ Flickable {
                     checked: Config.motion.reduced
                     onToggled: Settings.setField(
                         "motion.reduced", checked ? "false" : "true")
-                }
-            }
-        }
-
-        SectionCard {
-            width: parent.width
-            title: "Font"
-            accent: Theme.blue
-
-            Column {
-                width: parent.width
-                spacing: Theme.spaceMd
-
-                SettingsFontRow {
-                    width: parent.width
-                    label: "Shell font"
-                    value: Config.font.family
                 }
             }
         }

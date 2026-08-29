@@ -98,6 +98,31 @@ func TestFontFamilyNormalizesAndValidates(t *testing.T) {
 	}
 }
 
+func TestFontMonoFamilyNormalizesAndValidates(t *testing.T) {
+	cfg := config.Defaults()
+	updated, err := config.SetField(cfg, "font.monoFamily", "  JetBrainsMono Nerd Font  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.Font.MonoFamily != "JetBrainsMono Nerd Font" {
+		t.Fatalf("mono family = %q", updated.Font.MonoFamily)
+	}
+	if got, err := config.GetField(updated, "font.monoFamily"); err != nil || got != `"JetBrainsMono Nerd Font"` {
+		t.Fatalf("get = %q, %v", got, err)
+	}
+	// The empty mono family keeps the shipped Adwaita Mono default and
+	// must stay valid.
+	if _, err := config.SetField(updated, "font.monoFamily", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := config.SetField(cfg, "font.monoFamily", "bad\nfamily"); err == nil {
+		t.Fatal("accepted control character")
+	}
+	if _, err := config.SetField(cfg, "font.monoFamily", strings.Repeat("é", 81)); err == nil {
+		t.Fatal("accepted more than 80 Unicode code points")
+	}
+}
+
 func TestLoadReturnsValidatedConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	contents := `{
