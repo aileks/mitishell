@@ -110,8 +110,8 @@ func TestFontMonoFamilyNormalizesAndValidates(t *testing.T) {
 	if got, err := config.GetField(updated, "font.monoFamily"); err != nil || got != `"JetBrainsMono Nerd Font"` {
 		t.Fatalf("get = %q, %v", got, err)
 	}
-	// The empty mono family keeps the shipped Adwaita Mono default and
-	// must stay valid.
+	// The empty mono family keeps the shipped AdwaitaMono Nerd Font Propo
+	// default and must stay valid.
 	if _, err := config.SetField(updated, "font.monoFamily", ""); err != nil {
 		t.Fatal(err)
 	}
@@ -120,6 +120,13 @@ func TestFontMonoFamilyNormalizesAndValidates(t *testing.T) {
 	}
 	if _, err := config.SetField(cfg, "font.monoFamily", strings.Repeat("é", 81)); err == nil {
 		t.Fatal("accepted more than 80 Unicode code points")
+	}
+	// The mono slot renders icon glyphs, so it must name a Nerd Font.
+	if _, err := config.SetField(cfg, "font.monoFamily", "Comic Sans"); err == nil {
+		t.Fatal("accepted non-Nerd mono family")
+	}
+	if _, err := config.SetField(cfg, "font.monoFamily", "AdwaitaMono Nerd Font Propo"); err != nil {
+		t.Fatal(err)
 	}
 }
 

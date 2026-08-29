@@ -13,6 +13,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/aileks/mitishell/internal/fonts"
 )
 
 const CurrentVersion = 2
@@ -29,8 +31,9 @@ type Config struct {
 
 // Font selects the shell's font families. Family styles standard text and
 // follows the system UI font when empty. MonoFamily styles data and icon
-// text and keeps Adwaita Mono when empty. Only Nerd Font families are
-// valid for MonoFamily because the shell's icons are Nerd Font glyphs.
+// text and keeps the shipped AdwaitaMono Nerd Font Propo when empty.
+// MonoFamily must name a Nerd Font family because the shell's icons are
+// Nerd Font glyphs.
 type Font struct {
 	Family     string `json:"family"`
 	MonoFamily string `json:"monoFamily"`
@@ -431,21 +434,14 @@ func Validate(cfg Config) error {
 			return errors.New("weather.location must not contain control characters")
 		}
 	}
-	if utf8.RuneCountInString(cfg.Font.Family) > 80 {
-		return errors.New("font.family must contain at most 80 characters")
+	if err := validateFontName("font.family", cfg.Font.Family); err != nil {
+		return err
 	}
-	for _, character := range cfg.Font.Family {
-		if unicode.IsControl(character) {
-			return errors.New("font.family must not contain control characters")
-		}
+	if err := validateFontName("font.monoFamily", cfg.Font.MonoFamily); err != nil {
+		return err
 	}
-	if utf8.RuneCountInString(cfg.Font.MonoFamily) > 80 {
-		return errors.New("font.monoFamily must contain at most 80 characters")
-	}
-	for _, character := range cfg.Font.MonoFamily {
-		if unicode.IsControl(character) {
-			return errors.New("font.monoFamily must not contain control characters")
-		}
+	if cfg.Font.MonoFamily != "" && !fonts.IsNerd(cfg.Font.MonoFamily) {
+		return errors.New("font.monoFamily must name a Nerd Font family")
 	}
 	switch cfg.Clock.Format {
 	case "auto", "24h", "12h", "24h-seconds", "12h-seconds":
@@ -469,6 +465,18 @@ func Validate(cfg Config) error {
 		}
 	}
 
+	return nil
+}
+
+func validateFontName(field string, value string) error {
+	if utf8.RuneCountInString(value) > 80 {
+		return fmt.Errorf("%s must contain at most 80 characters", field)
+	}
+	for _, character := range value {
+		if unicode.IsControl(character) {
+			return fmt.Errorf("%s must not contain control characters", field)
+		}
+	}
 	return nil
 }
 
