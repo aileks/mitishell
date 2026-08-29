@@ -63,8 +63,9 @@ QtObject {
     readonly property int floatingOffset: 5
 
     // The standard slot follows the system UI font until a family is
-    // chosen; the mono slot keeps Adwaita Mono, whose Nerd Font patch
-    // renders the shell's icon glyphs.
+    // chosen. The mono slot keeps the shipped AdwaitaMono Nerd Font Propo:
+    // its proportional Nerd glyphs suit UI text and data alike.
+    readonly property string monoDefault: "AdwaitaMono Nerd Font Propo"
     // qmltypes miss the Qt Quick Application.font extension, so quiet the
     // false positive:
     // qmllint disable missing-property
@@ -73,7 +74,7 @@ QtObject {
     readonly property string fontSans: Config.font.family !== ""
         ? Config.font.family : systemFont
     readonly property string fontMono: Config.font.monoFamily !== ""
-        ? Config.font.monoFamily : "Adwaita Mono"
+        ? Config.font.monoFamily : monoDefault
     readonly property int fontSizeCaption: 12
     readonly property int fontSizeBodySmall: 13
     readonly property int fontSizeBody: 14

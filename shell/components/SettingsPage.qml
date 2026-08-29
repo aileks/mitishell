@@ -52,7 +52,8 @@ Flickable {
                     width: parent.width
                     label: "Monospace font"
                     slot: "mono"
-                    value: Config.font.monoFamily !== "" ? Config.font.monoFamily : "Adwaita Mono"
+                    value: Config.font.monoFamily !== ""
+                        ? Config.font.monoFamily : "Default (Adwaita Mono Propo)"
                 }
             }
         }

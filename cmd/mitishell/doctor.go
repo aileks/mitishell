@@ -31,9 +31,9 @@ func (doctor systemDoctor) Checks() []cli.Check {
 		commandCheck("hyprsunset", false),
 		commandCheck("nmcli", false),
 		commandCheck("bluetoothctl", false),
-		// Adwaita Mono is the shipped mono default and renders the icon glyphs;
-		// the standard slot falls back to the system UI font.
-		fontCheck("Adwaita Mono"),
+		// The shipped mono default is the AdwaitaMono Nerd Font Propo
+		// variant; its Nerd glyphs render the shell's icons.
+		fontCheck("AdwaitaMono Nerd Font Propo"),
 	}
 
 	checks = append(checks, quickshellVersionCheck())

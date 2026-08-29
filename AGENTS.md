@@ -28,7 +28,7 @@ Each feature has one core service that owns state, commands, parsing, and mutati
 
 ## Visual design
 
-Mitishell uses one fixed Cinder Grove look. Keep the exact colors from `Theme.qml`. Standard text follows the system UI font unless Settings picks a family; monospace text and icons default to Adwaita Mono, and mono choices must be Nerd Fonts so the icon glyphs render. You may use alpha forms of these colors. Change the set only when the user asks.
+Mitishell uses one fixed Cinder Grove look. Keep the exact colors from `Theme.qml`. Standard text follows the system UI font unless Settings picks a family; monospace text and icons default to the AdwaitaMono Nerd Font Propo variant, and mono choices must be Nerd Fonts so the icon glyphs render. You may use alpha forms of these colors. Change the set only when the user asks.
 
 Favor soft depth, clear rank, and sparse focal accents. Use shared parts and theme tokens before you style one view. In a full shell design pass, fix those bases first. Motion should feel calm and firm. Keep using `Motion.duration(...)` so reduced motion has the same flow.
 
