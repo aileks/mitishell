@@ -21,6 +21,7 @@ func TestFamiliesKeepsOnlyNerdFonts(t *testing.T) {
 	got := fonts.Families(output)
 	want := []string{
 		"AdwaitaMono Nerd Font",
+		"AdwaitaMono Nerd Font Mono",
 		"FiraCode Nerd Font",
 		"JetBrainsMono Nerd Font Mono",
 	}
@@ -29,7 +30,7 @@ func TestFamiliesKeepsOnlyNerdFonts(t *testing.T) {
 	}
 }
 
-func TestFamiliesCollapsesVariants(t *testing.T) {
+func TestFamiliesKeepsWidthVariants(t *testing.T) {
 	output := strings.Join([]string{
 		"FiraCode Nerd Font",
 		"FiraCode Nerd Font Mono",
@@ -39,9 +40,32 @@ func TestFamiliesCollapsesVariants(t *testing.T) {
 	}, "\n")
 
 	got := fonts.Families(output)
-	want := []string{"FiraCode Nerd Font", "SymbolsNerdFont"}
+	want := []string{
+		"FiraCode Nerd Font",
+		"FiraCode Nerd Font Mono",
+		"FiraCode Nerd Font Propo",
+		"SymbolsNerdFont",
+		"SymbolsNerdFontPropo",
+	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Families() = %#v, want %#v", got, want)
+	}
+}
+
+func TestIsNerd(t *testing.T) {
+	cases := map[string]bool{
+		"AdwaitaMono Nerd Font Propo": true,
+		"JetBrainsMono Nerd Font":     true,
+		"SymbolsNerdFont":             true,
+		"Adwaita Mono":                false,
+		"Adwaita Sans":                false,
+		"Comic Sans":                  false,
+		"":                            false,
+	}
+	for family, want := range cases {
+		if got := fonts.IsNerd(family); got != want {
+			t.Fatalf("IsNerd(%q) = %v, want %v", family, got, want)
+		}
 	}
 }
 
