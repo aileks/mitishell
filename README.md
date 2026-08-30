@@ -165,8 +165,8 @@ Timers are transient user-systemd units. Their private metadata lives under `$XD
 Each release includes Linux archives for amd64 and arm64. The archive contains the Mitishell binary, QML shell, desktop entry, required third-party notices, and license files.
 
 ```bash
-tar -xzf mitishell-v1.1.1-linux-amd64.tar.gz
-cd mitishell-v1.1.1-linux-amd64
+tar -xzf mitishell-v1.2.0-linux-amd64.tar.gz
+cd mitishell-v1.2.0-linux-amd64
 make install-prebuilt
 quickshell -n -p ~/.local/share/mitishell/shell
 ```

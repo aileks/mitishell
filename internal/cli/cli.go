@@ -89,7 +89,7 @@ type DisplayService interface {
 }
 
 // Version tracks the release tag. Bump it when a release ships.
-const Version = "1.1.1"
+const Version = "1.2.0"
 
 const helpText = `Usage: mitishell <command>
 
