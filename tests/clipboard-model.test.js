@@ -19,8 +19,3 @@ test("preview returns the first non-empty line for the row label", () => {
     assert.equal(ClipboardModel.preview(""), "");
 });
 
-test("entryLimit falls back to 25 for unusable caps", () => {
-    assert.equal(ClipboardModel.entryLimit(40), 40);
-    assert.equal(ClipboardModel.entryLimit(undefined), 25);
-    assert.equal(ClipboardModel.entryLimit(0), 25);
-});

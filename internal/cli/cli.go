@@ -400,6 +400,8 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			fmt.Fprintf(stderr, "mitishell: read clipboard text: %v\n", err)
 			return 1
 		}
+		// A broken config file must not break per-copy recording, so it
+		// falls back to the shipped clipboard defaults.
 		clipboardConfig := config.Defaults().Clipboard
 		if loaded, loadErr := config.Load(dependencies.ConfigPath); loadErr == nil {
 			clipboardConfig = loaded.Clipboard

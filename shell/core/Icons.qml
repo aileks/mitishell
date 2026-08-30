@@ -14,7 +14,6 @@ QtObject {
     readonly property string clipboard: "󰒌"
     readonly property string close: "󰅖"
     readonly property string consoleIcon: "󰆎"
-    readonly property string copy: "󰆍"
     readonly property string computer: "󰍹"
     readonly property string cpu: ""
     readonly property string ellipsis: "󰇘"

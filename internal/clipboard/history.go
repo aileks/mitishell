@@ -39,14 +39,14 @@ func EmptyHistory() History {
 	return History{Version: HistoryVersion, Entries: []string{}}
 }
 
-// Record merges one copied text into a history: blank, invalid, or
-// oversize text is skipped, duplicates move to the top, and cap bounds
-// the result. The updated history returns alongside whether it changed.
-func Record(history History, text string, cap int) History {
+// Record merges one copied text into a history and returns the updated
+// history: blank, invalid, or oversize text is skipped, duplicates move
+// to the top, and maxEntries bounds the result.
+func Record(history History, text string, maxEntries int) History {
 	if !utf8.ValidString(text) || strings.TrimSpace(text) == "" {
 		return history
 	}
-	if utf8.RuneCountInString(text) > MaxEntryRunes || cap <= 0 {
+	if utf8.RuneCountInString(text) > MaxEntryRunes || maxEntries <= 0 {
 		return history
 	}
 	entries := []string{text}
@@ -55,8 +55,8 @@ func Record(history History, text string, cap int) History {
 			entries = append(entries, entry)
 		}
 	}
-	if len(entries) > cap {
-		entries = entries[:cap]
+	if len(entries) > maxEntries {
+		entries = entries[:maxEntries]
 	}
 	return History{Version: HistoryVersion, Entries: entries}
 }

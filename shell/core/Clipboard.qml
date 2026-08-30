@@ -21,9 +21,7 @@ QtObject {
 
     readonly property bool available: Config.clipboard.enabled && watcherAvailable
 
-    function entryLimit() {
-        return ClipboardModel.entryLimit(Config.clipboard.maxEntries);
-    }
+
 
     function preview(text) {
         return ClipboardModel.preview(text);
@@ -74,12 +72,19 @@ QtObject {
     property Connections configChanges: Connections {
         target: Config
         function onClipboardChanged() {
-            if (!root.available) {
-                // Disabled history keeps nothing, in memory or on disk.
+            // Only an explicit disable wipes history; startup resolves and
+            // unrelated settings edits must never touch the stored file.
+            if (!Config.clipboard.enabled) {
                 root.clear();
                 root.watcher.running = false;
-            } else if (root.watcherAvailable) {
+                return;
+            }
+            if (root.watcherAvailable) {
                 root.watcher.running = true;
+            }
+            if (root.entries.length > Config.clipboard.maxEntries) {
+                root.entries = root.entries.slice(0, Config.clipboard.maxEntries);
+                root.queueSave();
             }
         }
     }
@@ -107,7 +112,7 @@ QtObject {
         path: root.stateFilePath()
         watchChanges: true
         onFileChanged: {
-            if (root.available && !root.savePending && !root.clearPending) {
+            if (Config.clipboard.enabled && !root.savePending && !root.clearPending) {
                 root.loadProcess.running = true;
             }
         }
@@ -127,7 +132,7 @@ QtObject {
         // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
             // qmllint enable signal-handler-parameters
-            if (!root.available) {
+            if (!Config.clipboard.enabled) {
                 root.historyLoaded = true;
                 return;
             }
@@ -139,7 +144,7 @@ QtObject {
             }
             try {
                 const loaded = JSON.parse(loadOutput.text).entries || [];
-                root.entries = loaded.slice(0, root.entryLimit());
+                root.entries = loaded.slice(0, Config.clipboard.maxEntries);
                 root.persistenceError = "";
             } catch (parseError) {
                 root.persistenceError = "Clipboard history could not be read.";

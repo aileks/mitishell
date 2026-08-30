@@ -106,7 +106,6 @@ QtObject {
             return;
         }
         if (entry.source === "calculator-error") return;
-        if (entry.source === "calculator-pending") return;
         if (entry.source === "runner") {
             runCommand(entry.text);
             SurfaceCoordinator.close();
@@ -124,14 +123,17 @@ QtObject {
         }
         if (entry.source === "application") {
             recordLaunch(entry.desktopId);
-            const argv = LauncherModel.launchCommand(
-                entry.desktopEntry.command,
-                uwsmActive && !entry.desktopEntry.runInTerminal,
-            );
+            // Terminal-launch and custom-working-directory entries keep
+            // QuickShell's launcher; the uwsm argv path can't serve them.
+            const desktop = entry.desktopEntry;
+            const uwsmApplies = uwsmActive
+                && !desktop.runInTerminal
+                && String(desktop.workingDirectory || "").trim() === "";
+            const argv = LauncherModel.launchCommand(desktop.command, uwsmApplies);
             if (argv.length > 0) {
                 Quickshell.execDetached(argv);
             } else {
-                entry.desktopEntry.execute();
+                desktop.execute();
             }
             SurfaceCoordinator.close();
             return;

@@ -66,8 +66,10 @@ SearchSurface {
                 text: text,
             };
         });
-        const ranked = needle.trim() === ""
-            ? rows : SearchModel.rank(rows, needle, resultLimit);
+        // Leave one row for the clear action so the provider stays at 30.
+        const cap = resultLimit - 1;
+        const ranked = (needle.trim() === ""
+            ? rows : SearchModel.rank(rows, needle, cap)).slice(0, cap);
         if (Clipboard.entries.length > 0) {
             ranked.push({
                 id: "clipboard-clear",
