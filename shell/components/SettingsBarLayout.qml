@@ -11,6 +11,8 @@ Column {
     property var localLayout: BarModel.clone(Config.bar.layout)
     property string dragId: ""
     property string targetSection: ""
+    property string targetId: ""
+    property bool targetAfter: false
     property point dragPointerGlobal: Qt.point(0, 0)
     property point dragPressOffset: Qt.point(0, 0)
     property size dragGhostSize: Qt.size(0, 0)
@@ -57,9 +59,40 @@ Column {
         }, dragGhostSize);
     }
 
+    function sectionCard(sectionName) {
+        if (sectionName === "left") return leftSection;
+        if (sectionName === "center") return centerSection;
+        if (sectionName === "right") return rightSection;
+        if (sectionName === "hidden") return hiddenSection;
+        return null;
+    }
+
     function updateDrag(scenePosition) {
         if (!dragging) return;
         targetSection = sectionAt(scenePosition);
+        targetId = "";
+        targetAfter = false;
+        const card = sectionCard(targetSection);
+        if (card !== null) {
+            const rects = [];
+            for (let index = 0; index < card.pillsFlow.count; index += 1) {
+                const pillItem = card.pillsFlow.itemAt(index);
+                if (pillItem === null || !pillItem.visible) continue;
+                const position = pillItem.mapToItem(null, 0, 0);
+                rects.push({
+                    id: pillItem.modelData,
+                    x: position.x,
+                    y: position.y,
+                    width: pillItem.width,
+                    height: pillItem.height,
+                });
+            }
+            const target = BarModel.dropTargetAt(rects, scenePosition.x, scenePosition.y);
+            if (target !== null) {
+                targetId = target.id;
+                targetAfter = target.after;
+            }
+        }
         if (anchorWindow !== null) {
             dragPointerGlobal = anchorWindow.contentItem.mapToGlobal(
                 scenePosition.x,
@@ -71,12 +104,15 @@ Column {
     function finishDrag(scenePosition) {
         updateDrag(scenePosition);
         if (targetSection !== "") {
-            save(BarModel.moveTo(
-                localLayout,
-                dragId,
-                targetSection,
-                localLayout[targetSection].length,
-            ));
+            const next = targetId === ""
+                ? BarModel.moveTo(
+                    localLayout,
+                    dragId,
+                    targetSection,
+                    localLayout[targetSection].length,
+                )
+                : BarModel.moveAtDrop(localLayout, dragId, targetId, targetAfter);
+            save(next);
         }
         clearDrag();
     }
@@ -84,6 +120,8 @@ Column {
     function clearDrag() {
         dragId = "";
         targetSection = "";
+        targetId = "";
+        targetAfter = false;
         dragImageSource = "";
         dragGhostSize = Qt.size(0, 0);
     }
@@ -114,6 +152,7 @@ Column {
         required property string sectionName
         required property string title
         required property var widgets
+        property alias pillsFlow: pillsRepeater
 
         width: root.width
         implicitHeight: sectionContent.implicitHeight + Theme.spaceMd * 2
@@ -144,16 +183,20 @@ Column {
                 spacing: Theme.spaceXs
 
                 Repeater {
+                    id: pillsRepeater
                     model: sectionRoot.widgets
                     delegate: Rectangle {
                         id: pill
                         required property string modelData
+                        readonly property bool dropTarget: root.dragging
+                            && root.targetSection === sectionRoot.sectionName
+                            && root.targetId === pill.modelData
                         implicitWidth: label.implicitWidth + Theme.spaceMd * 2
                         implicitHeight: Theme.controlHeightSm
                         radius: Theme.radiusPill
                         color: activeFocus || hover.hovered ? Theme.hoverFill : Theme.layerRaised
-                        border.width: activeFocus ? 2 : 1
-                        border.color: activeFocus ? Theme.blue : Theme.borderStrong
+                        border.width: dropTarget || activeFocus ? 2 : 1
+                        border.color: dropTarget || activeFocus ? Theme.blue : Theme.borderStrong
                         opacity: root.dragId === modelData ? 0.24 : 1
                         activeFocusOnTab: true
                         Accessible.name: root.labels[modelData] || modelData

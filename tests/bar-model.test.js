@@ -30,6 +30,21 @@ test("keyboard movement crosses sections and respects center capacity", () => {
     assert.deepEqual(moved.center, ["media", "windowTitle"]);
 });
 
+test("drop target picks the pill in the pointer row and reports its side", () => {
+    const rects = [
+        { id: "updates", x: 0, y: 0, width: 80, height: 28 },
+        { id: "system", x: 88, y: 0, width: 80, height: 28 },
+        { id: "audio", x: 176, y: 0, width: 80, height: 28 },
+        { id: "quickSettings", x: 0, y: 32, width: 120, height: 28 },
+    ];
+    assert.deepEqual(model.dropTargetAt(rects, 60, 14), { id: "updates", after: true });
+    assert.deepEqual(model.dropTargetAt(rects, 20, 10), { id: "updates", after: false });
+    assert.deepEqual(model.dropTargetAt(rects, 40, 46), { id: "quickSettings", after: false });
+    assert.deepEqual(model.dropTargetAt(rects, 100, 46), { id: "quickSettings", after: true });
+    assert.equal(model.dropTargetAt(rects, 100, 30), null);
+    assert.equal(model.dropTargetAt([], 0, 0), null);
+});
+
 test("arrow keys map to the four keyboard move directions", () => {
     assert.equal(model.moveDirection(0x01000012), "previous");
     assert.equal(model.moveDirection(0x01000013), "next");

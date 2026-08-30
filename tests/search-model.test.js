@@ -16,6 +16,27 @@ test("normalization, words, and acronyms are stable", () => {
     assert.equal(SearchModel.acronym("Night Light Toggle"), "nlt");
 });
 
+test("wrapIndex wraps selection around both list ends", () => {
+    assert.equal(SearchModel.wrapIndex(3, 4), 3);
+    assert.equal(SearchModel.wrapIndex(4, 4), 0);
+    assert.equal(SearchModel.wrapIndex(-1, 4), 3);
+    assert.equal(SearchModel.wrapIndex(-5, 4), 3);
+    assert.equal(SearchModel.wrapIndex(0, 0), -1);
+});
+
+test("rank caps results at the requested limit", () => {
+    const many = ["alpha", "beta", "gamma", "delta"].map((name) => ({
+        id: "app:" + name,
+        label: name,
+    }));
+    assert.deepEqual(
+        SearchModel.rank(many, "a", 2).map((entry) => entry.id),
+        ["app:alpha", "app:beta"],
+    );
+    assert.equal(SearchModel.rank(many, "a").length, 4);
+    assert.equal(SearchModel.rank(many, "a", 0).length, 0);
+});
+
 test("exact and prefix matches rank before metadata matches", () => {
     assert.deepEqual(
         SearchModel.rank(entries, "fi").map((entry) => entry.id),

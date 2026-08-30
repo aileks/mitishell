@@ -21,12 +21,13 @@ FocusScope {
         anchors.fill: parent
         z: -1
         radius: Theme.radiusPill
-        color: parent.activeFocus || hover.hovered ? Theme.hoverFill : "transparent"
-        border.width: parent.activeFocus ? 2 : 0
+        color: parent.activeFocus || hover.hovered || tap.pressed
+            ? Theme.hoverFill : "transparent"
+        border.width: parent.activeFocus ? 2 : (tap.pressed ? 1 : 0)
         border.color: Theme.blue
         HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     }
-    TapHandler { onTapped: KeyboardLayout.cycle() }
+    TapHandler { id: tap; onTapped: KeyboardLayout.cycle() }
     Keys.onReturnPressed: function(event) { KeyboardLayout.cycle(); event.accepted = true; }
     Keys.onSpacePressed: function(event) { KeyboardLayout.cycle(); event.accepted = true; }
 }

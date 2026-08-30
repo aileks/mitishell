@@ -103,10 +103,7 @@ Row {
         }
     }
 
-    Rectangle {
-        anchors.verticalCenter: parent.verticalCenter
-        width: 1
-        height: 18
-        color: Theme.borderStrong
-    }
+    // Breathing room before the next bar widget now that the strip has no
+    // trailing divider.
+    Item { width: Theme.spaceSm; height: 1 }
 }

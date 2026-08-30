@@ -126,7 +126,13 @@ bind = SUPER, PERIOD, exec, mitishell emoji
 
 ## Launcher and keybinds
 
-`mitishell launcher` toggles a searchable launcher on the focused output. It finds installed desktop applications and frequent Mitishell actions. An empty search leads with the five most recently launched applications. Start a query with `=` to calculate basic arithmetic; activating the result copies it.
+`mitishell launcher` toggles a searchable launcher on the focused output. It finds installed desktop applications and frequent Mitishell actions. An empty search leads with the five most recently launched applications. Searches return at most 30 results and selection wraps from end to end. Start a query with `=` to calculate basic arithmetic; activating the result copies it. Incomplete input shows a muted hint instead of an error.
+
+Start a query with `:` to search the clipboard history, or type "clipboard" to open it. Activating an entry copies it again and moves it to the top. Delete removes the selected entry, and a clear action wipes the history. The shell records every copy while the history is enabled.
+
+Clipboard history is on by default. Settings > System can turn it off or cap the entries between 5 and 100. History lives at `$XDG_STATE_HOME/mitishell/clipboard-history.json`, or `~/.local/state/mitishell/clipboard-history.json` when `XDG_STATE_HOME` is unset.
+
+Start a query with `>` to run a shell command through `sh -c`. In an active UWSM session, launched applications and run commands start in their own systemd scope through `uwsm app`.
 
 Launcher history lives at `$XDG_STATE_HOME/mitishell/launcher-recents.json`, or `~/.local/state/mitishell/launcher-recents.json` when `XDG_STATE_HOME` is unset.
 

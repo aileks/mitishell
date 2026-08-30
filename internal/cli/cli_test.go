@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/aileks/mitishell/internal/cli"
+	"github.com/aileks/mitishell/internal/clipboard"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
@@ -241,6 +242,23 @@ func (stub *emojiRecentsStub) Clear() error {
 	return stub.err
 }
 
+type clipboardHistoryStub struct {
+	state   clipboard.History
+	saved   clipboard.History
+	cleared bool
+	err     error
+}
+
+func (stub *clipboardHistoryStub) Load() (clipboard.History, error) { return stub.state, stub.err }
+func (stub *clipboardHistoryStub) Save(state clipboard.History) error {
+	stub.saved = state
+	return stub.err
+}
+func (stub *clipboardHistoryStub) Clear() error {
+	stub.cleared = true
+	return stub.err
+}
+
 func TestEmojiCommandTogglesPicker(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -332,6 +350,93 @@ func TestInternalEmojiRecentCommands(t *testing.T) {
 			cli.Dependencies{EmojiRecents: stub})
 		if code != 0 || !stub.cleared {
 			t.Fatalf("code=%d cleared=%v stderr=%q", code, stub.cleared, stderr.String())
+		}
+	})
+}
+
+func TestInternalClipboardHistoryCommands(t *testing.T) {
+	stub := &clipboardHistoryStub{state: clipboard.History{
+		Version: clipboard.HistoryVersion,
+		Entries: []string{"first"},
+	}}
+	t.Run("load", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_clipboard-history-load"}, &stdout, &stderr,
+			cli.Dependencies{ClipboardHistory: stub})
+		if code != 0 || !strings.Contains(stdout.String(), `"entries":["first"]`) {
+			t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+		}
+	})
+	t.Run("save", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		input := strings.NewReader(`{"version":1,"entries":["second"]}`)
+		code := cli.Run([]string{"_clipboard-history-save"}, &stdout, &stderr,
+			cli.Dependencies{ClipboardHistory: stub, Stdin: input})
+		if code != 0 || !slices.Equal(stub.saved.Entries, []string{"second"}) {
+			t.Fatalf("code=%d saved=%#v stderr=%q", code, stub.saved, stderr.String())
+		}
+	})
+	t.Run("clear", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_clipboard-history-clear"}, &stdout, &stderr,
+			cli.Dependencies{ClipboardHistory: stub})
+		if code != 0 || !stub.cleared {
+			t.Fatalf("code=%d cleared=%v stderr=%q", code, stub.cleared, stderr.String())
+		}
+	})
+	t.Run("record", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "config.json")
+		contents := `{"version":2,"bar":{"outputs":["*"],"height":36,"systemMetrics":"separate"},"weather":{"units":"auto"},"clock":{"format":"24h"},"clipboard":{"enabled":true,"maxEntries":5}}`
+		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		store := &clipboardHistoryStub{state: clipboard.History{
+			Version: clipboard.HistoryVersion,
+			Entries: []string{"a", "b", "c", "d", "e"},
+		}}
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		input := strings.NewReader("z")
+		code := cli.Run([]string{"_clipboard-record"}, &stdout, &stderr, cli.Dependencies{
+			ConfigPath:       path,
+			ClipboardHistory: store,
+			Stdin:            input,
+		})
+		if code != 0 {
+			t.Fatalf("code=%d stderr=%q", code, stderr.String())
+		}
+		if !slices.Equal(store.saved.Entries, []string{"z", "a", "b", "c", "d"}) {
+			t.Fatalf("saved=%#v", store.saved.Entries)
+		}
+	})
+	t.Run("record disabled skips save", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "config.json")
+		contents := `{"version":2,"bar":{"outputs":["*"],"height":36,"systemMetrics":"separate"},"weather":{"units":"auto"},"clock":{"format":"24h"},"clipboard":{"enabled":false,"maxEntries":25}}`
+		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		store := &clipboardHistoryStub{}
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_clipboard-record"}, &stdout, &stderr, cli.Dependencies{
+			ConfigPath:       path,
+			ClipboardHistory: store,
+			Stdin:            strings.NewReader("text"),
+		})
+		if code != 0 || store.saved.Entries != nil {
+			t.Fatalf("code=%d saved=%#v", code, store.saved)
+		}
+	})
+	t.Run("unavailable", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_clipboard-history-load"}, &stdout, &stderr,
+			cli.Dependencies{})
+		if code != 1 || stderr.String() == "" {
+			t.Fatalf("code=%d stderr=%q", code, stderr.String())
 		}
 	})
 }

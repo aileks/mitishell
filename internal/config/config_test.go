@@ -204,6 +204,10 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
 			Enabled: true,
 			Reduced: true,
 		},
+		Clipboard: config.Clipboard{
+			Enabled:    true,
+			MaxEntries: 25,
+		},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Load() = %#v, want %#v", got, want)
@@ -511,6 +515,8 @@ func TestSetAndGetKnownFields(t *testing.T) {
 		{key: "calendar.showWeekNumbers", value: "true", want: "true"},
 		{key: "motion.enabled", value: "false", want: "false"},
 		{key: "motion.reduced", value: "true", want: "true"},
+		{key: "clipboard.enabled", value: "false", want: "false"},
+		{key: "clipboard.maxEntries", value: "50", want: "50"},
 	}
 
 	for _, test := range tests {
@@ -545,6 +551,10 @@ func TestSetFieldRejectsUnknownOrInvalidValues(t *testing.T) {
 		{key: "clock.timezones", value: "Europe/Berlin"},
 		{key: "clock.timezones", value: `["Mars/Olympus"]`},
 		{key: "calendar.showWeekNumbers", value: "sometimes"},
+		{key: "clipboard.enabled", value: "yes"},
+		{key: "clipboard.maxEntries", value: "large"},
+		{key: "clipboard.maxEntries", value: "4"},
+		{key: "clipboard.maxEntries", value: "101"},
 	}
 
 	for _, test := range tests {
@@ -553,6 +563,16 @@ func TestSetFieldRejectsUnknownOrInvalidValues(t *testing.T) {
 				t.Fatal("SetField() accepted an unknown field or invalid value")
 			}
 		})
+	}
+}
+
+func TestClipboardSectionDefaultsToEnabledWith25Entries(t *testing.T) {
+	defaults := config.Defaults()
+	if !defaults.Clipboard.Enabled {
+		t.Fatal("Defaults() clipboard.enabled = false, want true")
+	}
+	if defaults.Clipboard.MaxEntries != 25 {
+		t.Fatalf("Defaults() clipboard.maxEntries = %d, want 25", defaults.Clipboard.MaxEntries)
 	}
 }
 

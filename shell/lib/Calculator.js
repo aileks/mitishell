@@ -10,6 +10,14 @@ function evaluate(expression) {
     const source = String(expression || "");
     let index = 0;
 
+    // Failures at end of input mean the expression can still be completed,
+    // so the launcher shows a muted pending row instead of an error.
+    function fail(message) {
+        const error = new Error(message);
+        error.pending = index >= source.length;
+        throw error;
+    }
+
     function skipSpace() {
         while (/\s/.test(source.charAt(index))) index++;
     }
@@ -25,7 +33,8 @@ function evaluate(expression) {
         skipSpace();
         if (consume("(")) {
             const value = expressionValue();
-            if (!consume(")")) throw new Error("Missing closing parenthesis");
+            skipSpace();
+            if (!consume(")")) fail("Missing closing parenthesis");
             return value;
         }
         skipSpace();
@@ -42,7 +51,7 @@ function evaluate(expression) {
                 index++;
             }
         }
-        if (!sawDigit) throw new Error("Expected a number");
+        if (!sawDigit) fail("Expected a number");
         return Number(source.slice(start, index));
     }
 
@@ -86,7 +95,7 @@ function evaluate(expression) {
         }
     }
 
-    if (source.trim() === "") return { ok: false, error: "Enter an expression" };
+    if (source.trim() === "") return { ok: false, pending: true, error: "Enter an expression" };
     try {
         const value = expressionValue();
         skipSpace();
@@ -95,7 +104,11 @@ function evaluate(expression) {
         if (text === "") return { ok: false, error: "Result is not finite" };
         return { ok: true, value, text };
     } catch (error) {
-        return { ok: false, error: error.message || "Invalid expression" };
+        return {
+            ok: false,
+            pending: error.pending === true,
+            error: error.message || "Invalid expression",
+        };
     }
 }
 

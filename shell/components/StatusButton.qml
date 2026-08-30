@@ -6,6 +6,9 @@ FocusScope {
 
     property string iconSource: ""
     property color accent: Theme.orange
+    // Buttons whose action is a persistent shell state (dnd, night light,
+    // mic mute) keep an accent tint while that state is on.
+    property bool activeState: false
     required property string accessibleName
     signal activated
 
@@ -21,9 +24,10 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusPill
-        color: root.activeFocus || hover.hovered ? Theme.alpha(root.accent, 0.14) : "transparent"
-        border.width: root.activeFocus ? 2 : 0
-        border.color: Theme.blue
+        color: root.activeState || root.activeFocus || hover.hovered
+            ? Theme.alpha(root.accent, 0.14) : "transparent"
+        border.width: root.activeFocus ? 2 : (root.activeState ? 1 : 0)
+        border.color: root.activeFocus ? Theme.blue : root.accent
 
         IconLabel {
             anchors.centerIn: parent

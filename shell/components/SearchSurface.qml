@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../core"
+import "../lib/SearchModel.js" as SearchModel
 
 // Shared focused-output shell for compact searchable lists. Callers own
 // result construction and row rendering; this component owns focus, motion,
@@ -46,6 +47,7 @@ PanelWindow {
 
     signal opened()
     signal activateRequested(var entry)
+    signal deleteRequested(var entry)
 
     function select(index) {
         if (results.length === 0) {
@@ -57,7 +59,15 @@ PanelWindow {
     }
 
     function moveSelection(delta) {
-        select((resultList.currentIndex < 0 ? 0 : resultList.currentIndex) + delta);
+        const count = results.length;
+        if (count === 0) {
+            resultList.currentIndex = -1;
+            return;
+        }
+        select(SearchModel.wrapIndex(
+            (resultList.currentIndex < 0 ? 0 : resultList.currentIndex) + delta,
+            count,
+        ));
     }
 
     function activateIndex(index) {
@@ -202,6 +212,13 @@ PanelWindow {
                     }
                     Keys.onUpPressed: function(event) {
                         root.moveSelection(-1);
+                        event.accepted = true;
+                    }
+                    Keys.onDeletePressed: function(event) {
+                        if (resultList.currentIndex >= 0
+                                && resultList.currentIndex < root.results.length) {
+                            root.deleteRequested(root.results[resultList.currentIndex]);
+                        }
                         event.accepted = true;
                     }
                     Keys.onPressed: function(event) {

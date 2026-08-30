@@ -26,7 +26,27 @@ test("launcher calculator requires an equals prefix", () => {
 });
 
 test("malformed and non-finite expressions are rejected", () => {
-    for (const expression of ["", "2 +", "(2+3", "2 nope", "1/0", "0%0"]) {
+    for (const expression of ["2 nope", "1/0", "0%0"]) {
         assert.equal(Calculator.evaluate(expression).ok, false, expression);
     }
+});
+
+test("incomplete expressions stay pending instead of erroring", () => {
+    for (const expression of ["", "2 +", "(2+3"]) {
+        const result = Calculator.evaluate(expression);
+        assert.equal(result.ok, false, expression);
+        assert.equal(result.pending, true, expression);
+    }
+});
+
+test("malformed expressions are errors, never pending", () => {
+    for (const expression of ["2 nope", ")3", "2..3", "2+3)"]) {
+        const result = Calculator.evaluate(expression);
+        assert.equal(result.ok, false, expression);
+        assert.equal(result.pending, false, expression);
+    }
+});
+
+test("equals alone is pending", () => {
+    assert.equal(Calculator.fromQuery("=").pending, true);
 });

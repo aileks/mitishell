@@ -81,9 +81,7 @@ FocusScope {
                 border.color: Theme.blue
                 IconLabel {
                     anchors.centerIn: parent
-                    value: root.expanded
-                        ? Icons.chevronRight
-                        : Icons.chevronLeft
+                    value: Icons.chevronLeft
                 }
                 HoverHandler { id: chevronHover; cursorShape: Qt.PointingHandCursor }
             }

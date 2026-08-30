@@ -8,18 +8,11 @@ Row {
     spacing: Theme.spaceXs
 
     StatusButton {
-        visible: Notifications.doNotDisturb
-        iconSource: Icons.bellOff
-        accessibleName: "Disable do not disturb"
-        accent: Theme.orange
-        onActivated: Notifications.toggleDoNotDisturb()
-    }
-
-    StatusButton {
         visible: NightLight.available && NightLight.enabled
         iconSource: Icons.moon
         accessibleName: "Disable night light"
         accent: Theme.yellow
+        activeState: NightLight.enabled
         onActivated: NightLight.toggle()
     }
 
@@ -28,6 +21,7 @@ Row {
         iconSource: Icons.microphoneOff
         accessibleName: "Unmute microphone"
         accent: Theme.red
+        activeState: Audio.inputMuted
         onActivated: {
             Audio.toggleInputMute();
             Osd.showMicMuted(Audio.inputMuted);

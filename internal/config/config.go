@@ -20,13 +20,14 @@ import (
 const CurrentVersion = 2
 
 type Config struct {
-	Version  int      `json:"version"`
-	Bar      Bar      `json:"bar"`
-	Clock    Clock    `json:"clock"`
-	Calendar Calendar `json:"calendar"`
-	Weather  Weather  `json:"weather"`
-	Motion   Motion   `json:"motion"`
-	Font     Font     `json:"font"`
+	Version   int       `json:"version"`
+	Bar       Bar       `json:"bar"`
+	Clock     Clock     `json:"clock"`
+	Calendar  Calendar  `json:"calendar"`
+	Weather   Weather   `json:"weather"`
+	Motion    Motion    `json:"motion"`
+	Font      Font      `json:"font"`
+	Clipboard Clipboard `json:"clipboard"`
 }
 
 // Font selects the shell's font families. Family styles standard text and
@@ -160,6 +161,13 @@ type Motion struct {
 	Reduced bool `json:"reduced"`
 }
 
+// Clipboard bounds the launcher's clipboard history. Enabled keeps the
+// shell watching the clipboard; MaxEntries caps the persisted history.
+type Clipboard struct {
+	Enabled    bool `json:"enabled"`
+	MaxEntries int  `json:"maxEntries"`
+}
+
 func Defaults() Config {
 	return Config{
 		Version: CurrentVersion,
@@ -183,6 +191,10 @@ func Defaults() Config {
 			Enabled: true,
 		},
 		Font: Font{},
+		Clipboard: Clipboard{
+			Enabled:    true,
+			MaxEntries: 25,
+		},
 	}
 }
 
@@ -232,13 +244,16 @@ func Load(path string) (Config, error) {
 	default:
 		return Config{}, fmt.Errorf("validate config: version must be 1 or %d", CurrentVersion)
 	}
-	// Configs written before the clock section existed decode with an
-	// empty format; treat that as "section absent" rather than invalid.
+	// Configs written before a section existed decode with zero values;
+	// treat that as "section absent" rather than invalid.
 	if result.Clock.Format == "" {
 		result.Clock = Defaults().Clock
 	}
 	if result.Clock.Timezones == nil {
 		result.Clock.Timezones = []string{}
+	}
+	if result.Clipboard == (Clipboard{}) {
+		result.Clipboard = Defaults().Clipboard
 	}
 	result.Weather.Location = strings.TrimSpace(result.Weather.Location)
 	result.Font.Family = strings.TrimSpace(result.Font.Family)
@@ -465,6 +480,10 @@ func Validate(cfg Config) error {
 		}
 	}
 
+	if cfg.Clipboard.MaxEntries < 5 || cfg.Clipboard.MaxEntries > 100 {
+		return errors.New("clipboard.maxEntries must be between 5 and 100")
+	}
+
 	return nil
 }
 
@@ -668,6 +687,18 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 			return cfg, errors.New("motion.reduced must be true or false")
 		}
 		result.Motion.Reduced = parsed
+	case "clipboard.enabled":
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			return cfg, errors.New("clipboard.enabled must be true or false")
+		}
+		result.Clipboard.Enabled = parsed
+	case "clipboard.maxEntries":
+		parsed, err := strconv.Atoi(value)
+		if err != nil {
+			return cfg, errors.New("clipboard.maxEntries must be an integer")
+		}
+		result.Clipboard.MaxEntries = parsed
 	default:
 		return cfg, fmt.Errorf("unknown config field %q", key)
 	}
@@ -725,6 +756,10 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Motion.Enabled
 	case "motion.reduced":
 		value = cfg.Motion.Reduced
+	case "clipboard.enabled":
+		value = cfg.Clipboard.Enabled
+	case "clipboard.maxEntries":
+		value = cfg.Clipboard.MaxEntries
 	default:
 		return "", fmt.Errorf("unknown config field %q", key)
 	}
