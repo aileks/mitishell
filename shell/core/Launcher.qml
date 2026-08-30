@@ -28,10 +28,16 @@ QtObject {
                 { type: "settings", target: "audio" }),
             action("settings.display", "Display Settings", "Settings", Icons.computer,
                 { type: "settings", target: "display" }),
-            action("settings.network", "Network Settings", "Settings", Icons.wifi,
-                { type: "settings", target: "network" }),
-            action("settings.bluetooth", "Bluetooth Settings", "Settings", Icons.bluetooth,
-                { type: "settings", target: "bluetooth" }),
+        ];
+        if (Network.state === "ready") {
+            actions.push(action("settings.network", "Network Settings", "Settings", Icons.wifi,
+                { type: "settings", target: "network" }));
+        }
+        if (Bluetooth.state === "ready" && Bluetooth.adapter !== null) {
+            actions.push(action("settings.bluetooth", "Bluetooth Settings", "Settings",
+                Icons.bluetooth, { type: "settings", target: "bluetooth" }));
+        }
+        actions.push(
             action("settings.system", "System Settings", "Settings", Icons.settings,
                 { type: "settings", target: "system" }),
             action("emoji", "Emoji Picker", "Mitishell", Icons.emoji,
@@ -41,7 +47,7 @@ QtObject {
             action("dnd", "Do Not Disturb", Notifications.doNotDisturb ? "On" : "Off",
                 Notifications.doNotDisturb ? Icons.bellOff : Icons.bell,
                 { type: "dnd" }),
-        ];
+        );
         if (Reminders.available) {
             actions.push(action("reminders", "Reminders", "Mitishell", Icons.alarmClock,
                 { type: "surface", target: "reminders" }));
@@ -74,6 +80,36 @@ QtObject {
         pumpSave();
     }
 
+    function activate(entry, screen) {
+        if (entry.source === "calculator") {
+            Quickshell.clipboardText = entry.label;
+            SurfaceCoordinator.close();
+            return;
+        }
+        if (entry.source === "calculator-error") return;
+        if (entry.source === "application") {
+            recordLaunch(entry.desktopId);
+            SurfaceCoordinator.close();
+            entry.desktopEntry.execute();
+            return;
+        }
+
+        const nativeAction = entry.action || {};
+        if (nativeAction.type === "settings") {
+            Control.selectPage(nativeAction.target);
+            SurfaceCoordinator.open("settings", screen);
+        } else if (nativeAction.type === "surface") {
+            if (nativeAction.target === "reminders") Reminders.refresh();
+            SurfaceCoordinator.open(nativeAction.target, screen);
+        } else if (nativeAction.type === "dnd") {
+            Notifications.toggleDoNotDisturb();
+            SurfaceCoordinator.close();
+        } else if (nativeAction.type === "night-light") {
+            NightLight.toggle();
+            SurfaceCoordinator.close();
+        }
+    }
+
     function pumpSave() {
         if (!saveProcess.running && savePending) {
             savePending = false;
@@ -103,10 +139,13 @@ QtObject {
             try {
                 const loaded = JSON.parse(loadOutput.text).entries || [];
                 root.recents = root.recentsDirty
-                    ? loaded.reduce(function(current, value) {
-                        return LauncherModel.addRecent(current, value);
-                    }, root.recents)
+                    ? LauncherModel.mergeRecents(root.recents, loaded)
                     : loaded.slice(0, LauncherModel.recentLimit);
+                if (root.recentsDirty) {
+                    root.pendingSavePayload = JSON.stringify({ version: 1, entries: root.recents });
+                    root.savePending = true;
+                    root.pumpSave();
+                }
                 root.persistenceError = "";
             } catch (parseError) {
                 root.persistenceError = "Recent applications could not be read.";

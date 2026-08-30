@@ -15,9 +15,11 @@ test("application normalization filters hidden and unnamed entries", () => {
     });
     const entries = LauncherModel.applicationEntries([
         firefox,
-        desktop("hidden.desktop", "Hidden", { noDisplay: true }),
+        desktop("hidden.desktop", "Hidden", { hidden: true }),
+        desktop("no-display.desktop", "No display", { noDisplay: true }),
         desktop("nameless.desktop", "  "),
     ]);
+    assert.deepEqual(firefox.keywords, ["internet"]);
     assert.equal(entries.length, 1);
     assert.equal(entries[0].desktopEntry, firefox);
     assert.deepEqual(entries[0], {
@@ -68,4 +70,21 @@ test("recent updates are unique and bounded", () => {
     assert.deepEqual(LauncherModel.addRecent(original, "six"), [
         "six", "one", "two", "three", "four",
     ]);
+});
+
+test("loaded recents append without displacing launches made during startup", () => {
+    assert.deepEqual(
+        LauncherModel.mergeRecents(
+            ["new.desktop"],
+            ["old-one.desktop", "old-two.desktop"],
+        ),
+        ["new.desktop", "old-one.desktop", "old-two.desktop"],
+    );
+    assert.deepEqual(
+        LauncherModel.mergeRecents(
+            ["new.desktop", "old-one.desktop"],
+            ["old-one.desktop", "old-two.desktop"],
+        ),
+        ["new.desktop", "old-one.desktop", "old-two.desktop"],
+    );
 });

@@ -33,13 +33,15 @@ PanelWindow {
         + Theme.spaceLg
     readonly property int warningHeight: warningText.visible
         ? warningText.implicitHeight + Theme.spaceMd : 0
-    readonly property int viewportHeight: Math.min(
-        resultViewportHeight,
-        Math.max(
-            Theme.controlHeightLg * 3,
-            height - panelTopMargin - Theme.spaceXl - Theme.spaceLg * 2
-                - Theme.controlHeight - Theme.spaceMd - warningHeight,
-        ),
+    readonly property int panelChromeHeight: Theme.spaceLg * 2
+        + Theme.controlHeight + Theme.spaceMd + warningHeight
+    readonly property int availablePanelHeight: Math.max(
+        0,
+        height - panelTopMargin - Theme.spaceXl,
+    )
+    readonly property int viewportHeight: Math.max(
+        0,
+        Math.min(resultViewportHeight, availablePanelHeight - panelChromeHeight),
     )
 
     signal opened()
@@ -135,9 +137,12 @@ PanelWindow {
         anchors.top: parent.top
         anchors.topMargin: root.panelTopMargin
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.min(560, root.width - Theme.spaceXl * 2)
-        height: Theme.spaceLg * 2 + Theme.controlHeight + Theme.spaceMd
-            + root.viewportHeight + root.warningHeight
+        width: Math.max(0, Math.min(560, root.width - Theme.spaceXl * 2))
+        height: Math.min(
+            root.availablePanelHeight,
+            root.panelChromeHeight + root.viewportHeight,
+        )
+        clip: true
         floating: true
         accent: root.accent
         padding: Theme.spaceLg

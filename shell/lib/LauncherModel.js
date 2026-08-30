@@ -2,7 +2,7 @@ const recentLimit = 5;
 
 function valuesFrom(collection) {
     if (!collection) return [];
-    if (Array.isArray(collection)) return collection;
+    if (Array.isArray(collection)) return collection.slice();
     const values = [];
     if (typeof collection.forEach === "function") {
         collection.forEach(function(value) { values.push(value); });
@@ -16,7 +16,8 @@ function valuesFrom(collection) {
 function applicationEntries(applications) {
     const values = valuesFrom(applications);
     return values.filter(function(entry) {
-        return entry && entry.noDisplay !== true && String(entry.name || "").trim() !== "";
+        return entry && entry.hidden !== true && entry.noDisplay !== true
+            && String(entry.name || "").trim() !== "";
     }).map(function(entry) {
         const desktopId = String(entry.id || entry.name);
         const keywords = valuesFrom(entry.keywords);
@@ -71,6 +72,21 @@ function addRecent(recentIds, desktopId) {
     })).slice(0, recentLimit);
 }
 
+function mergeRecents(primaryIds, fallbackIds) {
+    const merged = (Array.isArray(primaryIds) ? primaryIds : []).slice(0, recentLimit);
+    (Array.isArray(fallbackIds) ? fallbackIds : []).forEach(function(id) {
+        if (merged.length < recentLimit && merged.indexOf(id) === -1) merged.push(id);
+    });
+    return merged;
+}
+
 if (typeof module !== "undefined") {
-    module.exports = { addRecent, applicationEntries, blankEntries, recentLimit, valuesFrom };
+    module.exports = {
+        addRecent,
+        applicationEntries,
+        blankEntries,
+        mergeRecents,
+        recentLimit,
+        valuesFrom,
+    };
 }

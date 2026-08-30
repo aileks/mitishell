@@ -38,39 +38,9 @@ SearchSurface {
             : SearchModel.rank(entries, query);
     }
 
-    function activate(entry) {
-        if (entry.source === "calculator") {
-            Quickshell.clipboardText = entry.label;
-            SurfaceCoordinator.close();
-            return;
-        }
-        if (entry.source === "calculator-error") return;
-        if (entry.source === "application") {
-            Launcher.recordLaunch(entry.desktopId);
-            SurfaceCoordinator.close();
-            entry.desktopEntry.execute();
-            return;
-        }
-
-        const action = entry.action || {};
-        if (action.type === "settings") {
-            Control.selectPage(action.target);
-            SurfaceCoordinator.open("settings", root.modelData);
-        } else if (action.type === "surface") {
-            if (action.target === "reminders") Reminders.refresh();
-            SurfaceCoordinator.open(action.target, root.modelData);
-        } else if (action.type === "dnd") {
-            Notifications.toggleDoNotDisturb();
-            SurfaceCoordinator.close();
-        } else if (action.type === "night-light") {
-            NightLight.toggle();
-            SurfaceCoordinator.close();
-        }
-    }
-
     onOpened: rebuild()
     onQueryChanged: rebuild()
-    onActivateRequested: function(entry) { root.activate(entry); }
+    onActivateRequested: function(entry) { Launcher.activate(entry, root.modelData); }
 
     Connections {
         target: Launcher
@@ -93,6 +63,17 @@ SearchSurface {
     Connections {
         target: Reminders
         function onAvailableChanged() { root.rebuild(); }
+    }
+
+    Connections {
+        target: Network
+        function onStateChanged() { root.rebuild(); }
+    }
+
+    Connections {
+        target: Bluetooth
+        function onStateChanged() { root.rebuild(); }
+        function onAdapterChanged() { root.rebuild(); }
     }
 
     Component {
