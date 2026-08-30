@@ -2,16 +2,12 @@
 package launcher
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/aileks/mitishell/internal/statefile"
 )
 
 const (
@@ -25,23 +21,15 @@ type Recents struct {
 }
 
 type FileRecents struct {
-	path string
+	file statefile.JSON
 }
 
 func NewFileRecents(path string) FileRecents {
-	return FileRecents{path: path}
+	return FileRecents{file: statefile.NewJSON(path, "launcher recents")}
 }
 
 func RecentsPath() (string, error) {
-	stateRoot := os.Getenv("XDG_STATE_HOME")
-	if stateRoot == "" {
-		homeDirectory, err := os.UserHomeDir()
-		if err != nil {
-			return "", fmt.Errorf("resolve user state directory: %w", err)
-		}
-		stateRoot = filepath.Join(homeDirectory, ".local", "state")
-	}
-	return filepath.Join(stateRoot, "mitishell", "launcher-recents.json"), nil
+	return statefile.Path("launcher-recents.json")
 }
 
 func EmptyRecents() Recents {
@@ -49,22 +37,13 @@ func EmptyRecents() Recents {
 }
 
 func (recents FileRecents) Load() (Recents, error) {
-	contents, err := os.ReadFile(recents.path)
-	if errors.Is(err, os.ErrNotExist) {
-		return EmptyRecents(), nil
-	}
+	state := EmptyRecents()
+	found, err := recents.file.Load(&state)
 	if err != nil {
-		return Recents{}, fmt.Errorf("read launcher recents: %w", err)
+		return Recents{}, err
 	}
-
-	decoder := json.NewDecoder(bytes.NewReader(contents))
-	decoder.DisallowUnknownFields()
-	state := Recents{}
-	if err := decoder.Decode(&state); err != nil {
-		return Recents{}, fmt.Errorf("decode launcher recents: %w", err)
-	}
-	if decoder.Decode(&struct{}{}) != io.EOF {
-		return Recents{}, fmt.Errorf("decode launcher recents: trailing content")
+	if !found {
+		return state, nil
 	}
 	if err := validateRecents(state); err != nil {
 		return Recents{}, err
@@ -80,45 +59,7 @@ func (recents FileRecents) Save(state Recents) error {
 		return err
 	}
 
-	contents, err := json.Marshal(state)
-	if err != nil {
-		return fmt.Errorf("encode launcher recents: %w", err)
-	}
-	contents = append(contents, '\n')
-
-	directory := filepath.Dir(recents.path)
-	if err := os.MkdirAll(directory, 0o700); err != nil {
-		return fmt.Errorf("create launcher state directory: %w", err)
-	}
-	if err := os.Chmod(directory, 0o700); err != nil {
-		return fmt.Errorf("set launcher state directory permissions: %w", err)
-	}
-	temporary, err := os.CreateTemp(directory, ".launcher-recents-*.json")
-	if err != nil {
-		return fmt.Errorf("create temporary launcher recents: %w", err)
-	}
-	temporaryPath := temporary.Name()
-	defer os.Remove(temporaryPath)
-
-	if err := temporary.Chmod(0o600); err != nil {
-		temporary.Close()
-		return fmt.Errorf("set launcher recents permissions: %w", err)
-	}
-	if _, err := temporary.Write(contents); err != nil {
-		temporary.Close()
-		return fmt.Errorf("write launcher recents: %w", err)
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return fmt.Errorf("sync launcher recents: %w", err)
-	}
-	if err := temporary.Close(); err != nil {
-		return fmt.Errorf("close launcher recents: %w", err)
-	}
-	if err := os.Rename(temporaryPath, recents.path); err != nil {
-		return fmt.Errorf("replace launcher recents: %w", err)
-	}
-	return nil
+	return recents.file.Save(state)
 }
 
 func normalizeEntries(entries []string) []string {

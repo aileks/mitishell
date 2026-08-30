@@ -23,6 +23,21 @@ func TestRecentsPathUsesXDGStateHome(t *testing.T) {
 	}
 }
 
+func TestRecentsPathFallsBackToLocalState(t *testing.T) {
+	homeDirectory := t.TempDir()
+	t.Setenv("XDG_STATE_HOME", "")
+	t.Setenv("HOME", homeDirectory)
+
+	path, err := launcher.RecentsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(homeDirectory, ".local", "state", "mitishell", "launcher-recents.json")
+	if path != want {
+		t.Fatalf("path = %q, want %q", path, want)
+	}
+}
+
 func TestMissingRecentsAreEmpty(t *testing.T) {
 	state, err := launcher.NewFileRecents(filepath.Join(t.TempDir(), "missing.json")).Load()
 	if err != nil {

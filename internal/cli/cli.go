@@ -231,41 +231,57 @@ type Dependencies struct {
 	Stdin               io.Reader
 }
 
+func loadRecentState[T any](stdout, stderr io.Writer, store interface {
+	Load() (T, error)
+}, label string) int {
+	state, err := store.Load()
+	if err != nil {
+		fmt.Fprintf(stderr, "mitishell: %s unavailable: %v\n", label, err)
+		return 1
+	}
+	if err := json.NewEncoder(stdout).Encode(state); err != nil {
+		fmt.Fprintf(stderr, "mitishell: encode %s: %v\n", label, err)
+		return 1
+	}
+	return 0
+}
+
+func saveRecentState[T any](stdout, stderr io.Writer, input io.Reader, store interface {
+	Save(T) error
+}, state T, label string) int {
+	decoder := json.NewDecoder(input)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&state); err != nil {
+		fmt.Fprintf(stderr, "mitishell: decode %s: %v\n", label, err)
+		return 2
+	}
+	if decoder.Decode(&struct{}{}) != io.EOF {
+		fmt.Fprintf(stderr, "mitishell: decode %s: trailing content\n", label)
+		return 2
+	}
+	if err := store.Save(state); err != nil {
+		fmt.Fprintf(stderr, "mitishell: save %s: %v\n", label, err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "%s saved\n", label)
+	return 0
+}
+
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
 	if len(args) == 1 && args[0] == "_launcher-recents-load" {
 		if dependencies.LauncherRecents == nil {
 			fmt.Fprintln(stderr, "mitishell: launcher recents unavailable")
 			return 1
 		}
-		state, err := dependencies.LauncherRecents.Load()
-		if err != nil {
-			fmt.Fprintf(stderr, "mitishell: launcher recents unavailable: %v\n", err)
-			return 1
-		}
-		if err := json.NewEncoder(stdout).Encode(state); err != nil {
-			fmt.Fprintf(stderr, "mitishell: encode launcher recents: %v\n", err)
-			return 1
-		}
-		return 0
+		return loadRecentState(stdout, stderr, dependencies.LauncherRecents, "launcher recents")
 	}
 	if len(args) == 1 && args[0] == "_launcher-recents-save" {
 		if dependencies.LauncherRecents == nil || dependencies.Stdin == nil {
 			fmt.Fprintln(stderr, "mitishell: launcher recents unavailable")
 			return 1
 		}
-		state := launcher.Recents{}
-		decoder := json.NewDecoder(dependencies.Stdin)
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&state); err != nil {
-			fmt.Fprintf(stderr, "mitishell: decode launcher recents: %v\n", err)
-			return 2
-		}
-		if err := dependencies.LauncherRecents.Save(state); err != nil {
-			fmt.Fprintf(stderr, "mitishell: save launcher recents: %v\n", err)
-			return 1
-		}
-		fmt.Fprintln(stdout, "launcher recents saved")
-		return 0
+		return saveRecentState(stdout, stderr, dependencies.Stdin,
+			dependencies.LauncherRecents, launcher.Recents{}, "launcher recents")
 	}
 	if len(args) == 1 && args[0] == "_system-temperature-snapshot" {
 		result := systemmetrics.Temperature{}
@@ -315,35 +331,15 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
 			return 1
 		}
-		state, err := dependencies.EmojiRecents.Load()
-		if err != nil {
-			fmt.Fprintf(stderr, "mitishell: emoji recents unavailable: %v\n", err)
-			return 1
-		}
-		if err := json.NewEncoder(stdout).Encode(state); err != nil {
-			fmt.Fprintf(stderr, "mitishell: encode emoji recents: %v\n", err)
-			return 1
-		}
-		return 0
+		return loadRecentState(stdout, stderr, dependencies.EmojiRecents, "emoji recents")
 	}
 	if len(args) == 1 && args[0] == "_emoji-recents-save" {
 		if dependencies.EmojiRecents == nil || dependencies.Stdin == nil {
 			fmt.Fprintln(stderr, "mitishell: emoji recents unavailable")
 			return 1
 		}
-		state := emoji.Recents{}
-		decoder := json.NewDecoder(dependencies.Stdin)
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&state); err != nil {
-			fmt.Fprintf(stderr, "mitishell: decode emoji recents: %v\n", err)
-			return 2
-		}
-		if err := dependencies.EmojiRecents.Save(state); err != nil {
-			fmt.Fprintf(stderr, "mitishell: save emoji recents: %v\n", err)
-			return 1
-		}
-		fmt.Fprintln(stdout, "emoji recents saved")
-		return 0
+		return saveRecentState(stdout, stderr, dependencies.Stdin,
+			dependencies.EmojiRecents, emoji.Recents{}, "emoji recents")
 	}
 	if len(args) == 1 && args[0] == "_emoji-recents-clear" {
 		if dependencies.EmojiRecents == nil {
