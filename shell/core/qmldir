@@ -10,6 +10,8 @@ singleton HyprlandSync 1.0 HyprlandSync.qml
 singleton Icons 1.0 Icons.qml
 singleton Media 1.0 Media.qml
 singleton KeyboardLayout 1.0 KeyboardLayout.qml
+singleton Keybindings 1.0 Keybindings.qml
+singleton Launcher 1.0 Launcher.qml
 singleton Motion 1.0 Motion.qml
 singleton Network 1.0 Network.qml
 singleton NightLight 1.0 NightLight.qml

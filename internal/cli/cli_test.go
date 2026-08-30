@@ -16,6 +16,7 @@ import (
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
+	"github.com/aileks/mitishell/internal/launcher"
 	"github.com/aileks/mitishell/internal/nightlight"
 	"github.com/aileks/mitishell/internal/notifications"
 	"github.com/aileks/mitishell/internal/osd"
@@ -183,6 +184,41 @@ type emojiUIStub struct {
 	err     error
 }
 
+type launcherUIStub struct {
+	toggled bool
+	err     error
+}
+
+func (stub *launcherUIStub) ToggleLauncher() error {
+	stub.toggled = true
+	return stub.err
+}
+
+type keybindingUIStub struct {
+	toggled bool
+	err     error
+}
+
+func (stub *keybindingUIStub) ToggleKeybindings() error {
+	stub.toggled = true
+	return stub.err
+}
+
+type launcherRecentsStub struct {
+	state launcher.Recents
+	saved launcher.Recents
+	err   error
+}
+
+func (stub *launcherRecentsStub) Load() (launcher.Recents, error) {
+	return stub.state, stub.err
+}
+
+func (stub *launcherRecentsStub) Save(state launcher.Recents) error {
+	stub.saved = state
+	return stub.err
+}
+
 func (stub *emojiUIStub) ToggleEmojiPicker() error {
 	stub.toggled = true
 	return stub.err
@@ -213,6 +249,56 @@ func TestEmojiCommandTogglesPicker(t *testing.T) {
 	if code != 0 || !ui.toggled || stdout.String() != "emoji picker toggled\n" {
 		t.Fatalf("code=%d toggled=%v stdout=%q stderr=%q", code, ui.toggled, stdout.String(), stderr.String())
 	}
+}
+
+func TestLauncherAndKeybindCommandsToggleSurfaces(t *testing.T) {
+	launcherUI := &launcherUIStub{}
+	keybindingUI := &keybindingUIStub{}
+	dependencies := cli.Dependencies{LauncherUI: launcherUI, KeybindingUI: keybindingUI}
+
+	for _, testCase := range []struct {
+		command string
+		output  string
+	}{
+		{command: "launcher", output: "launcher toggled\n"},
+		{command: "keybinds", output: "keybinds toggled\n"},
+	} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{testCase.command}, &stdout, &stderr, dependencies)
+		if code != 0 || stdout.String() != testCase.output || stderr.Len() != 0 {
+			t.Fatalf("%s code=%d stdout=%q stderr=%q", testCase.command, code, stdout.String(), stderr.String())
+		}
+	}
+	if !launcherUI.toggled || !keybindingUI.toggled {
+		t.Fatalf("launcher=%v keybinds=%v", launcherUI.toggled, keybindingUI.toggled)
+	}
+}
+
+func TestInternalLauncherRecentCommands(t *testing.T) {
+	stub := &launcherRecentsStub{state: launcher.Recents{
+		Version: launcher.RecentsVersion,
+		Entries: []string{"firefox.desktop"},
+	}}
+	t.Run("load", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_launcher-recents-load"}, &stdout, &stderr,
+			cli.Dependencies{LauncherRecents: stub})
+		if code != 0 || !strings.Contains(stdout.String(), `"entries":["firefox.desktop"]`) {
+			t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+		}
+	})
+	t.Run("save", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		input := strings.NewReader(`{"version":1,"entries":["foot.desktop"]}`)
+		code := cli.Run([]string{"_launcher-recents-save"}, &stdout, &stderr,
+			cli.Dependencies{LauncherRecents: stub, Stdin: input})
+		if code != 0 || !slices.Equal(stub.saved.Entries, []string{"foot.desktop"}) {
+			t.Fatalf("code=%d saved=%#v stderr=%q", code, stub.saved, stderr.String())
+		}
+	})
 }
 
 func TestInternalEmojiRecentCommands(t *testing.T) {
@@ -1590,7 +1676,9 @@ func TestHelpCommandsPrintCommandList(t *testing.T) {
 			t.Fatalf("Run(%q) exit code = %d, stderr = %q", argument, exitCode, stderr.String())
 		}
 		output := stdout.String()
-		for _, command := range []string{"config", "doctor", "night-light", "reminder", "volume"} {
+		for _, command := range []string{
+			"config", "doctor", "keybinds", "launcher", "night-light", "reminder", "volume",
+		} {
 			if !strings.Contains(output, command) {
 				t.Fatalf("help output missing %q:\n%s", command, output)
 			}

@@ -4,7 +4,6 @@ Mitishell gives Hyprland a shell built with QuickShell, QML, and a small Go tool
 
 ## Read before changing behavior
 
-- Read `ROADMAP.md` before adding a feature or more scope. Each planned tag ships one useful slice. The non-goals set firm limits. Update the roadmap when a change ends or alters an item.
 - Read `README.md` before changing install steps, settings, outside links, or weather. Those facts form user-facing contracts.
 - Prefer the smallest sound change. Avoid tools for future use. Keep stray cleanup out of feature and bug-fix work.
 

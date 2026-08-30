@@ -15,6 +15,7 @@ import (
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
+	"github.com/aileks/mitishell/internal/launcher"
 	"github.com/aileks/mitishell/internal/network"
 	"github.com/aileks/mitishell/internal/nightlight"
 	"github.com/aileks/mitishell/internal/notifications"
@@ -104,6 +105,8 @@ const helpText = `Usage: mitishell <command>
   reminder [minutes|list|clear]     manage reminders
   night-light on|off|toggle|status  control the night light
   emoji                             toggle the emoji picker
+  launcher                          toggle the application launcher
+  keybinds                          toggle the keybind viewer
   volume up|down|mute|set <0-150>   control the volume
   mic up|down|mute|set <0-150>      control the microphone
   brightness up|down|set <0-100>    control the brightness
@@ -170,6 +173,19 @@ type EmojiRecents interface {
 	Clear() error
 }
 
+type LauncherUI interface {
+	ToggleLauncher() error
+}
+
+type KeybindingUI interface {
+	ToggleKeybindings() error
+}
+
+type LauncherRecents interface {
+	Load() (launcher.Recents, error)
+	Save(launcher.Recents) error
+}
+
 type UpdateService interface {
 	Snapshot(context.Context) updates.Result
 }
@@ -205,6 +221,9 @@ type Dependencies struct {
 	ReminderUI          ReminderUI
 	EmojiUI             EmojiUI
 	EmojiRecents        EmojiRecents
+	LauncherUI          LauncherUI
+	KeybindingUI        KeybindingUI
+	LauncherRecents     LauncherRecents
 	Updates             UpdateService
 	Fonts               FontService
 	NightLight          NightLightService
@@ -213,6 +232,41 @@ type Dependencies struct {
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Dependencies) int {
+	if len(args) == 1 && args[0] == "_launcher-recents-load" {
+		if dependencies.LauncherRecents == nil {
+			fmt.Fprintln(stderr, "mitishell: launcher recents unavailable")
+			return 1
+		}
+		state, err := dependencies.LauncherRecents.Load()
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: launcher recents unavailable: %v\n", err)
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode launcher recents: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_launcher-recents-save" {
+		if dependencies.LauncherRecents == nil || dependencies.Stdin == nil {
+			fmt.Fprintln(stderr, "mitishell: launcher recents unavailable")
+			return 1
+		}
+		state := launcher.Recents{}
+		decoder := json.NewDecoder(dependencies.Stdin)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: decode launcher recents: %v\n", err)
+			return 2
+		}
+		if err := dependencies.LauncherRecents.Save(state); err != nil {
+			fmt.Fprintf(stderr, "mitishell: save launcher recents: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "launcher recents saved")
+		return 0
+	}
 	if len(args) == 1 && args[0] == "_system-temperature-snapshot" {
 		result := systemmetrics.Temperature{}
 		if dependencies.SystemTemperature != nil {
@@ -714,6 +768,28 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		fmt.Fprintln(stdout, "reload requested")
+		return 0
+	case "launcher":
+		if dependencies.LauncherUI == nil {
+			fmt.Fprintln(stderr, "mitishell: launcher unavailable")
+			return 1
+		}
+		if err := dependencies.LauncherUI.ToggleLauncher(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: launcher unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "launcher toggled")
+		return 0
+	case "keybinds":
+		if dependencies.KeybindingUI == nil {
+			fmt.Fprintln(stderr, "mitishell: keybind viewer unavailable")
+			return 1
+		}
+		if err := dependencies.KeybindingUI.ToggleKeybindings(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: keybind viewer unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "keybinds toggled")
 		return 0
 	case "doctor":
 		failed := false
