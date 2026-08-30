@@ -64,6 +64,10 @@ func (client Client) ToggleLauncher() error {
 	return client.action("launcher", "toggle", "launcher toggled")
 }
 
+func (client Client) OpenClipboard() error {
+	return client.action("clipboard", "open", "clipboard opened")
+}
+
 func (client Client) ToggleKeybindings() error {
 	return client.action("keybinds", "toggle", "keybinds toggled")
 }

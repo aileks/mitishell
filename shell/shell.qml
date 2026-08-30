@@ -124,6 +124,19 @@ ShellRoot {
     }
 
     IpcHandler {
+        target: "clipboard"
+
+        function open(): string {
+            const screen = root.focusedScreen();
+            if (screen === null) {
+                return "clipboard history unavailable";
+            }
+            Launcher.openWithQuery(":", screen);
+            return "clipboard opened";
+        }
+    }
+
+    IpcHandler {
         target: "launcher"
 
         function toggle(): string {

@@ -152,6 +152,7 @@ func main() {
 		EmojiRecents:        emoji.NewFileRecents(emojiRecentsPath),
 		ClipboardHistory:    clipboard.NewFileHistory(clipboardHistoryPath),
 		LauncherUI:          shell,
+		ClipboardUI:         shell,
 		KeybindingUI:        shell,
 		LauncherRecents:     launcher.NewFileRecents(launcherRecentsPath),
 		Updates:             updates.NewService(updates.SystemRunner{}),

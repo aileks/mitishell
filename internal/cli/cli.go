@@ -106,6 +106,7 @@ const helpText = `Usage: mitishell <command>
   reminder [minutes|list|clear]     manage reminders
   night-light on|off|toggle|status  control the night light
   emoji                             toggle the emoji picker
+  clipboard                         open the clipboard history view
   launcher                          toggle the application launcher
   keybinds                          toggle the keybind viewer
   volume up|down|mute|set <0-150>   control the volume
@@ -184,6 +185,10 @@ type LauncherUI interface {
 	ToggleLauncher() error
 }
 
+type ClipboardUI interface {
+	OpenClipboard() error
+}
+
 type KeybindingUI interface {
 	ToggleKeybindings() error
 }
@@ -230,6 +235,7 @@ type Dependencies struct {
 	EmojiRecents        EmojiRecents
 	ClipboardHistory    ClipboardHistory
 	LauncherUI          LauncherUI
+	ClipboardUI         ClipboardUI
 	KeybindingUI        KeybindingUI
 	LauncherRecents     LauncherRecents
 	Updates             UpdateService
@@ -835,6 +841,17 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		fmt.Fprintln(stdout, "reload requested")
+		return 0
+	case "clipboard":
+		if dependencies.ClipboardUI == nil {
+			fmt.Fprintln(stderr, "mitishell: clipboard history unavailable")
+			return 1
+		}
+		if err := dependencies.ClipboardUI.OpenClipboard(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: clipboard history unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "clipboard opened")
 		return 0
 	case "launcher":
 		if dependencies.LauncherUI == nil {

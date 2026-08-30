@@ -269,6 +269,26 @@ func TestEmojiCommandTogglesPicker(t *testing.T) {
 	}
 }
 
+type clipboardUIStub struct {
+	toggled bool
+	err     error
+}
+
+func (stub *clipboardUIStub) OpenClipboard() error {
+	stub.toggled = true
+	return stub.err
+}
+
+func TestClipboardCommandOpensHistory(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	ui := &clipboardUIStub{}
+	code := cli.Run([]string{"clipboard"}, &stdout, &stderr, cli.Dependencies{ClipboardUI: ui})
+	if code != 0 || !ui.toggled || stdout.String() != "clipboard opened\n" {
+		t.Fatalf("code=%d toggled=%v stdout=%q stderr=%q", code, ui.toggled, stdout.String(), stderr.String())
+	}
+}
+
 func TestLauncherAndKeybindCommandsToggleSurfaces(t *testing.T) {
 	launcherUI := &launcherUIStub{}
 	keybindingUI := &keybindingUIStub{}
