@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aileks/mitishell/internal/bluetooth"
+	"github.com/aileks/mitishell/internal/clipboard"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
@@ -173,6 +174,12 @@ type EmojiRecents interface {
 	Clear() error
 }
 
+type ClipboardHistory interface {
+	Load() (clipboard.History, error)
+	Save(clipboard.History) error
+	Clear() error
+}
+
 type LauncherUI interface {
 	ToggleLauncher() error
 }
@@ -221,6 +228,7 @@ type Dependencies struct {
 	ReminderUI          ReminderUI
 	EmojiUI             EmojiUI
 	EmojiRecents        EmojiRecents
+	ClipboardHistory    ClipboardHistory
 	LauncherUI          LauncherUI
 	KeybindingUI        KeybindingUI
 	LauncherRecents     LauncherRecents
@@ -351,6 +359,69 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		fmt.Fprintln(stdout, "emoji recents cleared")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_clipboard-history-load" {
+		if dependencies.ClipboardHistory == nil {
+			fmt.Fprintln(stderr, "mitishell: clipboard history unavailable")
+			return 1
+		}
+		return loadRecentState(stdout, stderr, dependencies.ClipboardHistory, "clipboard history")
+	}
+	if len(args) == 1 && args[0] == "_clipboard-history-save" {
+		if dependencies.ClipboardHistory == nil || dependencies.Stdin == nil {
+			fmt.Fprintln(stderr, "mitishell: clipboard history unavailable")
+			return 1
+		}
+		return saveRecentState(stdout, stderr, dependencies.Stdin,
+			dependencies.ClipboardHistory, clipboard.History{}, "clipboard history")
+	}
+	if len(args) == 1 && args[0] == "_clipboard-history-clear" {
+		if dependencies.ClipboardHistory == nil {
+			fmt.Fprintln(stderr, "mitishell: clipboard history unavailable")
+			return 1
+		}
+		if err := dependencies.ClipboardHistory.Clear(); err != nil {
+			fmt.Fprintf(stderr, "mitishell: clear clipboard history: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "clipboard history cleared")
+		return 0
+	}
+	// Called by wl-paste --watch with the copied text on stdin, so copied
+	// text travels through a pipe and never shows in process arguments.
+	if len(args) == 1 && args[0] == "_clipboard-record" {
+		if dependencies.ClipboardHistory == nil || dependencies.Stdin == nil {
+			fmt.Fprintln(stderr, "mitishell: clipboard history unavailable")
+			return 1
+		}
+		text, err := io.ReadAll(io.LimitReader(dependencies.Stdin, clipboard.MaxEntryRunes*4+1))
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: read clipboard text: %v\n", err)
+			return 1
+		}
+		// A broken config file must not break per-copy recording, so it
+		// falls back to the shipped clipboard defaults.
+		clipboardConfig := config.Defaults().Clipboard
+		if loaded, loadErr := config.Load(dependencies.ConfigPath); loadErr == nil {
+			clipboardConfig = loaded.Clipboard
+		}
+		if !clipboardConfig.Enabled {
+			return 0
+		}
+		history, err := dependencies.ClipboardHistory.Load()
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: load clipboard history: %v\n", err)
+			return 1
+		}
+		recorded := clipboard.Record(history, string(text), clipboardConfig.MaxEntries)
+		if slices.Equal(recorded.Entries, history.Entries) {
+			return 0
+		}
+		if err := dependencies.ClipboardHistory.Save(recorded); err != nil {
+			fmt.Fprintf(stderr, "mitishell: save clipboard history: %v\n", err)
+			return 1
+		}
 		return 0
 	}
 	if len(args) == 1 && args[0] == "_updates-snapshot" {

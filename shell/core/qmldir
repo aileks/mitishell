@@ -1,5 +1,6 @@
 singleton Audio 1.0 Audio.qml
 singleton Bluetooth 1.0 Bluetooth.qml
+singleton Clipboard 1.0 Clipboard.qml
 singleton Clock 1.0 Clock.qml
 singleton Config 1.0 Config.qml
 singleton Control 1.0 Control.qml

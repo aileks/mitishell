@@ -15,6 +15,8 @@ QtObject {
     property bool recentsDirty: false
     property bool savePending: false
     property string pendingSavePayload: ""
+    property bool uwsmActive: false
+    property string pendingQuery: ""
 
     function refreshApplications() {
         applications = LauncherModel.applicationEntries(DesktopEntries.applications.values);
@@ -48,6 +50,10 @@ QtObject {
                 Notifications.doNotDisturb ? Icons.bellOff : Icons.bell,
                 { type: "dnd" }),
         );
+        if (Clipboard.available) {
+            actions.push(action("clipboard-history", "Clipboard History", "Mitishell",
+                Icons.clipboard, { type: "clipboard-history" }));
+        }
         if (Reminders.available) {
             actions.push(action("reminders", "Reminders", "Mitishell", Icons.alarmClock,
                 { type: "surface", target: "reminders" }));
@@ -80,6 +86,19 @@ QtObject {
         pumpSave();
     }
 
+    function openWithQuery(query, screen) {
+        pendingQuery = query;
+        SurfaceCoordinator.close();
+        SurfaceCoordinator.open("launcher", screen);
+    }
+
+    function runCommand(text) {
+        const argv = LauncherModel.runCommand(text, uwsmActive);
+        if (argv.length > 0) {
+            Quickshell.execDetached(argv);
+        }
+    }
+
     function activate(entry, screen) {
         if (entry.source === "calculator") {
             Quickshell.clipboardText = entry.label;
@@ -87,10 +106,36 @@ QtObject {
             return;
         }
         if (entry.source === "calculator-error") return;
+        if (entry.source === "runner") {
+            runCommand(entry.text);
+            SurfaceCoordinator.close();
+            return;
+        }
+        if (entry.source === "clipboard") {
+            Clipboard.copy(entry.text);
+            SurfaceCoordinator.close();
+            return;
+        }
+        if (entry.source === "clipboard-clear") {
+            Clipboard.clear();
+            SurfaceCoordinator.close();
+            return;
+        }
         if (entry.source === "application") {
             recordLaunch(entry.desktopId);
+            // Terminal-launch and custom-working-directory entries keep
+            // QuickShell's launcher; the uwsm argv path can't serve them.
+            const desktop = entry.desktopEntry;
+            const uwsmApplies = uwsmActive
+                && !desktop.runInTerminal
+                && String(desktop.workingDirectory || "").trim() === "";
+            const argv = LauncherModel.launchCommand(desktop.command, uwsmApplies);
+            if (argv.length > 0) {
+                Quickshell.execDetached(argv);
+            } else {
+                desktop.execute();
+            }
             SurfaceCoordinator.close();
-            entry.desktopEntry.execute();
             return;
         }
 
@@ -107,6 +152,8 @@ QtObject {
         } else if (nativeAction.type === "night-light") {
             NightLight.toggle();
             SurfaceCoordinator.close();
+        } else if (nativeAction.type === "clipboard-history") {
+            openWithQuery(":", screen);
         }
     }
 
@@ -170,8 +217,21 @@ QtObject {
         }
     }
 
+    property Process uwsmProbe: Process {
+        command: ["systemctl", "--user", "list-units", "--no-legend", "--state=active",
+            "wayland-wm@*.service"]
+        stdout: StdioCollector { id: uwsmOutput; waitForEnd: true }
+
+        // qmllint disable signal-handler-parameters
+        onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
+            root.uwsmActive = uwsmOutput.text.trim() !== "";
+        }
+    }
+
     Component.onCompleted: {
         refreshApplications();
         loadProcess.running = true;
+        uwsmProbe.running = true;
     }
 }

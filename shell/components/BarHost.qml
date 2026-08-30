@@ -228,13 +228,22 @@ PanelWindow {
 
             BarPopoverTrigger {
                 id: trigger
+                anchors.verticalCenter: parent.verticalCenter
                 popoverKey: "barOverflow"
                 screen: root.modelData
                 accent: Theme.orange
-                contentHandlesHover: true
-                StatusButton {
-                    iconSource: Icons.ellipsis
-                    accessibleName: "More bar items"
+                Accessible.name: "More bar items"
+
+                // Same island height as the power widget, with a tighter
+                // horizontal pad: barIconSize glyph centered.
+                Item {
+                    implicitWidth: Theme.barIconSize + Theme.spaceMd
+                    implicitHeight: 24
+
+                    IconLabel {
+                        anchors.centerIn: parent
+                        value: Icons.ellipsis
+                    }
                 }
             }
 
@@ -248,7 +257,10 @@ PanelWindow {
                     root.overflowIds,
                 )
                 focusGrabEnabled: trigger.active
-                contentWidth: 440
+                contentWidth: Math.max(
+                    240,
+                    Math.min(440, overflowFlow.implicitWidth + Theme.spaceLg * 2),
+                )
                 contentHeight: overflowFlow.implicitHeight + Theme.spaceLg * 2
 
                 Flow {
@@ -258,10 +270,17 @@ PanelWindow {
 
                     Repeater {
                         model: root.overflowIds
-                        delegate: BarWidget {
+                        delegate: Item {
                             required property string modelData
-                            widgetId: modelData
-                            screen: root.modelData
+                            width: overflowWidget.implicitWidth
+                            height: 28
+
+                            BarWidget {
+                                id: overflowWidget
+                                anchors.centerIn: parent
+                                widgetId: parent.modelData
+                                screen: root.modelData
+                            }
                         }
                     }
                 }

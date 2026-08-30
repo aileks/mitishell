@@ -226,5 +226,34 @@ Flickable {
                 }
             }
         }
+
+        SectionCard {
+            width: parent.width
+            title: "Clipboard"
+            accent: Theme.blue
+
+            Column {
+                width: parent.width
+                spacing: Theme.spaceMd
+
+                ToggleRow {
+                    width: parent.width
+                    accent: Theme.blue
+                    label: "History enabled"
+                    checked: Config.clipboard.enabled
+                    onToggled: Settings.setField(
+                        "clipboard.enabled", checked ? "false" : "true")
+                }
+
+                SettingsNumberRow {
+                    width: parent.width
+                    label: "Max entries"
+                    fieldKey: "clipboard.maxEntries"
+                    value: Config.clipboard.maxEntries
+                    from: 5
+                    to: 100
+                }
+            }
+        }
     }
 }

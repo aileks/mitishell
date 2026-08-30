@@ -111,6 +111,16 @@ Item {
                     Accessible.role: Accessible.Button
                     Accessible.onPressAction: Media.togglePlaying()
 
+                    Rectangle {
+                        anchors.fill: parent
+                        z: -1
+                        radius: Theme.radiusPill
+                        color: playbackButton.activeFocus || mediaHover.hovered
+                            ? Theme.hoverFill : "transparent"
+                        border.width: playbackButton.activeFocus ? 2 : 0
+                        border.color: Theme.blue
+                    }
+
                     IconLabel {
                         anchors.centerIn: parent
                         value: Media.activePlayer !== null && Media.activePlayer.isPlaying
@@ -120,6 +130,7 @@ Item {
                     }
 
                     HoverHandler {
+                        id: mediaHover
                         enabled: playbackButton.enabled
                         cursorShape: Qt.PointingHandCursor
                     }

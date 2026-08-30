@@ -109,7 +109,12 @@ function compareText(left, right) {
     return 0;
 }
 
-function rank(items, query) {
+function wrapIndex(index, count) {
+    if (count <= 0) return -1;
+    return ((index % count) + count) % count;
+}
+
+function rank(items, query, limit) {
     const values = Array.isArray(items) ? items : [];
     const tokens = words(query);
     if (tokens.length === 0) return values.slice();
@@ -134,7 +139,9 @@ function rank(items, query) {
         const idOrder = compareText(left.item.id, right.item.id);
         return idOrder !== 0 ? idOrder : left.index - right.index;
     });
-    return matches.map(function(match) { return match.item; });
+    const ordered = matches.map(function(match) { return match.item; });
+    const cap = Number(limit);
+    return Number.isFinite(cap) && cap >= 0 ? ordered.slice(0, cap) : ordered;
 }
 
 if (typeof module !== "undefined") {
@@ -145,5 +152,6 @@ if (typeof module !== "undefined") {
         normalize,
         rank,
         words,
+        wrapIndex,
     };
 }

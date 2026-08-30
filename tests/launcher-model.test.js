@@ -7,6 +7,35 @@ function desktop(id, name, extra = {}) {
     return Object.assign({ id, name, genericName: "", comment: "", icon: "", keywords: [] }, extra);
 }
 
+test("launchCommand wraps app argv with uwsm when the session is managed", () => {
+    assert.deepEqual(
+        LauncherModel.launchCommand(["foot", "-e", "sh"], true),
+        ["uwsm", "app", "--", "foot", "-e", "sh"],
+    );
+    assert.deepEqual(
+        LauncherModel.launchCommand(["foot"], false),
+        ["foot"],
+    );
+});
+
+test("launchCommand passes through empty command lines untouched", () => {
+    assert.deepEqual(LauncherModel.launchCommand([], true), []);
+    assert.deepEqual(LauncherModel.launchCommand(undefined, false), []);
+});
+
+test("runCommand shells out through uwsm when the session is managed", () => {
+    assert.deepEqual(
+        LauncherModel.runCommand("killall wine", true),
+        ["uwsm", "app", "--", "sh", "-c", "killall wine"],
+    );
+    assert.deepEqual(
+        LauncherModel.runCommand("killall wine", false),
+        ["sh", "-c", "killall wine"],
+    );
+    assert.deepEqual(LauncherModel.runCommand("   ", true), []);
+    assert.deepEqual(LauncherModel.runCommand("", false), []);
+});
+
 test("application normalization filters hidden and unnamed entries", () => {
     const firefox = desktop("firefox.desktop", "Firefox", {
         genericName: "Web Browser",

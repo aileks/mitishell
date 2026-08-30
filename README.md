@@ -21,6 +21,8 @@ The update widget needs `checkupdates` from `pacman-contrib`. AUR counts and upg
 
 Night-light controls need a user-managed `hyprsunset` process. Mitishell reads and switches its live state through `hyprctl`, setting 4800 K when it turns night light on. It does not start, supervise, or persist configuration for the outside tool. The control stays hidden when `hyprsunset` is not running.
 
+Clipboard history needs `wl-clipboard` (`wl-paste`). Without it the clipboard features hide and the rest of the shell is unaffected.
+
 ## Development
 
 ```bash
@@ -126,7 +128,13 @@ bind = SUPER, PERIOD, exec, mitishell emoji
 
 ## Launcher and keybinds
 
-`mitishell launcher` toggles a searchable launcher on the focused output. It finds installed desktop applications and frequent Mitishell actions. An empty search leads with the five most recently launched applications. Start a query with `=` to calculate basic arithmetic; activating the result copies it.
+`mitishell launcher` toggles a searchable launcher on the focused output. It finds installed desktop applications and frequent Mitishell actions. An empty search leads with the five most recently launched applications. Searches return at most 30 results and selection wraps from end to end. Start a query with `=` to calculate basic arithmetic; activating the result copies it. Incomplete input shows a muted hint instead of an error.
+
+Start a query with `:` to search the clipboard history, or type "clipboard" to open it. Activating an entry copies it again and moves it to the top. Delete removes the selected entry, and a clear action wipes the history. The shell records every text copy while the history is enabled; images and other non-text data are not recorded.
+
+Clipboard history is on by default. Settings > System can turn it off or cap the entries between 5 and 100. Turning history off clears the stored history. History lives at `$XDG_STATE_HOME/mitishell/clipboard-history.json`, or `~/.local/state/mitishell/clipboard-history.json` when `XDG_STATE_HOME` is unset.
+
+Start a query with `>` to run a shell command through `sh -c`. In an active UWSM session, most launched applications and run commands start in their own systemd scope through `uwsm app`. Desktop entries that launch in a terminal or set a working directory keep the shell's own launcher.
 
 Launcher history lives at `$XDG_STATE_HOME/mitishell/launcher-recents.json`, or `~/.local/state/mitishell/launcher-recents.json` when `XDG_STATE_HOME` is unset.
 

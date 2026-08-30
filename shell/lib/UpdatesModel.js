@@ -13,4 +13,6 @@ function nextDailyDelayMs(hour, now) {
     return next.getTime() - now.getTime();
 }
 
-module.exports = { nextDailyDelayMs };
+if (typeof module !== "undefined") {
+    module.exports = { nextDailyDelayMs };
+}

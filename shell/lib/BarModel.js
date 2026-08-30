@@ -162,6 +162,26 @@ function overflowFor(ids, widths, budget, spacing, overflowButtonWidth) {
     return configured.filter(function(id) { return visible.indexOf(id) === -1; });
 }
 
+// Picks the drop target pill under a pointer. Only rects whose vertical
+// band contains y are considered; the nearest center wins and after is
+// true when the pointer sits in the right half. Returns null for gaps.
+function dropTargetAt(rects, x, y) {
+    let best = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    (Array.isArray(rects) ? rects : []).forEach(function(rect) {
+        if (!rect || rect.height <= 0 || rect.width <= 0) return;
+        const centerY = rect.y + rect.height / 2;
+        if (Math.abs(y - centerY) > rect.height / 2) return;
+        const centerX = rect.x + rect.width / 2;
+        const distance = Math.abs(x - centerX);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            best = { id: rect.id, after: x >= centerX };
+        }
+    });
+    return best;
+}
+
 if (typeof module !== "undefined") module.exports = {
     clone,
     sectionNames,
@@ -170,6 +190,7 @@ if (typeof module !== "undefined") module.exports = {
     moveAtDrop,
     moveKeyboard,
     moveDirection,
+    dropTargetAt,
     overflowOpen,
     popoverActive,
     overflowFor,

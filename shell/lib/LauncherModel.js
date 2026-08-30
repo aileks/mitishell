@@ -80,13 +80,30 @@ function mergeRecents(primaryIds, fallbackIds) {
     return merged;
 }
 
+// uwsm-managed sessions launch apps through `uwsm app --` so each lands in
+// its own systemd scope; otherwise the raw argv runs directly.
+function launchCommand(argv, uwsm) {
+    const command = Array.isArray(argv) ? argv.slice() : [];
+    if (command.length === 0) return [];
+    if (!uwsm) return command;
+    return ["uwsm", "app", "--"].concat(command);
+}
+
+function runCommand(text, uwsm) {
+    const command = String(text || "").trim();
+    if (command === "") return [];
+    return launchCommand(["sh", "-c", command], uwsm);
+}
+
 if (typeof module !== "undefined") {
     module.exports = {
         addRecent,
         applicationEntries,
         blankEntries,
+        launchCommand,
         mergeRecents,
         recentLimit,
+        runCommand,
         valuesFrom,
     };
 }

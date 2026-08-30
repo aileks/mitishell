@@ -43,6 +43,10 @@ QtObject {
         "font": {
             "family": "",
             "monoFamily": ""
+        },
+        "clipboard": {
+            "enabled": true,
+            "maxEntries": 25
         }
     })
     property var value: defaults
@@ -55,6 +59,7 @@ QtObject {
     readonly property var calendar: value.calendar
     readonly property var motion: value.motion
     readonly property var font: value.font
+    readonly property var clipboard: value.clipboard
     readonly property string binary: Quickshell.env("MITISHELL_BIN") || "mitishell"
     readonly property string configRoot: Quickshell.env("XDG_CONFIG_HOME")
         || (Quickshell.env("HOME") + "/.config")

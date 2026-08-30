@@ -13,6 +13,7 @@ import (
 
 	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/cli"
+	"github.com/aileks/mitishell/internal/clipboard"
 	"github.com/aileks/mitishell/internal/config"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
@@ -105,6 +106,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
 		os.Exit(1)
 	}
+	clipboardHistoryPath, err := clipboard.HistoryPath()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
+		os.Exit(1)
+	}
 	launcherRecentsPath, err := launcher.RecentsPath()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "mitishell: %v\n", err)
@@ -144,6 +150,7 @@ func main() {
 		ReminderUI:          shell,
 		EmojiUI:             shell,
 		EmojiRecents:        emoji.NewFileRecents(emojiRecentsPath),
+		ClipboardHistory:    clipboard.NewFileHistory(clipboardHistoryPath),
 		LauncherUI:          shell,
 		KeybindingUI:        shell,
 		LauncherRecents:     launcher.NewFileRecents(launcherRecentsPath),
