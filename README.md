@@ -48,6 +48,8 @@ bin/mitishell power menu
 bin/mitishell settings
 bin/mitishell settings audio
 bin/mitishell emoji
+bin/mitishell launcher
+bin/mitishell keybinds
 bin/mitishell night-light status
 ```
 
@@ -121,6 +123,14 @@ The picker keeps the 24 most recently copied unique emojis and exposes a clear a
 ```ini
 bind = SUPER, PERIOD, exec, mitishell emoji
 ```
+
+## Launcher and keybinds
+
+`mitishell launcher` toggles a searchable launcher on the focused output. It finds installed desktop applications and frequent Mitishell actions. An empty search leads with the five most recently launched applications. Start a query with `=` to calculate basic arithmetic; activating the result copies it.
+
+Launcher history lives at `$XDG_STATE_HOME/mitishell/launcher-recents.json`, or `~/.local/state/mitishell/launcher-recents.json` when `XDG_STATE_HOME` is unset.
+
+`mitishell keybinds` toggles a searchable, read-only view of every binding reported by Hyprland. It refreshes when the viewer opens and when Hyprland reloads its config. Mitishell does not install, edit, or execute bindings.
 
 ## Night light
 

@@ -1,5 +1,5 @@
-// Package emoji owns the durable recent-emoji state used by the picker.
-package emoji
+// Package launcher owns the durable recent-application state used by the launcher.
+package launcher
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 const (
 	RecentsVersion = 1
-	RecentsLimit   = 24
+	RecentsLimit   = 5
 )
 
 type Recents struct {
@@ -25,11 +25,11 @@ type FileRecents struct {
 }
 
 func NewFileRecents(path string) FileRecents {
-	return FileRecents{file: statefile.NewJSON(path, "emoji recents")}
+	return FileRecents{file: statefile.NewJSON(path, "launcher recents")}
 }
 
 func RecentsPath() (string, error) {
-	return statefile.Path("emoji-recents.json")
+	return statefile.Path("launcher-recents.json")
 }
 
 func EmptyRecents() Recents {
@@ -62,10 +62,6 @@ func (recents FileRecents) Save(state Recents) error {
 	return recents.file.Save(state)
 }
 
-func (recents FileRecents) Clear() error {
-	return recents.file.Clear()
-}
-
 func normalizeEntries(entries []string) []string {
 	seen := make(map[string]struct{}, len(entries))
 	normalized := make([]string, 0, min(len(entries), RecentsLimit))
@@ -84,23 +80,23 @@ func normalizeEntries(entries []string) []string {
 
 func validateRecents(state Recents) error {
 	if state.Version != RecentsVersion {
-		return fmt.Errorf("unsupported emoji recents version %d", state.Version)
+		return fmt.Errorf("unsupported launcher recents version %d", state.Version)
 	}
 	if len(state.Entries) > RecentsLimit {
-		return fmt.Errorf("emoji recents exceed %d entries", RecentsLimit)
+		return fmt.Errorf("launcher recents exceed %d entries", RecentsLimit)
 	}
 	seen := make(map[string]struct{}, len(state.Entries))
 	for _, entry := range state.Entries {
-		if !utf8.ValidString(entry) || strings.TrimSpace(entry) == "" || utf8.RuneCountInString(entry) > 32 {
-			return fmt.Errorf("invalid recent emoji")
+		if !utf8.ValidString(entry) || strings.TrimSpace(entry) == "" || utf8.RuneCountInString(entry) > 512 {
+			return fmt.Errorf("invalid recent application ID")
 		}
 		for _, character := range entry {
 			if unicode.IsControl(character) {
-				return fmt.Errorf("recent emoji contains control characters")
+				return fmt.Errorf("recent application ID contains control characters")
 			}
 		}
 		if _, exists := seen[entry]; exists {
-			return fmt.Errorf("duplicate recent emoji")
+			return fmt.Errorf("duplicate recent application ID")
 		}
 		seen[entry] = struct{}{}
 	}

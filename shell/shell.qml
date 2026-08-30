@@ -44,6 +44,18 @@ ShellRoot {
         delegate: EmojiHost {}
     }
 
+    Variants {
+        model: Quickshell.screens
+
+        delegate: LauncherHost {}
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: KeybindingsHost {}
+    }
+
     IpcHandler {
         target: "shell"
 
@@ -108,6 +120,28 @@ ShellRoot {
             }
             SurfaceCoordinator.toggle("emoji", screen);
             return "emoji picker toggled";
+        }
+    }
+
+    IpcHandler {
+        target: "launcher"
+
+        function toggle(): string {
+            const screen = root.focusedScreen();
+            if (screen === null) return "launcher unavailable";
+            SurfaceCoordinator.toggle("launcher", screen);
+            return "launcher toggled";
+        }
+    }
+
+    IpcHandler {
+        target: "keybinds"
+
+        function toggle(): string {
+            const screen = root.focusedScreen();
+            if (screen === null) return "keybind viewer unavailable";
+            SurfaceCoordinator.toggle("keybinds", screen);
+            return "keybinds toggled";
         }
     }
 

@@ -15,6 +15,7 @@ QtObject {
     readonly property string computer: "󰍹"
     readonly property string cpu: ""
     readonly property string ellipsis: "󰇘"
+    readonly property string emoji: "󰞅"
     readonly property string home: "󰋜"
     readonly property string lock: "󰌾"
     readonly property string logOut: "󰍃"

@@ -29,8 +29,11 @@ IconButton 1.0 IconButton.qml
 IconLabel 1.0 IconLabel.qml
 InlineStatus 1.0 InlineStatus.qml
 MediaIsland 1.0 MediaIsland.qml
+MediaMetadata 1.0 MediaMetadata.qml
 MediaPopover 1.0 MediaPopover.qml
 KeyboardLayoutIsland 1.0 KeyboardLayoutIsland.qml
+KeybindingsHost 1.0 KeybindingsHost.qml
+LauncherHost 1.0 LauncherHost.qml
 MetricCard 1.0 MetricCard.qml
 NotificationCard 1.0 NotificationCard.qml
 NotificationIsland 1.0 NotificationIsland.qml
@@ -59,6 +62,7 @@ SettingsOutputsRow 1.0 SettingsOutputsRow.qml
 SettingsPill 1.0 SettingsPill.qml
 SettingsTimezonesRow 1.0 SettingsTimezonesRow.qml
 SectionCard 1.0 SectionCard.qml
+SearchSurface 1.0 SearchSurface.qml
 SignalBars 1.0 SignalBars.qml
 StateMessage 1.0 StateMessage.qml
 StatusButton 1.0 StatusButton.qml

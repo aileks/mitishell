@@ -65,6 +65,20 @@ func TestToggleEmojiPickerAcceptsAcknowledgement(t *testing.T) {
 	}
 }
 
+func TestToggleLauncherAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "launcher toggled"), "/tmp/mitishell-shell")
+	if err := client.ToggleLauncher(); err != nil {
+		t.Fatalf("ToggleLauncher() error = %v", err)
+	}
+}
+
+func TestToggleKeybindingsAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQS(t, "keybinds toggled"), "/tmp/mitishell-shell")
+	if err := client.ToggleKeybindings(); err != nil {
+		t.Fatalf("ToggleKeybindings() error = %v", err)
+	}
+}
+
 func TestReminderChangedPassesFeedbackPositionally(t *testing.T) {
 	client := ipc.NewClient(
 		fakeQSCheckingArg(t, "Reminder cancelled", "Reminder state refreshed"),
