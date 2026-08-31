@@ -24,3 +24,11 @@ func TestRunCommandDoesNotWaitForForkedChildren(t *testing.T) {
 		t.Fatalf("runCommand() blocked %v on the forked child", elapsed)
 	}
 }
+
+func TestShellQuoteSurvivesSpacesAndQuotes(t *testing.T) {
+	quoted := shellQuote("/home/test/Pictures/Screenshots/my 'shot'.png")
+	want := "'/home/test/Pictures/Screenshots/my '\\''shot'\\''.png'"
+	if quoted != want {
+		t.Fatalf("shellQuote() = %s, want %s", quoted, want)
+	}
+}

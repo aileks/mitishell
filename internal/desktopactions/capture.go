@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -42,34 +43,51 @@ func takeScreenshot(ctx context.Context, mode string) error {
 	if err := runCommand(ctx, bytes.NewReader(contents), "wl-copy", "--type", "image/png"); err != nil {
 		return fmt.Errorf("copy screenshot: %w", err)
 	}
+	return showScreenshotNotification(path)
+}
 
-	action, err := commandOutput(ctx, nil, "notify-send",
-		"-a", "Screenshot",
-		"-i", path,
-		"-A", "annotate=Annotate",
-		"Screenshot saved and copied",
-		path,
-	)
+// showScreenshotNotification reports the saved screenshot and offers
+// annotation. The notifier waits for the popup to close, so it runs
+// detached: the action must not stay busy for the popup's lifetime or the
+// launcher cannot start another capture.
+func showScreenshotNotification(path string) error {
+	quoted := shellQuote(path)
+	title := "'Screenshot saved and copied' " + quoted
+	script := "notify-send -a Screenshot -i " + quoted + " " + title
+	if _, err := exec.LookPath("tensaku"); err == nil {
+		script = "out=$(notify-send -a Screenshot -i " + quoted +
+			" -A annotate=Annotate " + title + ")" +
+			" && [ \"$out\" = annotate ] && exec tensaku" +
+			" --filename " + quoted +
+			" --output-filename " + quoted +
+			" --copy-command wl-copy" +
+			" --app-id dev.tensaku.Tensaku" +
+			" --actions-on-enter save-to-file" +
+			" --actions-on-enter save-to-clipboard" +
+			" --actions-on-enter exit"
+	}
+	command := exec.Command("sh", "-c", script)
+	return detachCommand(command)
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+}
+
+func detachCommand(command *exec.Cmd) error {
+	command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	devNull, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 	if err != nil {
-		return fmt.Errorf("show screenshot notification: %w", err)
+		return fmt.Errorf("open null device: %w", err)
 	}
-	if strings.TrimSpace(string(action)) == "annotate" {
-		if _, err := exec.LookPath("tensaku"); err != nil {
-			return fmt.Errorf("Please install tensaku for screenshot annotation")
-		}
-		if err := runCommand(ctx, nil, "tensaku",
-			"--filename", path,
-			"--output-filename", path,
-			"--copy-command", "wl-copy",
-			"--app-id", "dev.tensaku.Tensaku",
-			"--actions-on-enter", "save-to-file",
-			"--actions-on-enter", "save-to-clipboard",
-			"--actions-on-enter", "exit",
-		); err != nil {
-			return fmt.Errorf("annotate screenshot: %w", err)
-		}
+	defer devNull.Close()
+	command.Stdin = devNull
+	command.Stdout = devNull
+	command.Stderr = devNull
+	if err := command.Start(); err != nil {
+		return fmt.Errorf("start notification: %w", err)
 	}
-	return nil
+	return command.Process.Release()
 }
 
 func screenshotArguments(ctx context.Context, mode string, path string) ([]string, error) {
