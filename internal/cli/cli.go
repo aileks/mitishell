@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/aileks/mitishell/internal/bluetooth"
 	"github.com/aileks/mitishell/internal/clipboard"
 	"github.com/aileks/mitishell/internal/config"
+	"github.com/aileks/mitishell/internal/desktopactions"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/launcher"
@@ -90,7 +92,7 @@ type DisplayService interface {
 }
 
 // Version tracks the release tag. Bump it when a release ships.
-const Version = "1.3.0"
+const Version = "1.3.1"
 
 const helpText = `Usage: mitishell <command>
 
@@ -179,6 +181,12 @@ type ClipboardHistory interface {
 	Load() (clipboard.History, error)
 	Save(clipboard.History) error
 	Clear() error
+	Record(clipboard.History, []byte, int) (clipboard.History, error)
+	ImageData(string) (clipboard.Entry, []byte, error)
+}
+
+type ClipboardWriter interface {
+	CopyImage(string, []byte) error
 }
 
 type LauncherUI interface {
@@ -200,6 +208,10 @@ type LauncherRecents interface {
 
 type UpdateService interface {
 	Snapshot(context.Context) updates.Result
+}
+
+type DesktopActions interface {
+	Snapshot(context.Context) desktopactions.Snapshot
 }
 
 type FontService interface {
@@ -234,11 +246,13 @@ type Dependencies struct {
 	EmojiUI             EmojiUI
 	EmojiRecents        EmojiRecents
 	ClipboardHistory    ClipboardHistory
+	ClipboardWriter     ClipboardWriter
 	LauncherUI          LauncherUI
 	ClipboardUI         ClipboardUI
 	KeybindingUI        KeybindingUI
 	LauncherRecents     LauncherRecents
 	Updates             UpdateService
+	DesktopActions      DesktopActions
 	Fonts               FontService
 	NightLight          NightLightService
 	SystemTemperature   SystemTemperature
@@ -394,17 +408,23 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		fmt.Fprintln(stdout, "clipboard history cleared")
 		return 0
 	}
-	// Called by wl-paste --watch with the copied text on stdin, so copied
-	// text travels through a pipe and never shows in process arguments.
+	// Called by wl-paste --watch with clipboard bytes on stdin, so copied
+	// content never appears in process arguments.
 	if len(args) == 1 && args[0] == "_clipboard-record" {
 		if dependencies.ClipboardHistory == nil || dependencies.Stdin == nil {
 			fmt.Fprintln(stderr, "mitishell: clipboard history unavailable")
 			return 1
 		}
-		text, err := io.ReadAll(io.LimitReader(dependencies.Stdin, clipboard.MaxEntryRunes*4+1))
+		if os.Getenv("CLIPBOARD_STATE") == "sensitive" {
+			return 0
+		}
+		contents, err := io.ReadAll(io.LimitReader(dependencies.Stdin, clipboard.MaxImageBytes+1))
 		if err != nil {
-			fmt.Fprintf(stderr, "mitishell: read clipboard text: %v\n", err)
+			fmt.Fprintf(stderr, "mitishell: read clipboard content: %v\n", err)
 			return 1
+		}
+		if len(contents) > clipboard.MaxImageBytes {
+			return 0
 		}
 		// A broken config file must not break per-copy recording, so it
 		// falls back to the shipped clipboard defaults.
@@ -420,12 +440,33 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			fmt.Fprintf(stderr, "mitishell: load clipboard history: %v\n", err)
 			return 1
 		}
-		recorded := clipboard.Record(history, string(text), clipboardConfig.MaxEntries)
+		recorded, err := dependencies.ClipboardHistory.Record(
+			history, contents, clipboardConfig.MaxEntries)
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: record clipboard content: %v\n", err)
+			return 1
+		}
 		if slices.Equal(recorded.Entries, history.Entries) {
 			return 0
 		}
 		if err := dependencies.ClipboardHistory.Save(recorded); err != nil {
 			fmt.Fprintf(stderr, "mitishell: save clipboard history: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 2 && args[0] == "_clipboard-copy-image" {
+		if dependencies.ClipboardHistory == nil || dependencies.ClipboardWriter == nil {
+			fmt.Fprintln(stderr, "mitishell: clipboard image unavailable")
+			return 1
+		}
+		entry, contents, err := dependencies.ClipboardHistory.ImageData(args[1])
+		if err != nil {
+			fmt.Fprintf(stderr, "mitishell: load clipboard image: %v\n", err)
+			return 1
+		}
+		if err := dependencies.ClipboardWriter.CopyImage(entry.MimeType, contents); err != nil {
+			fmt.Fprintf(stderr, "mitishell: %v\n", err)
 			return 1
 		}
 		return 0
@@ -437,6 +478,17 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		}
 		if err := json.NewEncoder(stdout).Encode(result); err != nil {
 			fmt.Fprintf(stderr, "mitishell: encode updates: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if len(args) == 1 && args[0] == "_desktop-actions-snapshot" {
+		result := desktopactions.Snapshot{PowerProfiles: []desktopactions.Profile{}}
+		if dependencies.DesktopActions != nil {
+			result = dependencies.DesktopActions.Snapshot(context.Background())
+		}
+		if err := json.NewEncoder(stdout).Encode(result); err != nil {
+			fmt.Fprintf(stderr, "mitishell: encode desktop actions: %v\n", err)
 			return 1
 		}
 		return 0

@@ -15,6 +15,7 @@ import (
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/clipboard"
 	"github.com/aileks/mitishell/internal/config"
+	"github.com/aileks/mitishell/internal/desktopactions"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/launcher"
@@ -211,6 +212,14 @@ type launcherRecentsStub struct {
 	err   error
 }
 
+type desktopActionsStub struct {
+	snapshot desktopactions.Snapshot
+}
+
+func (stub desktopActionsStub) Snapshot(context.Context) desktopactions.Snapshot {
+	return stub.snapshot
+}
+
 func (stub *launcherRecentsStub) Load() (launcher.Recents, error) {
 	return stub.state, stub.err
 }
@@ -243,10 +252,12 @@ func (stub *emojiRecentsStub) Clear() error {
 }
 
 type clipboardHistoryStub struct {
-	state   clipboard.History
-	saved   clipboard.History
-	cleared bool
-	err     error
+	state      clipboard.History
+	saved      clipboard.History
+	imageEntry clipboard.Entry
+	imageBytes []byte
+	cleared    bool
+	err        error
 }
 
 func (stub *clipboardHistoryStub) Load() (clipboard.History, error) { return stub.state, stub.err }
@@ -256,6 +267,31 @@ func (stub *clipboardHistoryStub) Save(state clipboard.History) error {
 }
 func (stub *clipboardHistoryStub) Clear() error {
 	stub.cleared = true
+	return stub.err
+}
+func (stub *clipboardHistoryStub) Record(
+	state clipboard.History,
+	contents []byte,
+	maxEntries int,
+) (clipboard.History, error) {
+	if stub.err != nil {
+		return clipboard.History{}, stub.err
+	}
+	return clipboard.RecordText(state, string(contents), maxEntries), nil
+}
+func (stub *clipboardHistoryStub) ImageData(string) (clipboard.Entry, []byte, error) {
+	return stub.imageEntry, stub.imageBytes, stub.err
+}
+
+type clipboardWriterStub struct {
+	mimeType string
+	contents []byte
+	err      error
+}
+
+func (stub *clipboardWriterStub) CopyImage(mimeType string, contents []byte) error {
+	stub.mimeType = mimeType
+	stub.contents = append([]byte(nil), contents...)
 	return stub.err
 }
 
@@ -375,26 +411,29 @@ func TestInternalEmojiRecentCommands(t *testing.T) {
 }
 
 func TestInternalClipboardHistoryCommands(t *testing.T) {
-	stub := &clipboardHistoryStub{state: clipboard.History{
-		Version: clipboard.HistoryVersion,
-		Entries: []string{"first"},
-	}}
+	first := clipboard.RecordText(clipboard.EmptyHistory(), "first", 25)
+	stub := &clipboardHistoryStub{state: first}
 	t.Run("load", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 		code := cli.Run([]string{"_clipboard-history-load"}, &stdout, &stderr,
 			cli.Dependencies{ClipboardHistory: stub})
-		if code != 0 || !strings.Contains(stdout.String(), `"entries":["first"]`) {
+		if code != 0 || !strings.Contains(stdout.String(), `"kind":"text","text":"first"`) {
 			t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 		}
 	})
 	t.Run("save", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		input := strings.NewReader(`{"version":1,"entries":["second"]}`)
+		second := clipboard.RecordText(clipboard.EmptyHistory(), "second", 25)
+		payload, err := json.Marshal(second)
+		if err != nil {
+			t.Fatal(err)
+		}
+		input := bytes.NewReader(payload)
 		code := cli.Run([]string{"_clipboard-history-save"}, &stdout, &stderr,
 			cli.Dependencies{ClipboardHistory: stub, Stdin: input})
-		if code != 0 || !slices.Equal(stub.saved.Entries, []string{"second"}) {
+		if code != 0 || len(stub.saved.Entries) != 1 || stub.saved.Entries[0].Text != "second" {
 			t.Fatalf("code=%d saved=%#v stderr=%q", code, stub.saved, stderr.String())
 		}
 	})
@@ -413,10 +452,11 @@ func TestInternalClipboardHistoryCommands(t *testing.T) {
 		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		store := &clipboardHistoryStub{state: clipboard.History{
-			Version: clipboard.HistoryVersion,
-			Entries: []string{"a", "b", "c", "d", "e"},
-		}}
+		state := clipboard.EmptyHistory()
+		for _, value := range []string{"e", "d", "c", "b", "a"} {
+			state = clipboard.RecordText(state, value, 5)
+		}
+		store := &clipboardHistoryStub{state: state}
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 		input := strings.NewReader("z")
@@ -428,8 +468,39 @@ func TestInternalClipboardHistoryCommands(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("code=%d stderr=%q", code, stderr.String())
 		}
-		if !slices.Equal(store.saved.Entries, []string{"z", "a", "b", "c", "d"}) {
+		texts := make([]string, 0, len(store.saved.Entries))
+		for _, entry := range store.saved.Entries {
+			texts = append(texts, entry.Text)
+		}
+		if !slices.Equal(texts, []string{"z", "a", "b", "c", "d"}) {
 			t.Fatalf("saved=%#v", store.saved.Entries)
+		}
+	})
+	t.Run("sensitive record skips save", func(t *testing.T) {
+		t.Setenv("CLIPBOARD_STATE", "sensitive")
+		store := &clipboardHistoryStub{state: clipboard.EmptyHistory()}
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_clipboard-record"}, &stdout, &stderr, cli.Dependencies{
+			ClipboardHistory: store,
+			Stdin:            strings.NewReader("secret"),
+		})
+		if code != 0 || len(store.saved.Entries) != 0 {
+			t.Fatalf("code=%d saved=%#v stderr=%q", code, store.saved, stderr.String())
+		}
+	})
+	t.Run("copy image", func(t *testing.T) {
+		store := &clipboardHistoryStub{
+			imageEntry: clipboard.Entry{ID: "image-id", Kind: clipboard.KindImage, MimeType: "image/png"},
+			imageBytes: []byte("png"),
+		}
+		writer := &clipboardWriterStub{}
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := cli.Run([]string{"_clipboard-copy-image", "image-id"}, &stdout, &stderr,
+			cli.Dependencies{ClipboardHistory: store, ClipboardWriter: writer})
+		if code != 0 || writer.mimeType != "image/png" || string(writer.contents) != "png" {
+			t.Fatalf("code=%d writer=%#v stderr=%q", code, writer, stderr.String())
 		}
 	})
 	t.Run("record disabled skips save", func(t *testing.T) {
@@ -459,6 +530,21 @@ func TestInternalClipboardHistoryCommands(t *testing.T) {
 			t.Fatalf("code=%d stderr=%q", code, stderr.String())
 		}
 	})
+}
+
+func TestDesktopActionsSnapshotCommand(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"_desktop-actions-snapshot"}, &stdout, &stderr, cli.Dependencies{
+		DesktopActions: desktopActionsStub{snapshot: desktopactions.Snapshot{
+			ScreenshotCommand: []string{"/usr/bin/desktop-screenshot"},
+			PowerProfiles:     []desktopactions.Profile{{Name: "balanced", Active: true}},
+		}},
+	})
+	if code != 0 || stderr.Len() != 0 ||
+		!strings.Contains(stdout.String(), `"screenshotCommand":["/usr/bin/desktop-screenshot"]`) ||
+		!strings.Contains(stdout.String(), `"name":"balanced","active":true`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
 }
 
 type updateServiceStub struct{ result updates.Result }

@@ -15,6 +15,7 @@ import (
 	"github.com/aileks/mitishell/internal/cli"
 	"github.com/aileks/mitishell/internal/clipboard"
 	"github.com/aileks/mitishell/internal/config"
+	"github.com/aileks/mitishell/internal/desktopactions"
 	"github.com/aileks/mitishell/internal/display"
 	"github.com/aileks/mitishell/internal/emoji"
 	"github.com/aileks/mitishell/internal/fonts"
@@ -151,11 +152,13 @@ func main() {
 		EmojiUI:             shell,
 		EmojiRecents:        emoji.NewFileRecents(emojiRecentsPath),
 		ClipboardHistory:    clipboard.NewFileHistory(clipboardHistoryPath),
+		ClipboardWriter:     clipboard.SystemWriter{},
 		LauncherUI:          shell,
 		ClipboardUI:         shell,
 		KeybindingUI:        shell,
 		LauncherRecents:     launcher.NewFileRecents(launcherRecentsPath),
 		Updates:             updates.NewService(updates.SystemRunner{}),
+		DesktopActions:      desktopactions.NewService(desktopactions.SystemRunner{}),
 		Fonts:               fonts.NewService(fonts.SystemRunner{}),
 		NightLight:          nightlight.NewService(nightlight.SystemRunner{}),
 		SystemTemperature: systemmetrics.NewTemperatureService(

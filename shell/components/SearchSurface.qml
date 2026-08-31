@@ -24,6 +24,7 @@ PanelWindow {
     property string emptyMessage: "No matches"
     property string warning: ""
     property bool activationEnabled: true
+    property bool backEnabled: false
     property alias query: searchInput.text
 
     readonly property bool open: SurfaceCoordinator.activeKey === surfaceKey
@@ -47,7 +48,12 @@ PanelWindow {
 
     signal opened()
     signal activateRequested(var entry)
+    signal backRequested()
     signal deleteRequested(var entry)
+
+    function focusSearch() {
+        searchInput.forceActiveFocus(Qt.TabFocusReason);
+    }
 
     function select(index) {
         if (results.length === 0) {
@@ -191,10 +197,27 @@ PanelWindow {
                 border.width: searchInput.activeFocus ? 2 : 1
                 border.color: searchInput.activeFocus ? Theme.blue : Theme.borderStrong
 
+                IconButton {
+                    id: backButton
+
+                    visible: root.backEnabled
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spaceXs
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.controlHeightSm
+                    height: Theme.controlHeightSm
+                    iconSource: Icons.chevronLeft
+                    accessibleName: "Back"
+                    onClicked: root.backRequested()
+                }
+
                 TextInput {
                     id: searchInput
 
-                    anchors.fill: parent
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.left: backButton.visible ? backButton.right : parent.left
+                    anchors.right: parent.right
                     anchors.leftMargin: Theme.spaceMd
                     anchors.rightMargin: Theme.spaceMd
                     clip: true
@@ -222,7 +245,13 @@ PanelWindow {
                         event.accepted = true;
                     }
                     Keys.onPressed: function(event) {
-                        if (event.key === Qt.Key_PageDown) {
+                        if (root.backEnabled && searchInput.text === ""
+                                && (event.key === Qt.Key_Backspace
+                                    || (event.key === Qt.Key_Left
+                                        && (event.modifiers & Qt.AltModifier)))) {
+                            root.backRequested();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_PageDown) {
                             root.moveSelection(6);
                             event.accepted = true;
                         } else if (event.key === Qt.Key_PageUp) {

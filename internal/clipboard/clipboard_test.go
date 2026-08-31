@@ -1,8 +1,10 @@
 package clipboard_test
 
 import (
-	"encoding/json"
-	"fmt"
+	"bytes"
+	"image"
+	"image/color"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,48 +13,23 @@ import (
 	"github.com/aileks/mitishell/internal/clipboard"
 )
 
-func TestRecordAddsTextFirstAndDeduplicates(t *testing.T) {
-	history := clipboard.History{Entries: []string{"first", "second", "third"}}
-	recorded := clipboard.Record(history, "second", 25)
-	if len(recorded.Entries) != 3 || recorded.Entries[0] != "second" {
-		t.Fatalf("entries = %#v", recorded.Entries)
-	}
-	if recorded.Entries[1] != "first" || recorded.Entries[2] != "third" {
-		t.Fatalf("order lost: %#v", recorded.Entries)
-	}
-	fresh := clipboard.Record(history, "new text", 25)
-	if len(fresh.Entries) != 4 || fresh.Entries[0] != "new text" {
-		t.Fatalf("entries = %#v", fresh.Entries)
-	}
-}
-
-func TestRecordSkipsBlankInvalidOrOversizeText(t *testing.T) {
-	history := clipboard.History{Entries: []string{"kept"}}
-	oversize := strings.Repeat("a", clipboard.MaxEntryRunes+1)
-	if kept := clipboard.Record(history, "   ", 25); len(kept.Entries) != 1 {
-		t.Fatalf("blank recorded: %#v", kept.Entries)
-	}
-	if kept := clipboard.Record(history, "", 25); len(kept.Entries) != 1 {
-		t.Fatalf("empty recorded: %#v", kept.Entries)
-	}
-	if kept := clipboard.Record(history, oversize, 25); len(kept.Entries) != 1 {
-		t.Fatalf("oversize recorded: %#v", kept.Entries)
-	}
-	if kept := clipboard.Record(history, "\nline\n", 25); len(kept.Entries) != 2 {
-		t.Fatalf("multiline not recorded: %#v", kept.Entries)
-	}
-}
-
-func TestRecordCapsEntries(t *testing.T) {
-	history := clipboard.History{}
-	for index := 0; index < 5; index++ {
-		history = clipboard.Record(history, fmt.Sprintf("entry-%d", index), 4)
-	}
-	if len(history.Entries) != 4 {
+func TestRecordTextAddsFirstDeduplicatesAndCaps(t *testing.T) {
+	history := clipboard.EmptyHistory()
+	history = clipboard.RecordText(history, "first", 2)
+	history = clipboard.RecordText(history, "second", 2)
+	history = clipboard.RecordText(history, "first", 2)
+	if len(history.Entries) != 2 || history.Entries[0].Text != "first" ||
+		history.Entries[1].Text != "second" {
 		t.Fatalf("entries = %#v", history.Entries)
 	}
-	if history.Entries[0] != "entry-4" {
-		t.Fatalf("newest missing: %#v", history.Entries)
+}
+
+func TestRecordTextSkipsInvalidValues(t *testing.T) {
+	history := clipboard.RecordText(clipboard.EmptyHistory(), "kept", 25)
+	for _, value := range []string{"", "   ", strings.Repeat("a", clipboard.MaxEntryRunes+1)} {
+		if got := clipboard.RecordText(history, value, 25); len(got.Entries) != 1 {
+			t.Fatalf("value %q changed history: %#v", value, got)
+		}
 	}
 }
 
@@ -63,101 +40,126 @@ func TestHistoryPathUsesStateHome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(stateRoot, "mitishell", "clipboard-history.json")
-	if path != want {
+	if want := filepath.Join(stateRoot, "mitishell", "clipboard-history.json"); path != want {
 		t.Fatalf("path = %q, want %q", path, want)
 	}
 }
 
-func TestHistoryPathFallsBackToLocalState(t *testing.T) {
-	homeDirectory := t.TempDir()
-	t.Setenv("XDG_STATE_HOME", "")
-	t.Setenv("HOME", homeDirectory)
-	path, err := clipboard.HistoryPath()
+func TestLegacyTextHistoryMigratesInMemory(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "history.json")
+	if err := os.WriteFile(path, []byte(`{"version":1,"entries":["first","second"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	state, err := clipboard.NewFileHistory(path).Load()
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(homeDirectory, ".local", "state", "mitishell", "clipboard-history.json")
-	if path != want {
-		t.Fatalf("path = %q, want %q", path, want)
-	}
-}
-
-func TestMissingHistoryLoadsAsEmpty(t *testing.T) {
-	store := clipboard.NewFileHistory(filepath.Join(t.TempDir(), "history.json"))
-	state, err := store.Load()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if state.Version != clipboard.HistoryVersion || len(state.Entries) != 0 {
+	if state.Version != clipboard.HistoryVersion || len(state.Entries) != 2 ||
+		state.Entries[0].Kind != clipboard.KindText || state.Entries[0].Text != "first" {
 		t.Fatalf("state = %#v", state)
 	}
+	contents, err := os.ReadFile(path)
+	if err != nil || !bytes.Contains(contents, []byte(`"version":1`)) {
+		t.Fatalf("legacy file was rewritten: %q err=%v", contents, err)
+	}
 }
 
-func TestHistorySaveDeduplicatesAndLimitsEntries(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "state", "clipboard-history.json")
-	store := clipboard.NewFileHistory(path)
-	entries := []string{"first", "first"}
-	for index := 0; index < clipboard.HistoryLimit+10; index++ {
-		entries = append(entries, "entry "+strings.Repeat("x", index))
-	}
-	if err := store.Save(clipboard.History{Entries: entries}); err != nil {
-		t.Fatal(err)
-	}
-	state, err := store.Load()
+func TestImageRecordPersistsMetadataAndCanBeReadBack(t *testing.T) {
+	root := t.TempDir()
+	store := clipboard.NewFileHistory(filepath.Join(root, "history.json"))
+	imageBytes := testPNG(t, 3, 2)
+	state, err := store.Record(clipboard.EmptyHistory(), imageBytes, 25)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(state.Entries) != clipboard.HistoryLimit {
-		t.Fatalf("entries = %d, want %d", len(state.Entries), clipboard.HistoryLimit)
+	if len(state.Entries) != 1 {
+		t.Fatalf("state = %#v", state)
 	}
-	if state.Entries[0] != "first" {
-		t.Fatalf("first entry = %q, want %q", state.Entries[0], "first")
+	entry := state.Entries[0]
+	if entry.Kind != clipboard.KindImage || entry.MimeType != "image/png" ||
+		entry.Width != 3 || entry.Height != 2 || !strings.HasPrefix(entry.Image, "file://") {
+		t.Fatalf("entry = %#v", entry)
 	}
-	info, err := os.Stat(path)
+	if err := store.Save(state); err != nil {
+		t.Fatal(err)
+	}
+	loadedEntry, loadedBytes, err := store.ImageData(entry.ID)
+	if err != nil || loadedEntry.ID != entry.ID || !bytes.Equal(loadedBytes, imageBytes) {
+		t.Fatalf("entry=%#v bytes=%d err=%v", loadedEntry, len(loadedBytes), err)
+	}
+	mediaPath := strings.TrimPrefix(entry.Image, "file://")
+	info, err := os.Stat(mediaPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if info.Mode().Perm() != 0o600 {
-		t.Fatalf("permissions = %o", info.Mode().Perm())
+		t.Fatalf("media mode=%v", info.Mode())
 	}
-}
-
-func TestHistoryPreservesMultilineEntries(t *testing.T) {
-	store := clipboard.NewFileHistory(filepath.Join(t.TempDir(), "history.json"))
-	entry := "line one\nline two\ttabbed"
-	if err := store.Save(clipboard.History{Entries: []string{entry}}); err != nil {
-		t.Fatal(err)
-	}
-	state, err := store.Load()
+	directoryInfo, err := os.Stat(filepath.Dir(mediaPath))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(state.Entries) != 1 || state.Entries[0] != entry {
+	if directoryInfo.Mode().Perm() != 0o700 {
+		t.Fatalf("directory mode=%v", directoryInfo.Mode())
+	}
+}
+
+func TestDuplicateImageMovesToFrontWithoutAddingEntry(t *testing.T) {
+	store := clipboard.NewFileHistory(filepath.Join(t.TempDir(), "history.json"))
+	first := testPNG(t, 1, 1)
+	second := testPNG(t, 2, 1)
+	state, err := store.Record(clipboard.EmptyHistory(), first, 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err = store.Record(state, second, 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err = store.Record(state, first, 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Entries) != 2 || state.Entries[0].Width != 1 || state.Entries[1].Width != 2 {
 		t.Fatalf("entries = %#v", state.Entries)
 	}
 }
 
-func TestHistoryRejectsOversizeEntries(t *testing.T) {
-	store := clipboard.NewFileHistory(filepath.Join(t.TempDir(), "history.json"))
-	oversize := strings.Repeat("a", clipboard.MaxEntryRunes+1)
-	if err := store.Save(clipboard.History{Entries: []string{oversize}}); err == nil {
-		t.Fatal("Save accepted an oversize entry")
+func TestSaveRemovesDroppedImageAndClearRemovesMediaDirectory(t *testing.T) {
+	root := t.TempDir()
+	store := clipboard.NewFileHistory(filepath.Join(root, "history.json"))
+	state, err := store.Record(clipboard.EmptyHistory(), testPNG(t, 2, 2), 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Save(state); err != nil {
+		t.Fatal(err)
+	}
+	mediaPath := strings.TrimPrefix(state.Entries[0].Image, "file://")
+	state.Entries = []clipboard.Entry{}
+	if err := store.Save(state); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(mediaPath); !os.IsNotExist(err) {
+		t.Fatalf("dropped image remains: %v", err)
+	}
+	state, err = store.Record(state, testPNG(t, 3, 3), 25)
+	if err != nil || store.Save(state) != nil || store.Clear() != nil {
+		t.Fatalf("record/save/clear failed: %v", err)
+	}
+	if _, err := store.Load(); err != nil {
+		t.Fatal(err)
 	}
 }
 
-func TestHistoryRejectMalformedState(t *testing.T) {
-	oversize := strings.Repeat("a", clipboard.MaxEntryRunes+1)
+func TestHistoryRejectsMalformedStructuredState(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "history.json")
 	for name, contents := range map[string]string{
-		"unknown field": `{"version":1,"entries":[],"extra":true}`,
-		"bad version":   `{"version":2,"entries":[]}`,
-		"duplicate":     `{"version":1,"entries":["a","a"]}`,
-		"blank":         `{"version":1,"entries":["  "]}`,
-		"oversize":      `{"version":1,"entries":["` + oversize + `"]}`,
-		"trailing":      `{"version":1,"entries":[]} {}`,
+		"unknown":        `{"version":2,"entries":[],"extra":true}`,
+		"bad kind":       `{"version":2,"entries":[{"id":"x","kind":"binary"}]}`,
+		"bad image path": `{"version":2,"entries":[{"id":"image-x","kind":"image","image":"file:///tmp/x.png","mimeType":"image/png"}]}`,
 	} {
 		t.Run(name, func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "history.json")
 			if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
 				t.Fatal(err)
 			}
@@ -168,39 +170,17 @@ func TestHistoryRejectMalformedState(t *testing.T) {
 	}
 }
 
-func TestHistoryClearIsIdempotent(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "clipboard-history.json")
-	store := clipboard.NewFileHistory(path)
-	if err := store.Save(clipboard.History{Entries: []string{"text"}}); err != nil {
+func testPNG(t *testing.T, width int, height int) []byte {
+	t.Helper()
+	picture := image.NewRGBA(image.Rect(0, 0, width, height))
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			picture.Set(x, y, color.RGBA{R: uint8(x + 1), G: uint8(y + 1), B: 90, A: 255})
+		}
+	}
+	var output bytes.Buffer
+	if err := png.Encode(&output, picture); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Clear(); err != nil {
-		t.Fatal(err)
-	}
-	if err := store.Clear(); err != nil {
-		t.Fatal(err)
-	}
-	state, err := store.Load()
-	if err != nil || len(state.Entries) != 0 {
-		t.Fatalf("state=%#v err=%v", state, err)
-	}
-}
-
-func TestHistoryWritesVersionedJSON(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "clipboard-history.json")
-	store := clipboard.NewFileHistory(path)
-	if err := store.Save(clipboard.History{Entries: []string{"text"}}); err != nil {
-		t.Fatal(err)
-	}
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var state clipboard.History
-	if err := json.Unmarshal(contents, &state); err != nil {
-		t.Fatal(err)
-	}
-	if state.Version != 1 || len(state.Entries) != 1 || state.Entries[0] != "text" {
-		t.Fatalf("state = %#v", state)
-	}
+	return output.Bytes()
 }

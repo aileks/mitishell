@@ -6,10 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
+
+	"github.com/aileks/mitishell/internal/terminal"
 )
 
 const maxPackageNames = 50
@@ -61,10 +61,9 @@ func (SystemRunner) Output(ctx context.Context, name string, args ...string) (st
 
 type Service struct {
 	runner Runner
-	env    func(string) string
 }
 
-func NewService(runner Runner) Service { return Service{runner: runner, env: os.Getenv} }
+func NewService(runner Runner) Service { return Service{runner: runner} }
 
 func (service Service) Snapshot(ctx context.Context) Result {
 	result := Result{
@@ -106,27 +105,7 @@ func (service Service) updateCommand(helper string) []string {
 	if helper != "" {
 		update = []string{helper, "-Syu"}
 	}
-	if terminal, err := service.runner.LookPath("xdg-terminal-exec"); err == nil {
-		return append([]string{terminal, "--"}, update...)
-	}
-	if fields := strings.Fields(service.env("TERMINAL")); len(fields) > 0 {
-		return terminalCommand(fields, update)
-	}
-	for _, terminal := range []string{"foot", "alacritty", "kitty", "ghostty"} {
-		if found, err := service.runner.LookPath(terminal); err == nil {
-			return terminalCommand([]string{found}, update)
-		}
-	}
-	return nil
-}
-
-func terminalCommand(terminal []string, update []string) []string {
-	command := append([]string(nil), terminal...)
-	name := filepath.Base(terminal[0])
-	if name == "alacritty" || name == "ghostty" {
-		command = append(command, "-e")
-	}
-	return append(command, update...)
+	return terminal.Command(service.runner, update)
 }
 
 func packageSource(output string) Source {

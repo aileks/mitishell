@@ -117,3 +117,34 @@ test("loaded recents append without displacing launches made during startup", ()
         ["new.desktop", "old-one.desktop", "old-two.desktop"],
     );
 });
+
+test("nested launcher actions keep direct-child order and searchable paths", () => {
+    const entries = [
+        { id: "desktop", parent: "root", source: "menu", label: "Actions", keywords: [] },
+        { id: "screenshot", parent: "desktop", source: "action", label: "Screenshot Region", keywords: [] },
+        { id: "record", parent: "desktop", source: "menu", label: "Record Region", keywords: [] },
+        { id: "record-mic", parent: "record", source: "action", label: "Microphone", keywords: [] },
+    ];
+    assert.deepEqual(
+        LauncherModel.childEntries(entries, "desktop").map((entry) => entry.id),
+        ["screenshot", "record"],
+    );
+    const searchable = LauncherModel.searchableActions(entries, "root");
+    assert.deepEqual(searchable.map((entry) => entry.id), [
+        "desktop", "screenshot", "record", "record-mic",
+    ]);
+    assert.equal(searchable[3].detail, "Actions › Record Region");
+    assert.deepEqual(searchable[3].keywords, ["Actions", "Record Region"]);
+});
+
+test("descendant traversal ignores malformed cycles", () => {
+    const entries = [
+        { id: "one", parent: "root" },
+        { id: "two", parent: "one" },
+        { id: "one", parent: "two" },
+    ];
+    assert.deepEqual(
+        LauncherModel.descendantEntries(entries, "root").map((entry) => entry.id),
+        ["one", "two"],
+    );
+});
