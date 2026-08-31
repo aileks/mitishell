@@ -18,6 +18,9 @@ QtObject {
     property bool uwsmActive: false
     property string pendingQuery: ""
     property string pendingMenuId: ""
+    // Desktop commands wait for the surface to finish closing so region
+    // pickers and recorders never appear under the launcher.
+    property var pendingDesktopCommand: null
 
     function refreshApplications() {
         applications = LauncherModel.applicationEntries(DesktopEntries.applications.values);
@@ -103,6 +106,7 @@ QtObject {
     function openWithQuery(query, screen) {
         pendingQuery = query;
         pendingMenuId = "";
+        pendingDesktopCommand = null;
         SurfaceCoordinator.close();
         SurfaceCoordinator.open("launcher", screen);
     }
@@ -115,6 +119,7 @@ QtObject {
         };
         pendingQuery = "";
         pendingMenuId = menus[String(menu || "")] || menus.actions;
+        pendingDesktopCommand = null;
         SurfaceCoordinator.close();
         SurfaceCoordinator.open("launcher", screen);
     }
@@ -182,10 +187,17 @@ QtObject {
         } else if (nativeAction.type === "clipboard-history") {
             openWithQuery(":", screen);
         } else if (nativeAction.type === "desktop-command") {
-            if (DesktopActions.run(nativeAction.command, nativeAction.successMessage)) {
-                SurfaceCoordinator.close();
-            }
+            if (DesktopActions.actionRunning) return;
+            pendingDesktopCommand = nativeAction;
+            SurfaceCoordinator.close();
         }
+    }
+
+    function surfaceFullyClosed() {
+        if (pendingDesktopCommand === null) return;
+        const command = pendingDesktopCommand;
+        pendingDesktopCommand = null;
+        DesktopActions.run(command.command, command.successMessage);
     }
 
     function pumpSave() {

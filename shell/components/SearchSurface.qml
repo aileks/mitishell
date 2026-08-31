@@ -47,6 +47,10 @@ PanelWindow {
     )
 
     signal opened()
+    // Emitted once the close fade has finished and the window is hidden, so
+    // callers can hand off to screen-taking tools without the surface in the
+    // way. Fires immediately under reduced motion.
+    signal fullyClosed()
     signal activateRequested(var entry)
     signal backRequested()
     signal deleteRequested(var entry)
@@ -114,6 +118,8 @@ PanelWindow {
             });
         }
     }
+
+    onVisibleChanged: if (!visible) root.fullyClosed()
 
     onResultsChanged: root.select(Math.max(0, resultList.currentIndex))
 

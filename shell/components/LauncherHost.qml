@@ -168,6 +168,7 @@ SearchSurface {
         }
         rebuild();
     }
+    onFullyClosed: Launcher.surfaceFullyClosed()
     onQueryChanged: rebuild()
     onActivateRequested: function(entry) {
         if (entry.source === "menu") {
