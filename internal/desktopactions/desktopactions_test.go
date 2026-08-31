@@ -30,32 +30,39 @@ func (stub runnerStub) Output(_ context.Context, name string, args ...string) (s
 	return stub.outputs[key], stub.errors[key]
 }
 
-func TestSnapshotDiscoversCommandsAndLiveState(t *testing.T) {
+func TestSnapshotDiscoversNativeActions(t *testing.T) {
 	t.Setenv("TERMINAL", "")
+	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
 	service := desktopactions.NewService(runnerStub{
 		paths: map[string]string{
-			"desktop-screenshot": "/home/test/.local/bin/desktop-screenshot",
-			"desktop-record":     "/home/test/.local/bin/desktop-record",
-			"powerprofilesctl":   "/usr/bin/powerprofilesctl",
-			"fwupdmgr":           "/usr/bin/fwupdmgr",
-			"bash":               "/usr/bin/bash",
-			"foot":               "/usr/bin/foot",
+			"grim":                "/usr/bin/grim",
+			"wl-copy":             "/usr/bin/wl-copy",
+			"notify-send":         "/usr/bin/notify-send",
+			"hyprctl":             "/usr/bin/hyprctl",
+			"slurp":               "/usr/bin/slurp",
+			"hyprpicker":          "/usr/bin/hyprpicker",
+			"tesseract":           "/usr/bin/tesseract",
+			"zbarimg":             "/usr/bin/zbarimg",
+			"gpu-screen-recorder": "/usr/bin/gpu-screen-recorder",
+			"powerprofilesctl":    "/usr/bin/powerprofilesctl",
+			"fwupdmgr":            "/usr/bin/fwupdmgr",
+			"bash":                "/usr/bin/bash",
+			"foot":                "/usr/bin/foot",
 		},
 		outputs: map[string]string{
-			"/home/test/.local/bin/desktop-record status": "/tmp/recording.mp4\n",
-			"/usr/bin/powerprofilesctl get":               "balanced\n",
-			"/usr/bin/powerprofilesctl list":              "  power-saver:\n* balanced:\n  performance:\n",
+			"/usr/bin/powerprofilesctl get":  "balanced\n",
+			"/usr/bin/powerprofilesctl list": "  power-saver:\n* balanced:\n  performance:\n",
 		},
 	})
 
 	result := service.Snapshot(context.Background())
-	if !result.RecordingActive || len(result.PowerProfiles) != 3 || !result.PowerProfiles[1].Active {
+	if result.RecordingActive || len(result.PowerProfiles) != 3 || !result.PowerProfiles[1].Active {
 		t.Fatalf("result = %#v", result)
 	}
-	if !slices.Equal(result.FirmwareCommand, []string{
-		"/usr/bin/foot", "/usr/bin/bash", "-lc", "fwupdmgr refresh && fwupdmgr update",
-	}) {
-		t.Fatalf("firmware command = %#v", result.FirmwareCommand)
+	if !slices.Equal(result.ScreenshotModes, []string{"region", "window", "output", "desktop"}) ||
+		!slices.Equal(result.RecordingModes, []string{"region", "output"}) ||
+		!result.OCRAvailable || !result.QRAvailable || !result.FirmwareAvailable {
+		t.Fatalf("result = %#v", result)
 	}
 }
 
@@ -68,20 +75,40 @@ func TestSnapshotHidesUnavailableAndFailedProviders(t *testing.T) {
 		},
 	})
 	result := service.Snapshot(context.Background())
-	if len(result.ScreenshotCommand) != 0 || len(result.PowerProfiles) != 0 || len(result.FirmwareCommand) != 0 {
+	if len(result.ScreenshotModes) != 0 || len(result.RecordingModes) != 0 ||
+		len(result.PowerProfiles) != 0 || result.FirmwareAvailable {
 		t.Fatalf("result = %#v", result)
 	}
 }
 
-func TestInactiveRecordingKeepsRecordActionsAvailable(t *testing.T) {
+func TestRecordingActionsUseRecorderAndCaptureToolsInsteadOfHelperScripts(t *testing.T) {
+	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
 	service := desktopactions.NewService(runnerStub{
-		paths: map[string]string{"desktop-record": "/usr/bin/desktop-record"},
-		errors: map[string]error{
-			"/usr/bin/desktop-record status": errors.New("not recording"),
+		paths: map[string]string{
+			"gpu-screen-recorder": "/usr/bin/gpu-screen-recorder",
+			"notify-send":         "/usr/bin/notify-send",
+			"slurp":               "/usr/bin/slurp",
 		},
 	})
 	result := service.Snapshot(context.Background())
-	if result.RecordingActive || len(result.RecordingCommand) == 0 {
+	if result.RecordingActive || !slices.Equal(result.RecordingModes, []string{"region"}) {
 		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestRunReportsMissingPackagesClearly(t *testing.T) {
+	service := desktopactions.NewService(runnerStub{paths: map[string]string{}})
+	for _, testCase := range []struct {
+		args []string
+		want string
+	}{
+		{args: []string{"screenshot", "desktop"}, want: "Please install grim for screenshots"},
+		{args: []string{"record", "output", "none"}, want: "Please install gpu-screen-recorder for screen recording"},
+		{args: []string{"qr"}, want: "Please install grim for QR scanning"},
+	} {
+		err := service.Run(context.Background(), testCase.args)
+		if err == nil || err.Error() != testCase.want {
+			t.Fatalf("Run(%#v) error = %v, want %q", testCase.args, err, testCase.want)
+		}
 	}
 }

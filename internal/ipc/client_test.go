@@ -72,6 +72,14 @@ func TestToggleLauncherAcceptsAcknowledgement(t *testing.T) {
 	}
 }
 
+func TestOpenActionsAcceptsAcknowledgement(t *testing.T) {
+	client := ipc.NewClient(fakeQSCheckingArg(t, "record-output", "Actions menu opened"),
+		"/tmp/mitishell-shell")
+	if err := client.OpenActions("record-output"); err != nil {
+		t.Fatalf("OpenActions() error = %v", err)
+	}
+}
+
 func TestToggleKeybindingsAcceptsAcknowledgement(t *testing.T) {
 	client := ipc.NewClient(fakeQS(t, "keybinds toggled"), "/tmp/mitishell-shell")
 	if err := client.ToggleKeybindings(); err != nil {

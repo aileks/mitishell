@@ -23,7 +23,7 @@ Night-light controls need a user-managed `hyprsunset` process. Mitishell reads a
 
 Clipboard history needs `wl-clipboard` (`wl-paste` and `wl-copy`). Without it the clipboard features hide and the rest of the shell is unaffected.
 
-The launcher's optional Actions use `desktop-screenshot`, `desktop-ocr`, `desktop-qr`, and `desktop-record` when those commands are installed. Power profiles use `powerprofilesctl`. Firmware updates use `fwupdmgr` and the same terminal discovery as package updates. Missing commands hide only their related actions.
+The launcher's optional Actions are implemented by Mitishell. Screenshots use `grim`, `wl-copy`, and `notify-send`; region selection also uses `slurp` and `hyprpicker`. Text extraction adds Tesseract, QR scanning adds `zbarimg`, and recording uses `gpu-screen-recorder`. Power profiles use `powerprofilesctl`. Firmware updates use `fwupdmgr` and the same terminal discovery as package updates. Missing tools hide only their related actions.
 
 ## Development
 
@@ -53,6 +53,10 @@ bin/mitishell settings
 bin/mitishell settings audio
 bin/mitishell emoji
 bin/mitishell launcher
+bin/mitishell actions
+bin/mitishell capture region
+bin/mitishell capture text
+bin/mitishell record region
 bin/mitishell keybinds
 bin/mitishell night-light status
 ```
@@ -132,7 +136,7 @@ bind = SUPER, PERIOD, exec, mitishell emoji
 
 `mitishell launcher` toggles a searchable launcher on the focused output. It finds installed desktop applications and frequent Mitishell actions. An empty search leads with the five most recently launched applications. Searches return at most 30 results and selection wraps from end to end. Start a query with `=` to calculate basic arithmetic; activating the result copies it. Incomplete input shows a muted hint instead of an error.
 
-The launcher includes an Actions menu when its optional commands are installed. It exposes the screenshot, text extraction, QR scanning, recording, power-profile, and firmware-update actions previously collected by the `desktop-actions` script. Existing Mitishell actions such as Do Not Disturb, Night Light, and Reminders remain direct launcher results instead of being duplicated. Nested actions are searchable from the launcher root; Backspace on an empty submenu or the visible back control returns to its parent.
+The launcher includes an Actions menu when its optional tools are installed. Mitishell owns the screenshot, text extraction, QR scanning, recording, power-profile, and firmware-update workflows directly. Existing Mitishell actions such as Do Not Disturb, Night Light, and Reminders remain direct launcher results instead of being duplicated. Nested actions are searchable from the launcher root; Backspace on an empty submenu or the visible back control returns to its parent. `mitishell actions` opens the menu directly, while `mitishell record region` and `mitishell record output` open their audio choices.
 
 Start a query with `:` to search the clipboard history, or run `mitishell clipboard` to open it directly. The history records text and supported raster images up to 20 MiB. Image rows show a thumbnail, dimensions, and format. Activating an entry copies it again and moves it to the top. Delete removes the selected entry, and a clear action wipes the history. Sensitive clipboard events and unsupported binary data are not recorded.
 

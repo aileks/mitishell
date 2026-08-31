@@ -187,8 +187,14 @@ type emojiUIStub struct {
 }
 
 type launcherUIStub struct {
-	toggled bool
-	err     error
+	toggled     bool
+	actionsMenu string
+	err         error
+}
+
+func (stub *launcherUIStub) OpenActions(menu string) error {
+	stub.actionsMenu = menu
+	return stub.err
 }
 
 func (stub *launcherUIStub) ToggleLauncher() error {
@@ -213,7 +219,19 @@ type launcherRecentsStub struct {
 }
 
 type desktopActionsStub struct {
-	snapshot desktopactions.Snapshot
+	snapshot    desktopactions.Snapshot
+	runArgs     []string
+	runErr      error
+	validateErr error
+}
+
+func (stub *desktopActionsStub) ValidateRecording(string) error {
+	return stub.validateErr
+}
+
+func (stub *desktopActionsStub) Run(_ context.Context, args []string) error {
+	stub.runArgs = append([]string(nil), args...)
+	return stub.runErr
 }
 
 func (stub desktopActionsStub) Snapshot(context.Context) desktopactions.Snapshot {
@@ -346,6 +364,17 @@ func TestLauncherAndKeybindCommandsToggleSurfaces(t *testing.T) {
 	}
 	if !launcherUI.toggled || !keybindingUI.toggled {
 		t.Fatalf("launcher=%v keybinds=%v", launcherUI.toggled, keybindingUI.toggled)
+	}
+}
+
+func TestActionsCommandOpensLauncherMenu(t *testing.T) {
+	ui := &launcherUIStub{}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"actions"}, &stdout, &stderr,
+		cli.Dependencies{LauncherUI: ui})
+	if code != 0 || ui.actionsMenu != "actions" || stdout.String() != "Actions menu opened\n" {
+		t.Fatalf("code=%d menu=%q stdout=%q stderr=%q",
+			code, ui.actionsMenu, stdout.String(), stderr.String())
 	}
 }
 
@@ -535,15 +564,50 @@ func TestInternalClipboardHistoryCommands(t *testing.T) {
 func TestDesktopActionsSnapshotCommand(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.Run([]string{"_desktop-actions-snapshot"}, &stdout, &stderr, cli.Dependencies{
-		DesktopActions: desktopActionsStub{snapshot: desktopactions.Snapshot{
-			ScreenshotCommand: []string{"/usr/bin/desktop-screenshot"},
-			PowerProfiles:     []desktopactions.Profile{{Name: "balanced", Active: true}},
+		DesktopActions: &desktopActionsStub{snapshot: desktopactions.Snapshot{
+			ScreenshotModes: []string{"region"},
+			PowerProfiles:   []desktopactions.Profile{{Name: "balanced", Active: true}},
 		}},
 	})
 	if code != 0 || stderr.Len() != 0 ||
-		!strings.Contains(stdout.String(), `"screenshotCommand":["/usr/bin/desktop-screenshot"]`) ||
+		!strings.Contains(stdout.String(), `"screenshotModes":["region"]`) ||
 		!strings.Contains(stdout.String(), `"name":"balanced","active":true`) {
 		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestCaptureCommandRunsMitishellOwnedAction(t *testing.T) {
+	service := &desktopActionsStub{}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"capture", "region"}, &stdout, &stderr,
+		cli.Dependencies{DesktopActions: service})
+	if code != 0 || !slices.Equal(service.runArgs, []string{"screenshot", "region"}) {
+		t.Fatalf("code=%d args=%#v stderr=%q", code, service.runArgs, stderr.String())
+	}
+}
+
+func TestRecordCommandOpensAudioMenu(t *testing.T) {
+	ui := &launcherUIStub{}
+	service := &desktopActionsStub{}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"record", "output"}, &stdout, &stderr,
+		cli.Dependencies{LauncherUI: ui, DesktopActions: service})
+	if code != 0 || ui.actionsMenu != "record-output" || stdout.String() != "Recording menu opened\n" {
+		t.Fatalf("code=%d menu=%q stdout=%q stderr=%q",
+			code, ui.actionsMenu, stdout.String(), stderr.String())
+	}
+}
+
+func TestRecordCommandReportsMissingDependencyBeforeOpeningMenu(t *testing.T) {
+	ui := &launcherUIStub{}
+	service := &desktopActionsStub{validateErr: errors.New(
+		"Please install gpu-screen-recorder for screen recording")}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"record", "region"}, &stdout, &stderr,
+		cli.Dependencies{LauncherUI: ui, DesktopActions: service})
+	if code != 1 || ui.actionsMenu != "" ||
+		!strings.Contains(stderr.String(), "Please install gpu-screen-recorder") {
+		t.Fatalf("code=%d menu=%q stderr=%q", code, ui.actionsMenu, stderr.String())
 	}
 }
 

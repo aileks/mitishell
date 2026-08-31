@@ -17,6 +17,7 @@ QtObject {
     property string pendingSavePayload: ""
     property bool uwsmActive: false
     property string pendingQuery: ""
+    property string pendingMenuId: ""
 
     function refreshApplications() {
         applications = LauncherModel.applicationEntries(DesktopEntries.applications.values);
@@ -74,36 +75,38 @@ QtObject {
     function desktopActionEntries() {
         const entries = [];
         const parent = "action:desktop-actions";
-        if (DesktopActions.screenshotCommand.length > 0) {
-            ["Region", "Window", "Output", "Desktop"].forEach(function(mode) {
+        if (DesktopActions.screenshotModes.length > 0) {
+            DesktopActions.screenshotModes.forEach(function(value) {
+                const mode = profileLabel(value);
                 entries.push(action(
                     "desktop-actions.screenshot-" + mode.toLowerCase(),
                     "Screenshot " + mode,
                     "Actions",
                     Icons.camera,
-                    desktopCommand(DesktopActions.screenshotCommand.concat(mode.toLowerCase())),
+                    desktopCommand(["screenshot", value]),
                     parent,
                 ));
             });
         }
-        if (DesktopActions.ocrCommand.length > 0) {
+        if (DesktopActions.ocrAvailable) {
             entries.push(action("desktop-actions.extract-text", "Extract Text",
                 "Actions", Icons.textScan,
-                desktopCommand(DesktopActions.ocrCommand), parent));
+                desktopCommand(["text"]), parent));
         }
-        if (DesktopActions.qrCommand.length > 0) {
+        if (DesktopActions.qrAvailable) {
             entries.push(action("desktop-actions.scan-qr", "Scan QR Code",
                 "Actions", Icons.qrCode,
-                desktopCommand(DesktopActions.qrCommand), parent));
+                desktopCommand(["qr"]), parent));
         }
-        if (DesktopActions.recordingCommand.length > 0) {
+        if (DesktopActions.recordingActive || DesktopActions.recordingModes.length > 0) {
             if (DesktopActions.recordingActive) {
                 entries.push(action("desktop-actions.stop-recording", "Stop Recording",
                     "Actions", Icons.record,
-                    desktopCommand(DesktopActions.recordingCommand.concat("stop")), parent));
+                    desktopCommand(["record", "stop"]), parent));
             } else {
-                ["Region", "Output"].forEach(function(mode) {
-                    const menuId = "desktop-actions.record-" + mode.toLowerCase();
+                DesktopActions.recordingModes.forEach(function(value) {
+                    const mode = profileLabel(value);
+                    const menuId = "desktop-actions.record-" + value;
                     const menuEntry = menu(menuId, "Record " + mode,
                         "Actions", Icons.record, parent);
                     entries.push(menuEntry);
@@ -118,8 +121,7 @@ QtObject {
                             audio[0],
                             "Record " + mode,
                             Icons.record,
-                            desktopCommand(DesktopActions.recordingCommand.concat(
-                                mode.toLowerCase(), audio[1])),
+                            desktopCommand(["record", value, audio[1]]),
                             menuEntry.id,
                         ));
                     });
@@ -137,17 +139,17 @@ QtObject {
                     profile.active ? "Active" : "Power Profile",
                     profile.active ? Icons.check : Icons.powerProfile,
                     desktopCommand(
-                        DesktopActions.powerCommand.concat("set", profile.name),
+                        ["power-profile", profile.name],
                         "Power profile set to " + profileLabel(profile.name),
                     ),
                     powerMenu.id,
                 ));
             });
         }
-        if (DesktopActions.firmwareCommand.length > 0) {
+        if (DesktopActions.firmwareAvailable) {
             entries.push(action("desktop-actions.firmware", "Firmware Updates",
                 "Actions", Icons.update,
-                desktopCommand(DesktopActions.firmwareCommand), parent));
+                desktopCommand(["firmware"]), parent));
         }
         return entries;
     }
@@ -201,6 +203,19 @@ QtObject {
 
     function openWithQuery(query, screen) {
         pendingQuery = query;
+        pendingMenuId = "";
+        SurfaceCoordinator.close();
+        SurfaceCoordinator.open("launcher", screen);
+    }
+
+    function openWithMenu(menu, screen) {
+        const menus = {
+            "actions": "action:desktop-actions",
+            "record-region": "action:desktop-actions.record-region",
+            "record-output": "action:desktop-actions.record-output",
+        };
+        pendingQuery = "";
+        pendingMenuId = menus[String(menu || "")] || menus.actions;
         SurfaceCoordinator.close();
         SurfaceCoordinator.open("launcher", screen);
     }
