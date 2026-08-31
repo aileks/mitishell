@@ -9,7 +9,7 @@ QtObject {
     id: root
 
     // Copies are recorded by the _clipboard-record verb through
-    // wl-paste --watch; this singleton mirrors the state file, handles
+    // wl-paste --watch; this singleton mirrors the typed state file, handles
     // removal and clearing, and performs re-copies.
     property var entries: []
     property string persistenceError: ""
@@ -23,18 +23,34 @@ QtObject {
 
 
 
-    function preview(text) {
-        return ClipboardModel.preview(text);
+    function preview(entry) {
+        return ClipboardModel.preview(entry);
     }
 
-    function removeEntry(text) {
-        entries = ClipboardModel.removeEntry(entries, text);
+    function detail(entry) {
+        return ClipboardModel.detail(entry);
+    }
+
+    function keywords(entry) {
+        return ClipboardModel.keywords(entry);
+    }
+
+    function removeEntry(id) {
+        entries = ClipboardModel.removeEntry(entries, id);
         queueSave();
     }
 
-    function copy(text) {
+    function copy(entry) {
+        if (!entry) return;
         // The watch loop records the copy, which also moves it to the top.
-        Quickshell.clipboardText = text;
+        if (entry.kind === "image") {
+            if (!copyProcess.running) {
+                copyProcess.command = [Config.binary, "_clipboard-copy-image", entry.id];
+                copyProcess.running = true;
+            }
+        } else {
+            Quickshell.clipboardText = String(entry.text || "");
+        }
     }
 
     function clear() {
@@ -46,7 +62,7 @@ QtObject {
 
     function queueSave() {
         pendingSavePayload = JSON.stringify({
-            version: 1,
+            version: 2,
             entries: entries,
         });
         savePending = true;
@@ -92,7 +108,7 @@ QtObject {
     // The watch loop owns recording; without wl-clipboard the shell cannot
     // observe copies, so the whole feature hides (extra tools rule).
     property Process watcherProbe: Process {
-        command: ["sh", "-c", "command -v wl-paste"]
+        command: ["sh", "-c", "command -v wl-paste && command -v wl-copy"]
         // qmllint disable signal-handler-parameters
         onExited: function(exitCode, exitStatus) {
             // qmllint enable signal-handler-parameters
@@ -104,8 +120,19 @@ QtObject {
     }
 
     property Process watcher: Process {
-        command: ["wl-paste", "--watch", "sh", "-c",
-            "wl-paste -t text -n | '" + Config.binary + "' _clipboard-record"]
+        command: ["wl-paste", "--watch", Config.binary, "_clipboard-record"]
+    }
+
+    property Process copyProcess: Process {
+        stderr: StdioCollector { id: copyErrors; waitForEnd: true }
+
+        // qmllint disable signal-handler-parameters
+        onExited: function(exitCode, exitStatus) {
+            // qmllint enable signal-handler-parameters
+            root.persistenceError = exitCode === 0
+                ? ""
+                : (copyErrors.text.trim() || "Clipboard image could not be copied.");
+        }
     }
 
     property FileView historyFile: FileView {

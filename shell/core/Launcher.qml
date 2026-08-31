@@ -63,12 +63,125 @@ QtObject {
                 NightLight.enabled ? "On" : "Off", Icons.moon,
                 { type: "night-light" }));
         }
+        const desktopActions = desktopActionEntries();
+        if (desktopActions.length > 0) {
+            actions.push(menu("desktop-actions", "Actions", "Mitishell", Icons.consoleIcon));
+            desktopActions.forEach(function(entry) { actions.push(entry); });
+        }
         return actions;
     }
 
-    function action(id, label, detail, icon, actionValue) {
+    function desktopActionEntries() {
+        const entries = [];
+        const parent = "action:desktop-actions";
+        if (DesktopActions.screenshotCommand.length > 0) {
+            ["Region", "Window", "Output", "Desktop"].forEach(function(mode) {
+                entries.push(action(
+                    "desktop-actions.screenshot-" + mode.toLowerCase(),
+                    "Screenshot " + mode,
+                    "Actions",
+                    Icons.camera,
+                    desktopCommand(DesktopActions.screenshotCommand.concat(mode.toLowerCase())),
+                    parent,
+                ));
+            });
+        }
+        if (DesktopActions.ocrCommand.length > 0) {
+            entries.push(action("desktop-actions.extract-text", "Extract Text",
+                "Actions", Icons.textScan,
+                desktopCommand(DesktopActions.ocrCommand), parent));
+        }
+        if (DesktopActions.qrCommand.length > 0) {
+            entries.push(action("desktop-actions.scan-qr", "Scan QR Code",
+                "Actions", Icons.qrCode,
+                desktopCommand(DesktopActions.qrCommand), parent));
+        }
+        if (DesktopActions.recordingCommand.length > 0) {
+            if (DesktopActions.recordingActive) {
+                entries.push(action("desktop-actions.stop-recording", "Stop Recording",
+                    "Actions", Icons.record,
+                    desktopCommand(DesktopActions.recordingCommand.concat("stop")), parent));
+            } else {
+                ["Region", "Output"].forEach(function(mode) {
+                    const menuId = "desktop-actions.record-" + mode.toLowerCase();
+                    const menuEntry = menu(menuId, "Record " + mode,
+                        "Actions", Icons.record, parent);
+                    entries.push(menuEntry);
+                    [
+                        ["No Audio", "none"],
+                        ["Microphone", "mic"],
+                        ["Desktop Audio", "desktop"],
+                        ["Desktop + Microphone", "desktop+mic"],
+                    ].forEach(function(audio) {
+                        entries.push(action(
+                            menuId + "." + audio[1],
+                            audio[0],
+                            "Record " + mode,
+                            Icons.record,
+                            desktopCommand(DesktopActions.recordingCommand.concat(
+                                mode.toLowerCase(), audio[1])),
+                            menuEntry.id,
+                        ));
+                    });
+                });
+            }
+        }
+        if (DesktopActions.powerProfiles.length > 0) {
+            const powerMenu = menu("desktop-actions.power-profile", "Power Profile",
+                "Actions", Icons.powerProfile, parent);
+            entries.push(powerMenu);
+            DesktopActions.powerProfiles.forEach(function(profile) {
+                entries.push(action(
+                    "desktop-actions.power-profile." + profile.name,
+                    profileLabel(profile.name),
+                    profile.active ? "Active" : "Power Profile",
+                    profile.active ? Icons.check : Icons.powerProfile,
+                    desktopCommand(
+                        DesktopActions.powerCommand.concat("set", profile.name),
+                        "Power profile set to " + profileLabel(profile.name),
+                    ),
+                    powerMenu.id,
+                ));
+            });
+        }
+        if (DesktopActions.firmwareCommand.length > 0) {
+            entries.push(action("desktop-actions.firmware", "Firmware Updates",
+                "Actions", Icons.update,
+                desktopCommand(DesktopActions.firmwareCommand), parent));
+        }
+        return entries;
+    }
+
+    function profileLabel(value) {
+        return String(value || "").split("-").map(function(word) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }).join(" ");
+    }
+
+    function desktopCommand(command, successMessage) {
+        return {
+            type: "desktop-command",
+            command: Array.isArray(command) ? command.slice() : [],
+            successMessage: String(successMessage || ""),
+        };
+    }
+
+    function menu(id, label, detail, icon, parent) {
         return {
             id: "action:" + id,
+            parent: String(parent || "root"),
+            source: "menu",
+            label,
+            detail,
+            icon,
+            keywords: ["mitishell", detail],
+        };
+    }
+
+    function action(id, label, detail, icon, actionValue, parent) {
+        return {
+            id: "action:" + id,
+            parent: String(parent || "root"),
             source: "action",
             label,
             detail,
@@ -112,7 +225,7 @@ QtObject {
             return;
         }
         if (entry.source === "clipboard") {
-            Clipboard.copy(entry.text);
+            Clipboard.copy(entry.clipboardEntry);
             SurfaceCoordinator.close();
             return;
         }
@@ -154,6 +267,10 @@ QtObject {
             SurfaceCoordinator.close();
         } else if (nativeAction.type === "clipboard-history") {
             openWithQuery(":", screen);
+        } else if (nativeAction.type === "desktop-command") {
+            if (DesktopActions.run(nativeAction.command, nativeAction.successMessage)) {
+                SurfaceCoordinator.close();
+            }
         }
     }
 

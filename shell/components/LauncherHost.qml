@@ -12,18 +12,23 @@ SearchSurface {
 
     surfaceKey: "launcher"
     accent: Theme.orange
-    placeholder: "Launcher"
+    placeholder: activeMenuId === "root" ? "Launcher" : activeMenuLabel()
     emptyMessage: query.charAt(0) === ":" ? "Clipboard history is empty"
-        : (query.charAt(0) === "=" ? "Invalid expression" : "No matching applications")
-    warning: Launcher.persistenceError
+        : (query.charAt(0) === "=" ? "Invalid expression"
+            : (activeMenuId === "root" ? "No matching applications" : "No matching actions"))
+    warning: Launcher.persistenceError || Clipboard.persistenceError || DesktopActions.error
+    backEnabled: activeMenuId !== "root"
     rowDelegate: launcherRow
+
+    property string activeMenuId: "root"
 
     // Walker parity: launcher providers return at most 30 results.
     readonly property int resultLimit: 30
 
     function rebuild() {
-        const calculation = Calculator.fromQuery(query);
-        if (calculation !== null) {
+        const atRoot = activeMenuId === "root";
+        const calculation = atRoot ? Calculator.fromQuery(query) : null;
+        if (atRoot && calculation !== null) {
             results = [{
                 id: "calculator",
                 source: calculation.ok ? "calculator" : "calculator-error",
@@ -38,32 +43,69 @@ SearchSurface {
             return;
         }
 
-        if (query.charAt(0) === ":") {
+        if (atRoot && query.charAt(0) === ":") {
             results = clipboardResults(query.slice(1));
             return;
         }
-        if (query.charAt(0) === ">") {
+        if (atRoot && query.charAt(0) === ">") {
             results = runnerResults(query.slice(1));
             return;
         }
 
         const actions = Launcher.nativeActions();
-        const entries = Launcher.applications.concat(actions);
-        results = query.trim() === ""
-            ? LauncherModel.blankEntries(Launcher.applications, actions, Launcher.recents).slice(0, resultLimit)
-            : SearchModel.rank(entries, query, resultLimit);
+        if (query.trim() === "") {
+            const children = LauncherModel.childEntries(actions, activeMenuId);
+            results = atRoot
+                ? LauncherModel.blankEntries(
+                    Launcher.applications, children, Launcher.recents).slice(0, resultLimit)
+                : children.slice(0, resultLimit);
+            return;
+        }
+        const searchable = LauncherModel.searchableActions(actions, activeMenuId);
+        const entries = atRoot ? Launcher.applications.concat(searchable) : searchable;
+        results = SearchModel.rank(entries, query, resultLimit);
+    }
+
+    function activeMenuLabel() {
+        const actions = Launcher.nativeActions();
+        for (let index = 0; index < actions.length; index++) {
+            if (actions[index].id === activeMenuId) return actions[index].label;
+        }
+        return "Actions";
+    }
+
+    function openMenu(entry) {
+        activeMenuId = entry.id;
+        query = "";
+        rebuild();
+        focusSearch();
+    }
+
+    function goBack() {
+        const actions = Launcher.nativeActions();
+        let parent = "root";
+        for (let index = 0; index < actions.length; index++) {
+            if (actions[index].id === activeMenuId) {
+                parent = actions[index].parent || "root";
+                break;
+            }
+        }
+        activeMenuId = parent;
+        query = "";
+        rebuild();
+        focusSearch();
     }
 
     function clipboardResults(needle) {
-        const rows = Clipboard.entries.map(function(text, index) {
+        const rows = Clipboard.entries.map(function(entry, index) {
             return {
-                id: "clipboard:" + index,
+                id: "clipboard:" + entry.id,
                 source: "clipboard",
-                label: Clipboard.preview(text),
-                detail: "Copy",
+                label: Clipboard.preview(entry),
+                detail: Clipboard.detail(entry),
                 icon: Icons.clipboard,
-                keywords: [text],
-                text: text,
+                keywords: Clipboard.keywords(entry),
+                clipboardEntry: entry,
             };
         });
         // Leave one row for the clear action so the provider stays at 30.
@@ -109,6 +151,8 @@ SearchSurface {
     }
 
     onOpened: {
+        activeMenuId = "root";
+        DesktopActions.refresh();
         if (Launcher.pendingQuery !== "") {
             const seeded = Launcher.pendingQuery;
             Launcher.pendingQuery = "";
@@ -117,9 +161,16 @@ SearchSurface {
         rebuild();
     }
     onQueryChanged: rebuild()
-    onActivateRequested: function(entry) { Launcher.activate(entry, root.modelData); }
+    onActivateRequested: function(entry) {
+        if (entry.source === "menu") {
+            root.openMenu(entry);
+        } else {
+            Launcher.activate(entry, root.modelData);
+        }
+    }
+    onBackRequested: goBack()
     onDeleteRequested: function(entry) {
-        if (entry.source === "clipboard") Clipboard.removeEntry(entry.text);
+        if (entry.source === "clipboard") Clipboard.removeEntry(entry.clipboardEntry.id);
     }
 
     Connections {
@@ -162,6 +213,18 @@ SearchSurface {
         function onAdapterChanged() { root.rebuild(); }
     }
 
+    Connections {
+        target: DesktopActions
+        function onScreenshotCommandChanged() { root.rebuild(); }
+        function onOcrCommandChanged() { root.rebuild(); }
+        function onQrCommandChanged() { root.rebuild(); }
+        function onRecordingCommandChanged() { root.rebuild(); }
+        function onRecordingActiveChanged() { root.rebuild(); }
+        function onPowerProfilesChanged() { root.rebuild(); }
+        function onFirmwareCommandChanged() { root.rebuild(); }
+        function onErrorChanged() { root.rebuild(); }
+    }
+
     Component {
         id: launcherRow
 
@@ -190,35 +253,49 @@ SearchSurface {
                 anchors.leftMargin: Theme.spaceMd
                 anchors.rightMargin: Theme.spaceMd
 
-                Image {
-                    id: appIcon
+                Item {
+                    id: leadingVisual
 
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.iconMd
                     height: Theme.iconMd
-                    visible: row.modelData.source === "application"
-                    source: visible
-                        ? Quickshell.iconPath(row.modelData.icon, true)
-                        : ""
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                }
 
-                IconLabel {
-                    id: actionIcon
+                    Image {
+                        anchors.fill: parent
+                        visible: row.modelData.source === "application"
+                        source: visible
+                            ? Quickshell.iconPath(row.modelData.icon, true)
+                            : ""
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                    }
 
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: row.modelData.source !== "application"
-                    value: row.modelData.icon
-                    size: Theme.iconMd
+                    Image {
+                        anchors.fill: parent
+                        visible: row.modelData.source === "clipboard"
+                            && row.modelData.clipboardEntry.kind === "image"
+                        source: visible ? row.modelData.clipboardEntry.image : ""
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        cache: false
+                    }
+
+                    IconLabel {
+                        anchors.fill: parent
+                        visible: row.modelData.source !== "application"
+                            && !(row.modelData.source === "clipboard"
+                                && row.modelData.clipboardEntry.kind === "image")
+                        value: row.modelData.icon
+                        size: Theme.iconMd
+                    }
                 }
 
                 Column {
-                    anchors.left: appIcon.right
+                    anchors.left: leadingVisual.right
                     anchors.leftMargin: Theme.spaceMd
-                    anchors.right: parent.right
+                    anchors.right: menuChevron.visible ? menuChevron.left : parent.right
+                    anchors.rightMargin: menuChevron.visible ? Theme.spaceSm : 0
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 1
 
@@ -241,6 +318,16 @@ SearchSurface {
                         font.pixelSize: Theme.fontSizeCaption
                         elide: Text.ElideRight
                     }
+                }
+
+                IconLabel {
+                    id: menuChevron
+
+                    visible: row.modelData.source === "menu"
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    value: Icons.chevronRight
+                    size: Theme.iconSm
                 }
             }
 

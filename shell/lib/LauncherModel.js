@@ -80,6 +80,62 @@ function mergeRecents(primaryIds, fallbackIds) {
     return merged;
 }
 
+function childEntries(entries, parentId) {
+    const parent = String(parentId || "root");
+    return (Array.isArray(entries) ? entries : []).filter(function(entry) {
+        return String(entry.parent || "root") === parent;
+    });
+}
+
+function descendantEntries(entries, parentId) {
+    const values = Array.isArray(entries) ? entries : [];
+    const byParent = {};
+    values.forEach(function(entry) {
+        const parent = String(entry.parent || "root");
+        if (!byParent[parent]) byParent[parent] = [];
+        byParent[parent].push(entry);
+    });
+    const descendants = [];
+    const pending = childEntries(values, parentId);
+    const seen = {};
+    while (pending.length > 0) {
+        const entry = pending.shift();
+        if (!entry || seen[entry.id]) continue;
+        seen[entry.id] = true;
+        descendants.push(entry);
+        (byParent[entry.id] || []).forEach(function(child) { pending.push(child); });
+    }
+    return descendants;
+}
+
+function entryPath(entries, entryId) {
+    const byId = {};
+    (Array.isArray(entries) ? entries : []).forEach(function(entry) {
+        byId[entry.id] = entry;
+    });
+    const labels = [];
+    let current = byId[entryId];
+    const seen = {};
+    while (current && current.parent && current.parent !== "root" && !seen[current.id]) {
+        seen[current.id] = true;
+        current = byId[current.parent];
+        if (current) labels.unshift(current.label);
+    }
+    return labels;
+}
+
+function searchableActions(entries, parentId) {
+    const values = descendantEntries(entries, parentId);
+    return values.map(function(entry) {
+        const path = entryPath(entries, entry.id);
+        if (path.length === 0) return entry;
+        const copy = Object.assign({}, entry);
+        copy.detail = path.join(" › ");
+        copy.keywords = (Array.isArray(entry.keywords) ? entry.keywords : []).concat(path);
+        return copy;
+    });
+}
+
 // uwsm-managed sessions launch apps through `uwsm app --` so each lands in
 // its own systemd scope; otherwise the raw argv runs directly.
 function launchCommand(argv, uwsm) {
@@ -102,8 +158,12 @@ if (typeof module !== "undefined") {
         blankEntries,
         launchCommand,
         mergeRecents,
+        childEntries,
+        descendantEntries,
+        entryPath,
         recentLimit,
         runCommand,
+        searchableActions,
         valuesFrom,
     };
 }

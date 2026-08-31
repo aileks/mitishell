@@ -21,7 +21,9 @@ The update widget needs `checkupdates` from `pacman-contrib`. AUR counts and upg
 
 Night-light controls need a user-managed `hyprsunset` process. Mitishell reads and switches its live state through `hyprctl`, setting 4800 K when it turns night light on. It does not start, supervise, or persist configuration for the outside tool. The control stays hidden when `hyprsunset` is not running.
 
-Clipboard history needs `wl-clipboard` (`wl-paste`). Without it the clipboard features hide and the rest of the shell is unaffected.
+Clipboard history needs `wl-clipboard` (`wl-paste` and `wl-copy`). Without it the clipboard features hide and the rest of the shell is unaffected.
+
+The launcher's optional Actions use `desktop-screenshot`, `desktop-ocr`, `desktop-qr`, and `desktop-record` when those commands are installed. Power profiles use `powerprofilesctl`. Firmware updates use `fwupdmgr` and the same terminal discovery as package updates. Missing commands hide only their related actions.
 
 ## Development
 
@@ -130,9 +132,11 @@ bind = SUPER, PERIOD, exec, mitishell emoji
 
 `mitishell launcher` toggles a searchable launcher on the focused output. It finds installed desktop applications and frequent Mitishell actions. An empty search leads with the five most recently launched applications. Searches return at most 30 results and selection wraps from end to end. Start a query with `=` to calculate basic arithmetic; activating the result copies it. Incomplete input shows a muted hint instead of an error.
 
-Start a query with `:` to search the clipboard history, or run `mitishell clipboard` to open it directly. Activating an entry copies it again and moves it to the top. Delete removes the selected entry, and a clear action wipes the history. The shell records every text copy while the history is enabled; images and other non-text data are not recorded.
+The launcher includes an Actions menu when its optional commands are installed. It exposes the screenshot, text extraction, QR scanning, recording, power-profile, and firmware-update actions previously collected by the `desktop-actions` script. Existing Mitishell actions such as Do Not Disturb, Night Light, and Reminders remain direct launcher results instead of being duplicated. Nested actions are searchable from the launcher root; Backspace on an empty submenu or the visible back control returns to its parent.
 
-Clipboard history is on by default. Settings > System can turn it off or cap the entries between 5 and 100. Turning history off clears the stored history. History lives at `$XDG_STATE_HOME/mitishell/clipboard-history.json`, or `~/.local/state/mitishell/clipboard-history.json` when `XDG_STATE_HOME` is unset.
+Start a query with `:` to search the clipboard history, or run `mitishell clipboard` to open it directly. The history records text and supported raster images up to 20 MiB. Image rows show a thumbnail, dimensions, and format. Activating an entry copies it again and moves it to the top. Delete removes the selected entry, and a clear action wipes the history. Sensitive clipboard events and unsupported binary data are not recorded.
+
+Clipboard history is on by default. Settings > System can turn it off or cap the combined text and image entries between 5 and 100. Turning history off clears the stored history and image files. History lives at `$XDG_STATE_HOME/mitishell/clipboard-history.json`, or `~/.local/state/mitishell/clipboard-history.json` when `XDG_STATE_HOME` is unset. Image files live in the sibling `clipboard-media` directory. Version 1 text-only histories migrate in memory and are written in the new format after the next history change.
 
 Start a query with `>` to run a shell command through `sh -c`. In an active UWSM session, most launched applications and run commands start in their own systemd scope through `uwsm app`. Desktop entries that launch in a terminal or set a working directory keep the shell's own launcher.
 
@@ -173,8 +177,8 @@ Timers are transient user-systemd units. Their private metadata lives under `$XD
 Each release includes Linux archives for amd64 and arm64. The archive contains the Mitishell binary, QML shell, desktop entry, required third-party notices, and license files.
 
 ```bash
-tar -xzf mitishell-v1.3.0-linux-amd64.tar.gz
-cd mitishell-v1.3.0-linux-amd64
+tar -xzf mitishell-v1.3.1-linux-amd64.tar.gz
+cd mitishell-v1.3.1-linux-amd64
 make install-prebuilt
 quickshell -n -p ~/.local/share/mitishell/shell
 ```
