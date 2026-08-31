@@ -40,11 +40,13 @@ install-prebuilt:
 	test -x bin/mitishell
 	install -Dm755 bin/mitishell $(BIN_INSTALL_DIR)/mitishell
 	install -Dm644 data/mitishell.desktop $(DESKTOP_INSTALL_DIR)/mitishell.desktop
-	rm -rf $(SHELL_INSTALL_DIR)
+	rm -rf $(SHELL_INSTALL_DIR).staging
 	find shell -type f -print0 | while IFS= read -r -d '' file; do \
 		relative="$${file#shell/}"; \
-		install -Dm644 "$$file" "$(SHELL_INSTALL_DIR)/$$relative"; \
+		install -Dm644 "$$file" "$(SHELL_INSTALL_DIR).staging/$$relative"; \
 	done
+	rm -rf $(SHELL_INSTALL_DIR)
+	mv $(SHELL_INSTALL_DIR).staging $(SHELL_INSTALL_DIR)
 
 uninstall:
 	rm -f $(BIN_INSTALL_DIR)/mitishell
