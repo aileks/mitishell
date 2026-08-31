@@ -87,6 +87,18 @@ function childEntries(entries, parentId) {
     });
 }
 
+// Deep-opened menu ids can vanish between opens - an active recording swaps
+// the record menus for a stop action - so stale requests fall back to the
+// closest existing ancestor instead of an empty surface.
+function resolveMenuId(entries, requestedId, fallbackId) {
+    const values = Array.isArray(entries) ? entries : [];
+    const exists = function(id) {
+        return id === "root" || values.some(function(entry) { return entry.id === id; });
+    };
+    if (exists(requestedId)) return requestedId;
+    return exists(fallbackId) ? fallbackId : "root";
+}
+
 function descendantEntries(entries, parentId) {
     const values = Array.isArray(entries) ? entries : [];
     const byParent = {};
@@ -292,6 +304,7 @@ if (typeof module !== "undefined") {
         descendantEntries,
         entryPath,
         recentLimit,
+        resolveMenuId,
         runCommand,
         searchableActions,
         valuesFrom,

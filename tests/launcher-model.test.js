@@ -273,3 +273,26 @@ test("desktop actions never duplicate the direct dnd, night light, and reminders
         assert.ok(!labels.some((label) => label.includes(native)), `unexpected duplicate ${native}`);
     }
 });
+
+test("deep-opened menu ids fall back when a recording removes them", () => {
+    // nativeActions() wraps the children with the parent Actions menu entry.
+    const withActionsMenu = (children) => children.length === 0 ? [] : [{
+        id: "action:desktop-actions",
+        parent: "root",
+        source: "menu",
+        label: "Actions",
+    }].concat(children);
+    const idle = withActionsMenu(LauncherModel.desktopActionEntries(desktopActionsSnapshot(), {}));
+    const recording = withActionsMenu(LauncherModel.desktopActionEntries(
+        desktopActionsSnapshot({ recordingActive: true }), {}));
+    const audioMenu = "action:desktop-actions.record-region";
+    const actionsMenu = "action:desktop-actions";
+    assert.equal(LauncherModel.resolveMenuId(idle, audioMenu, actionsMenu), audioMenu);
+    assert.equal(LauncherModel.resolveMenuId(recording, audioMenu, actionsMenu), actionsMenu);
+    assert.equal(LauncherModel.resolveMenuId(recording, actionsMenu, actionsMenu), actionsMenu);
+});
+
+test("resolveMenuId drops to root when the fallback is missing too", () => {
+    assert.equal(LauncherModel.resolveMenuId([], "action:anything", "action:desktop-actions"), "root");
+    assert.equal(LauncherModel.resolveMenuId([], "root", "action:desktop-actions"), "root");
+});

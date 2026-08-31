@@ -26,6 +26,11 @@ SearchSurface {
     readonly property int resultLimit: 30
 
     function rebuild() {
+        const actions = Launcher.nativeActions();
+        if (activeMenuId !== "root") {
+            activeMenuId = LauncherModel.resolveMenuId(
+                actions, activeMenuId, "action:desktop-actions");
+        }
         const atRoot = activeMenuId === "root";
         const calculation = atRoot ? Calculator.fromQuery(query) : null;
         if (atRoot && calculation !== null) {
@@ -52,7 +57,6 @@ SearchSurface {
             return;
         }
 
-        const actions = Launcher.nativeActions();
         if (query.trim() === "") {
             const children = LauncherModel.childEntries(actions, activeMenuId);
             results = atRoot
