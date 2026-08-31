@@ -197,7 +197,9 @@ QtObject {
         if (pendingDesktopCommand === null) return;
         const command = pendingDesktopCommand;
         pendingDesktopCommand = null;
-        DesktopActions.run(command.command, command.successMessage);
+        if (!DesktopActions.run(command.command, command.successMessage)) {
+            Osd.showGeneric(Icons.warning, "Previous action still running", "", "2200");
+        }
     }
 
     function pumpSave() {

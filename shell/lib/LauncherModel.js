@@ -219,7 +219,10 @@ function desktopActionEntries(snapshot, icons) {
     const iconSet = icons || {};
     const entries = [];
     const parent = "action:desktop-actions";
-    const screenshotModes = Array.isArray(state.screenshotModes) ? state.screenshotModes : [];
+    // Full-desktop capture stays available to `mitishell capture desktop`
+    // but is not offered in the launcher; region and window cover it.
+    const screenshotModes = (Array.isArray(state.screenshotModes) ? state.screenshotModes : [])
+        .filter(function(value) { return value !== "desktop"; });
     if (screenshotModes.length > 0) {
         screenshotModes.forEach(function(value) {
             const mode = titleCase(value);

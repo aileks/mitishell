@@ -349,7 +349,6 @@ SearchSurface {
                 enabled: row.actionable
                 onTapped: root.activateIndex(row.index)
             }
-            onSelectedChanged: if (selected) ListView.view.positionViewAtIndex(index, ListView.Contain)
         }
     }
 }

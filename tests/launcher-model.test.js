@@ -175,7 +175,6 @@ test("desktop action entries mirror the snapshot in menu order", () => {
         "action:desktop-actions.screenshot-region",
         "action:desktop-actions.screenshot-window",
         "action:desktop-actions.screenshot-output",
-        "action:desktop-actions.screenshot-desktop",
         "action:desktop-actions.extract-text",
         "action:desktop-actions.scan-qr",
         "action:desktop-actions.record-region",
@@ -235,15 +234,20 @@ test("record menus follow the available recording modes", () => {
 
 test("entries hide when their supporting tools are missing", () => {
     const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot({
-        screenshotModes: ["desktop"],
+        screenshotModes: ["region"],
         ocrAvailable: false,
         qrAvailable: false,
         recordingModes: [],
         powerProfiles: [],
         firmwareAvailable: false,
     }), {});
-    assert.deepEqual(entryIds(entries), ["action:desktop-actions.screenshot-desktop"]);
+    assert.deepEqual(entryIds(entries), ["action:desktop-actions.screenshot-region"]);
     assert.deepEqual(LauncherModel.desktopActionEntries({}, {}), []);
+});
+
+test("full desktop screenshots stay out of the launcher", () => {
+    const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot(), {});
+    assert.ok(!entryIds(entries).includes("action:desktop-actions.screenshot-desktop"));
 });
 
 test("power profiles list dynamically with the active profile marked", () => {
