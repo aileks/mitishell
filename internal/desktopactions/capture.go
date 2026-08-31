@@ -263,9 +263,37 @@ func notify(ctx context.Context, urgency string, application string, message str
 	return nil
 }
 
+// runCommand runs a side-effect command and discards its output on files
+// rather than pipes: helper tools such as wl-copy fork a long-lived server
+// that would inherit pipe ends and block Wait long after the command exits.
 func runCommand(ctx context.Context, stdin io.Reader, name string, args ...string) error {
-	_, err := commandOutput(ctx, stdin, name, args...)
-	return err
+	devNull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
+	if err != nil {
+		return fmt.Errorf("open null device: %w", err)
+	}
+	defer devNull.Close()
+	stderr, err := os.CreateTemp("", "mitishell-stderr-*")
+	if err != nil {
+		return fmt.Errorf("create stderr capture: %w", err)
+	}
+	defer func() {
+		stderr.Close()
+		os.Remove(stderr.Name())
+	}()
+
+	command := exec.CommandContext(ctx, name, args...)
+	command.Stdin = stdin
+	command.Stdout = devNull
+	command.Stderr = stderr
+	if err := command.Run(); err != nil {
+		contents, _ := os.ReadFile(stderr.Name())
+		message := strings.TrimSpace(string(contents))
+		if message == "" {
+			message = err.Error()
+		}
+		return errors.New(message)
+	}
+	return nil
 }
 
 func commandOutput(ctx context.Context, stdin io.Reader, name string, args ...string) ([]byte, error) {
