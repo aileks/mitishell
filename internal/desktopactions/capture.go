@@ -1,0 +1,286 @@
+package desktopactions
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+)
+
+var errSelectionCancelled = errors.New("selection cancelled")
+
+func takeScreenshot(ctx context.Context, mode string) error {
+	directory, err := screenshotDirectory(ctx)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return fmt.Errorf("create screenshot directory: %w", err)
+	}
+	path := filepath.Join(directory, time.Now().Format("2006-01-02_15-04-05")+".png")
+	grimArgs, err := screenshotArguments(ctx, mode, path)
+	if errors.Is(err, errSelectionCancelled) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if err := runCommand(ctx, nil, "grim", grimArgs...); err != nil {
+		return fmt.Errorf("take screenshot: %w", err)
+	}
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read screenshot: %w", err)
+	}
+	if err := runCommand(ctx, bytes.NewReader(contents), "wl-copy", "--type", "image/png"); err != nil {
+		return fmt.Errorf("copy screenshot: %w", err)
+	}
+
+	action, err := commandOutput(ctx, nil, "notify-send",
+		"-a", "Screenshot",
+		"-i", path,
+		"-A", "annotate=Annotate",
+		"Screenshot saved and copied",
+		path,
+	)
+	if err != nil {
+		return fmt.Errorf("show screenshot notification: %w", err)
+	}
+	if strings.TrimSpace(string(action)) == "annotate" {
+		if _, err := exec.LookPath("tensaku"); err != nil {
+			return fmt.Errorf("Please install tensaku for screenshot annotation")
+		}
+		if err := runCommand(ctx, nil, "tensaku",
+			"--filename", path,
+			"--output-filename", path,
+			"--copy-command", "wl-copy",
+			"--app-id", "dev.tensaku.Tensaku",
+			"--actions-on-enter", "save-to-file",
+			"--actions-on-enter", "save-to-clipboard",
+			"--actions-on-enter", "exit",
+		); err != nil {
+			return fmt.Errorf("annotate screenshot: %w", err)
+		}
+	}
+	return nil
+}
+
+func screenshotArguments(ctx context.Context, mode string, path string) ([]string, error) {
+	switch mode {
+	case "desktop":
+		return []string{path}, nil
+	case "output":
+		output, err := focusedOutput(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return []string{"-o", output, path}, nil
+	case "window":
+		geometry, err := activeWindowGeometry(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return []string{"-g", geometry, path}, nil
+	case "region":
+		geometry, err := selectRegion(ctx, "")
+		if err != nil {
+			return nil, err
+		}
+		return []string{"-g", geometry, path}, nil
+	default:
+		return nil, fmt.Errorf("invalid screenshot mode %q", mode)
+	}
+}
+
+func extractText(ctx context.Context) error {
+	geometry, err := selectRegion(ctx, "")
+	if errors.Is(err, errSelectionCancelled) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	image, err := commandOutput(ctx, nil, "grim", "-g", geometry, "-")
+	if err != nil {
+		return fmt.Errorf("capture text region: %w", err)
+	}
+	result, err := commandOutput(ctx, bytes.NewReader(image), "tesseract",
+		"stdin", "stdout",
+		"--oem", "1",
+		"--psm", "6",
+		"-l", "eng",
+		"--dpi", "300",
+		"-c", "preserve_interword_spaces=1",
+	)
+	if err != nil || strings.TrimSpace(string(result)) == "" {
+		_ = notify(ctx, "critical", "Text Extraction", "No text found")
+		if err != nil {
+			return fmt.Errorf("extract text: %w", err)
+		}
+		return fmt.Errorf("extract text: no text found")
+	}
+	if err := runCommand(ctx, bytes.NewReader(result), "wl-copy"); err != nil {
+		return fmt.Errorf("copy extracted text: %w", err)
+	}
+	return notify(ctx, "", "Text Extraction", "Text copied")
+}
+
+func scanQR(ctx context.Context) error {
+	geometry, err := selectRegion(ctx, "")
+	if errors.Is(err, errSelectionCancelled) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	image, err := commandOutput(ctx, nil, "grim", "-g", geometry, "-")
+	if err != nil {
+		return fmt.Errorf("capture QR region: %w", err)
+	}
+	result, err := commandOutput(ctx, bytes.NewReader(image), "zbarimg",
+		"-q", "--raw", "-Sdisable", "-Sqrcode.enable", "-")
+	if err != nil || strings.TrimSpace(string(result)) == "" {
+		_ = notify(ctx, "critical", "QR Capture", "No QR code found")
+		if err != nil {
+			return fmt.Errorf("scan QR code: %w", err)
+		}
+		return fmt.Errorf("scan QR code: no QR code found")
+	}
+	if err := runCommand(ctx, bytes.NewReader(bytes.TrimSpace(result)),
+		"wl-copy", "--sensitive"); err != nil {
+		return fmt.Errorf("copy QR code: %w", err)
+	}
+	return notify(ctx, "", "QR Capture", "QR code copied")
+}
+
+func selectRegion(ctx context.Context, format string) (string, error) {
+	freeze := exec.CommandContext(ctx, "hyprpicker", "-r", "-z")
+	freeze.Stdout = io.Discard
+	freeze.Stderr = io.Discard
+	if err := freeze.Start(); err != nil {
+		return "", fmt.Errorf("freeze screen: %w", err)
+	}
+	defer func() {
+		_ = freeze.Process.Kill()
+		_ = freeze.Wait()
+	}()
+
+	timer := time.NewTimer(100 * time.Millisecond)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case <-timer.C:
+	}
+	args := []string{}
+	if format != "" {
+		args = append(args, "-f", format)
+	}
+	geometry, err := commandOutput(ctx, nil, "slurp", args...)
+	if err != nil {
+		return "", errSelectionCancelled
+	}
+	value := strings.TrimSpace(string(geometry))
+	if value == "" {
+		return "", errSelectionCancelled
+	}
+	return value, nil
+}
+
+func focusedOutput(ctx context.Context) (string, error) {
+	output, err := commandOutput(ctx, nil, "hyprctl", "-j", "monitors")
+	if err != nil {
+		return "", fmt.Errorf("read monitors: %w", err)
+	}
+	var monitors []struct {
+		Name    string
+		Focused bool
+	}
+	if err := json.Unmarshal(output, &monitors); err != nil {
+		return "", fmt.Errorf("decode monitors: %w", err)
+	}
+	for _, monitor := range monitors {
+		if monitor.Focused && monitor.Name != "" {
+			return monitor.Name, nil
+		}
+	}
+	return "", fmt.Errorf("could not determine the focused output")
+}
+
+func activeWindowGeometry(ctx context.Context) (string, error) {
+	output, err := commandOutput(ctx, nil, "hyprctl", "-j", "activewindow")
+	if err != nil {
+		return "", fmt.Errorf("read active window: %w", err)
+	}
+	var window struct {
+		At   []int
+		Size []int
+	}
+	if err := json.Unmarshal(output, &window); err != nil {
+		return "", fmt.Errorf("decode active window: %w", err)
+	}
+	if len(window.At) != 2 || len(window.Size) != 2 || window.Size[0] <= 0 || window.Size[1] <= 0 {
+		return "", fmt.Errorf("could not determine the active window")
+	}
+	return fmt.Sprintf("%d,%d %dx%d", window.At[0], window.At[1], window.Size[0], window.Size[1]), nil
+}
+
+func screenshotDirectory(ctx context.Context) (string, error) {
+	if output, err := commandOutput(ctx, nil, "xdg-user-dir", "PICTURES"); err == nil {
+		if directory := strings.TrimSpace(string(output)); directory != "" {
+			return filepath.Join(directory, "Screenshots"), nil
+		}
+	}
+	if directory := strings.TrimSpace(os.Getenv("XDG_PICTURES_DIR")); directory != "" {
+		return filepath.Join(directory, "Screenshots"), nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("resolve pictures directory: %w", err)
+	}
+	return filepath.Join(home, "Pictures", "Screenshots"), nil
+}
+
+func notify(ctx context.Context, urgency string, application string, message string) error {
+	if _, err := exec.LookPath("notify-send"); err != nil {
+		return fmt.Errorf("Please install libnotify for desktop notifications")
+	}
+	args := []string{"-a", application}
+	if urgency != "" {
+		args = append(args, "-u", urgency)
+	}
+	args = append(args, message)
+	if err := runCommand(ctx, nil, "notify-send", args...); err != nil {
+		return fmt.Errorf("show notification: %w", err)
+	}
+	return nil
+}
+
+func runCommand(ctx context.Context, stdin io.Reader, name string, args ...string) error {
+	_, err := commandOutput(ctx, stdin, name, args...)
+	return err
+}
+
+func commandOutput(ctx context.Context, stdin io.Reader, name string, args ...string) ([]byte, error) {
+	command := exec.CommandContext(ctx, name, args...)
+	command.Stdin = stdin
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	if err := command.Run(); err != nil {
+		message := strings.TrimSpace(stderr.String())
+		if message == "" {
+			message = err.Error()
+		}
+		return nil, errors.New(message)
+	}
+	return stdout.Bytes(), nil
+}

@@ -148,3 +148,128 @@ test("descendant traversal ignores malformed cycles", () => {
         ["one", "two"],
     );
 });
+
+function desktopActionsSnapshot(overrides = {}) {
+    return Object.assign({
+        screenshotModes: ["region", "window", "output", "desktop"],
+        ocrAvailable: true,
+        qrAvailable: true,
+        recordingModes: ["region", "output"],
+        recordingActive: false,
+        powerProfiles: [
+            { name: "power-saver", active: false },
+            { name: "balanced", active: true },
+            { name: "performance", active: false },
+        ],
+        firmwareAvailable: true,
+    }, overrides);
+}
+
+function entryIds(entries) {
+    return entries.map((entry) => entry.id);
+}
+
+test("desktop action entries mirror the snapshot in menu order", () => {
+    const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot(), {});
+    assert.deepEqual(entryIds(entries), [
+        "action:desktop-actions.screenshot-region",
+        "action:desktop-actions.screenshot-window",
+        "action:desktop-actions.screenshot-output",
+        "action:desktop-actions.screenshot-desktop",
+        "action:desktop-actions.extract-text",
+        "action:desktop-actions.scan-qr",
+        "action:desktop-actions.record-region",
+        "action:desktop-actions.record-region.none",
+        "action:desktop-actions.record-region.mic",
+        "action:desktop-actions.record-region.desktop",
+        "action:desktop-actions.record-region.desktop+mic",
+        "action:desktop-actions.record-output",
+        "action:desktop-actions.record-output.none",
+        "action:desktop-actions.record-output.mic",
+        "action:desktop-actions.record-output.desktop",
+        "action:desktop-actions.record-output.desktop+mic",
+        "action:desktop-actions.power-profile",
+        "action:desktop-actions.power-profile.power-saver",
+        "action:desktop-actions.power-profile.balanced",
+        "action:desktop-actions.power-profile.performance",
+        "action:desktop-actions.firmware",
+    ]);
+    const screenshot = entries.find((entry) => entry.id === "action:desktop-actions.screenshot-window");
+    assert.deepEqual(screenshot.action.command, ["screenshot", "window"]);
+    const microphone = entries.find((entry) => entry.id === "action:desktop-actions.record-region.mic");
+    assert.equal(microphone.label, "Microphone");
+    assert.deepEqual(microphone.action.command, ["record", "region", "mic"]);
+    const desktopAudio = entries.find((entry) => entry.id === "action:desktop-actions.record-output.desktop");
+    assert.deepEqual(desktopAudio.action.command, ["record", "output", "desktop"]);
+});
+
+test("desktop action entries nest audio choices under their record menu", () => {
+    const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot(), {});
+    const menu = entries.find((entry) => entry.id === "action:desktop-actions.record-region");
+    const children = LauncherModel.childEntries(entries, menu.id);
+    assert.deepEqual(children.map((child) => child.label), [
+        "No Audio", "Microphone", "Desktop Audio", "Desktop + Microphone",
+    ]);
+});
+
+test("an active recording replaces the record menus with a stop action", () => {
+    const entries = LauncherModel.desktopActionEntries(
+        desktopActionsSnapshot({ recordingActive: true }), {});
+    const recordingEntries = entries.filter((entry) => entry.id.includes("record"));
+    assert.deepEqual(entryIds(recordingEntries), ["action:desktop-actions.stop-recording"]);
+    assert.deepEqual(recordingEntries[0].action.command, ["record", "stop"]);
+});
+
+test("record menus follow the available recording modes", () => {
+    const entries = LauncherModel.desktopActionEntries(
+        desktopActionsSnapshot({ recordingModes: ["region"] }), {});
+    const recordingEntries = entryIds(entries.filter((entry) => entry.id.includes("record")));
+    assert.deepEqual(recordingEntries, [
+        "action:desktop-actions.record-region",
+        "action:desktop-actions.record-region.none",
+        "action:desktop-actions.record-region.mic",
+        "action:desktop-actions.record-region.desktop",
+        "action:desktop-actions.record-region.desktop+mic",
+    ]);
+});
+
+test("entries hide when their supporting tools are missing", () => {
+    const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot({
+        screenshotModes: ["desktop"],
+        ocrAvailable: false,
+        qrAvailable: false,
+        recordingModes: [],
+        powerProfiles: [],
+        firmwareAvailable: false,
+    }), {});
+    assert.deepEqual(entryIds(entries), ["action:desktop-actions.screenshot-desktop"]);
+    assert.deepEqual(LauncherModel.desktopActionEntries({}, {}), []);
+});
+
+test("power profiles list dynamically with the active profile marked", () => {
+    const icons = { camera: "camera", textScan: "text-scan", qrCode: "qr-code",
+        record: "record", powerProfile: "power-profile", check: "check", update: "update" };
+    const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot(), icons);
+    const balanced = entries.find((entry) => entry.id === "action:desktop-actions.power-profile.balanced");
+    assert.equal(balanced.label, "Balanced");
+    assert.equal(balanced.detail, "Active");
+    assert.equal(balanced.icon, "check");
+    const saver = entries.find((entry) => entry.id === "action:desktop-actions.power-profile.power-saver");
+    assert.equal(saver.label, "Power Saver");
+    assert.equal(saver.detail, "Power Profile");
+    assert.equal(saver.icon, "power-profile");
+    assert.deepEqual(saver.action.command, ["power-profile", "power-saver"]);
+    assert.equal(saver.action.successMessage, "Power profile set to Power Saver");
+});
+
+test("desktop actions never duplicate the direct dnd, night light, and reminders results", () => {
+    const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot(), {});
+    const ids = entryIds(entries);
+    for (const direct of ["action:dnd", "action:night-light", "action:reminders"]) {
+        assert.ok(!ids.includes(direct), `unexpected duplicate ${direct}`);
+    }
+    const labels = entries.map((entry) => entry.label.toLowerCase());
+    for (const native of ["do not disturb", "night light", "reminder"]) {
+        assert.ok(!labels.some((label) => label.includes(native)), `unexpected duplicate ${native}`);
+    }
+});

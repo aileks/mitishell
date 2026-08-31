@@ -1,10 +1,12 @@
-// Package desktopactions discovers the optional commands exposed by the
-// launcher's Actions menu.
+// Package desktopactions owns the actions exposed by the launcher's Actions menu.
 package desktopactions
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -13,20 +15,22 @@ import (
 
 const snapshotTimeout = 3 * time.Second
 
+// ErrInvalidAction reports a Run request that names no known action.
+var ErrInvalidAction = errors.New("invalid action")
+
 type Profile struct {
 	Name   string `json:"name"`
 	Active bool   `json:"active"`
 }
 
 type Snapshot struct {
-	ScreenshotCommand []string  `json:"screenshotCommand"`
-	OCRCommand        []string  `json:"ocrCommand"`
-	QRCommand         []string  `json:"qrCommand"`
-	RecordingCommand  []string  `json:"recordingCommand"`
+	ScreenshotModes   []string  `json:"screenshotModes"`
+	OCRAvailable      bool      `json:"ocrAvailable"`
+	QRAvailable       bool      `json:"qrAvailable"`
+	RecordingModes    []string  `json:"recordingModes"`
 	RecordingActive   bool      `json:"recordingActive"`
-	PowerCommand      []string  `json:"powerCommand"`
 	PowerProfiles     []Profile `json:"powerProfiles"`
-	FirmwareCommand   []string  `json:"firmwareCommand"`
+	FirmwareAvailable bool      `json:"firmwareAvailable"`
 }
 
 type Runner interface {
@@ -53,41 +57,171 @@ func (service Service) Snapshot(parent context.Context) Snapshot {
 	ctx, cancel := context.WithTimeout(parent, snapshotTimeout)
 	defer cancel()
 
-	result := Snapshot{PowerProfiles: []Profile{}}
-	result.ScreenshotCommand = service.command("desktop-screenshot")
-	result.OCRCommand = service.command("desktop-ocr")
-	result.QRCommand = service.command("desktop-qr")
-	result.RecordingCommand = service.command("desktop-record")
-	if len(result.RecordingCommand) > 0 {
-		_, err := service.runner.Output(ctx, result.RecordingCommand[0], "status")
-		result.RecordingActive = err == nil
+	result := Snapshot{
+		ScreenshotModes: []string{},
+		RecordingModes:  []string{},
+		PowerProfiles:   []Profile{},
+	}
+	if service.hasAll("grim", "wl-copy", "notify-send") {
+		if service.hasAll("slurp", "hyprpicker") {
+			result.ScreenshotModes = append(result.ScreenshotModes, "region")
+		}
+		if service.has("hyprctl") {
+			result.ScreenshotModes = append(result.ScreenshotModes, "window", "output")
+		}
+		result.ScreenshotModes = append(result.ScreenshotModes, "desktop")
+	}
+	result.OCRAvailable = service.hasAll(
+		"grim", "slurp", "hyprpicker", "tesseract", "wl-copy", "notify-send")
+	result.QRAvailable = service.hasAll(
+		"grim", "slurp", "hyprpicker", "zbarimg", "wl-copy", "notify-send")
+
+	result.RecordingActive = recordingIsActive()
+	if service.hasAll("gpu-screen-recorder", "notify-send") {
+		if service.has("slurp") {
+			result.RecordingModes = append(result.RecordingModes, "region")
+		}
+		if service.has("hyprctl") {
+			result.RecordingModes = append(result.RecordingModes, "output")
+		}
 	}
 
-	result.PowerCommand = service.command("powerprofilesctl")
-	if len(result.PowerCommand) > 0 {
-		active, activeErr := service.runner.Output(ctx, result.PowerCommand[0], "get")
-		profiles, profilesErr := service.runner.Output(ctx, result.PowerCommand[0], "list")
+	if power, err := service.runner.LookPath("powerprofilesctl"); err == nil {
+		active, activeErr := service.runner.Output(ctx, power, "get")
+		profiles, profilesErr := service.runner.Output(ctx, power, "list")
 		if activeErr == nil && profilesErr == nil {
 			result.PowerProfiles = parseProfiles(profiles, strings.TrimSpace(active))
 		}
 	}
 
-	firmware := service.command("fwupdmgr")
-	bash := service.command("bash")
-	if len(firmware) > 0 && len(bash) > 0 {
-		result.FirmwareCommand = terminal.Command(service.runner, []string{
-			bash[0], "-lc", "fwupdmgr refresh && fwupdmgr update",
-		})
+	result.FirmwareAvailable = service.hasAll("fwupdmgr", "bash")
+	if result.FirmwareAvailable {
+		result.FirmwareAvailable = len(terminal.Command(service.runner, []string{"true"})) > 0
 	}
 	return result
 }
 
-func (service Service) command(name string) []string {
-	found, err := service.runner.LookPath(name)
-	if err != nil {
-		return []string{}
+func (service Service) Run(ctx context.Context, args []string) error {
+	if len(args) == 2 && args[0] == "screenshot" && slices.Contains(
+		[]string{"region", "window", "output", "desktop"}, args[1]) {
+		tools := []string{"grim", "wl-copy", "notify-send"}
+		if args[1] == "region" {
+			tools = append(tools, "slurp", "hyprpicker")
+		}
+		if args[1] == "window" || args[1] == "output" {
+			tools = append(tools, "hyprctl")
+		}
+		if err := service.require("screenshots", tools...); err != nil {
+			return err
+		}
+		return takeScreenshot(ctx, args[1])
 	}
-	return []string{found}
+	if len(args) == 1 && args[0] == "text" {
+		if err := service.require("text extraction",
+			"grim", "slurp", "hyprpicker", "tesseract", "wl-copy", "notify-send"); err != nil {
+			return err
+		}
+		return extractText(ctx)
+	}
+	if len(args) == 1 && args[0] == "qr" {
+		if err := service.require("QR scanning",
+			"grim", "slurp", "hyprpicker", "zbarimg", "wl-copy", "notify-send"); err != nil {
+			return err
+		}
+		return scanQR(ctx)
+	}
+	if len(args) == 2 && args[0] == "record" && args[1] == "stop" {
+		return stopRecording()
+	}
+	if len(args) == 3 && args[0] == "record" &&
+		slices.Contains([]string{"region", "output"}, args[1]) &&
+		slices.Contains([]string{"none", "mic", "desktop", "desktop+mic"}, args[2]) {
+		if err := service.ValidateRecording(args[1]); err != nil {
+			return err
+		}
+		return startRecording(args[1], args[2])
+	}
+	if len(args) == 2 && args[0] == "power-profile" && args[1] != "" {
+		if err := service.require("power profiles", "powerprofilesctl"); err != nil {
+			return err
+		}
+		return runCommand(ctx, nil, "powerprofilesctl", "set", args[1])
+	}
+	if len(args) == 1 && args[0] == "firmware" {
+		if err := service.require("firmware updates", "fwupdmgr", "bash"); err != nil {
+			return err
+		}
+		return service.runFirmware(ctx)
+	}
+	return ErrInvalidAction
+}
+
+func (service Service) ValidateRecording(mode string) error {
+	tools := []string{"gpu-screen-recorder", "notify-send"}
+	switch mode {
+	case "region":
+		tools = append(tools, "slurp")
+	case "output":
+		tools = append(tools, "hyprctl")
+	default:
+		return fmt.Errorf("invalid recording mode %q", mode)
+	}
+	return service.require("screen recording", tools...)
+}
+
+func (service Service) runFirmware(ctx context.Context) error {
+	bash, err := service.runner.LookPath("bash")
+	if err != nil {
+		return fmt.Errorf("firmware updates unavailable: %w", err)
+	}
+	command := terminal.Command(service.runner, []string{
+		bash, "-lc", "fwupdmgr refresh && fwupdmgr update",
+	})
+	if len(command) == 0 {
+		return fmt.Errorf("Please install xdg-terminal-exec or a supported terminal for firmware updates")
+	}
+	return runCommand(ctx, nil, command[0], command[1:]...)
+}
+
+func (service Service) has(command string) bool {
+	_, err := service.runner.LookPath(command)
+	return err == nil
+}
+
+func (service Service) hasAll(commands ...string) bool {
+	for _, command := range commands {
+		if !service.has(command) {
+			return false
+		}
+	}
+	return true
+}
+
+func (service Service) require(purpose string, commands ...string) error {
+	packages := map[string]string{
+		"gpu-screen-recorder": "gpu-screen-recorder",
+		"grim":                "grim",
+		"hyprctl":             "Hyprland",
+		"hyprpicker":          "hyprpicker",
+		"notify-send":         "libnotify",
+		"powerprofilesctl":    "power-profiles-daemon",
+		"slurp":               "slurp",
+		"tesseract":           "tesseract and tesseract-data-eng",
+		"wl-copy":             "wl-clipboard",
+		"zbarimg":             "zbar",
+		"fwupdmgr":            "fwupd",
+	}
+	for _, command := range commands {
+		if service.has(command) {
+			continue
+		}
+		name := packages[command]
+		if name == "" {
+			name = command
+		}
+		return fmt.Errorf("Please install %s for %s", name, purpose)
+	}
+	return nil
 }
 
 func parseProfiles(output string, active string) []Profile {

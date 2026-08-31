@@ -153,7 +153,11 @@ SearchSurface {
     onOpened: {
         activeMenuId = "root";
         DesktopActions.refresh();
-        if (Launcher.pendingQuery !== "") {
+        if (Launcher.pendingMenuId !== "") {
+            activeMenuId = Launcher.pendingMenuId;
+            Launcher.pendingMenuId = "";
+            query = "";
+        } else if (Launcher.pendingQuery !== "") {
             const seeded = Launcher.pendingQuery;
             Launcher.pendingQuery = "";
             query = seeded;
@@ -215,13 +219,13 @@ SearchSurface {
 
     Connections {
         target: DesktopActions
-        function onScreenshotCommandChanged() { root.rebuild(); }
-        function onOcrCommandChanged() { root.rebuild(); }
-        function onQrCommandChanged() { root.rebuild(); }
-        function onRecordingCommandChanged() { root.rebuild(); }
+        function onScreenshotModesChanged() { root.rebuild(); }
+        function onOcrAvailableChanged() { root.rebuild(); }
+        function onQrAvailableChanged() { root.rebuild(); }
+        function onRecordingModesChanged() { root.rebuild(); }
         function onRecordingActiveChanged() { root.rebuild(); }
         function onPowerProfilesChanged() { root.rebuild(); }
-        function onFirmwareCommandChanged() { root.rebuild(); }
+        function onFirmwareAvailableChanged() { root.rebuild(); }
         function onErrorChanged() { root.rebuild(); }
     }
 

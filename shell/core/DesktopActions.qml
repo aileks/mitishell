@@ -6,14 +6,13 @@ import Quickshell.Io
 QtObject {
     id: root
 
-    property var screenshotCommand: []
-    property var ocrCommand: []
-    property var qrCommand: []
-    property var recordingCommand: []
+    property var screenshotModes: []
+    property bool ocrAvailable: false
+    property bool qrAvailable: false
+    property var recordingModes: []
     property bool recordingActive: false
-    property var powerCommand: []
     property var powerProfiles: []
-    property var firmwareCommand: []
+    property bool firmwareAvailable: false
     property string error: ""
     property string successMessage: ""
 
@@ -23,13 +22,13 @@ QtObject {
         if (!snapshotProcess.running) snapshotProcess.running = true;
     }
 
-    function run(command, success) {
-        if (actionProcess.running || !Array.isArray(command) || command.length === 0) {
+    function run(args, success) {
+        if (actionProcess.running || !Array.isArray(args) || args.length === 0) {
             return false;
         }
         error = "";
         successMessage = String(success || "");
-        actionProcess.command = command;
+        actionProcess.command = [Config.binary, "_desktop-action"].concat(args);
         actionProcess.running = true;
         return true;
     }
@@ -44,22 +43,21 @@ QtObject {
             // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
                 root.error = snapshotErrors.text.trim()
-                    || "Desktop actions could not be refreshed.";
+                    || "Actions could not be refreshed.";
                 return;
             }
             try {
                 const snapshot = JSON.parse(snapshotOutput.text);
-                root.screenshotCommand = snapshot.screenshotCommand || [];
-                root.ocrCommand = snapshot.ocrCommand || [];
-                root.qrCommand = snapshot.qrCommand || [];
-                root.recordingCommand = snapshot.recordingCommand || [];
+                root.screenshotModes = snapshot.screenshotModes || [];
+                root.ocrAvailable = snapshot.ocrAvailable === true;
+                root.qrAvailable = snapshot.qrAvailable === true;
+                root.recordingModes = snapshot.recordingModes || [];
                 root.recordingActive = snapshot.recordingActive === true;
-                root.powerCommand = snapshot.powerCommand || [];
                 root.powerProfiles = snapshot.powerProfiles || [];
-                root.firmwareCommand = snapshot.firmwareCommand || [];
+                root.firmwareAvailable = snapshot.firmwareAvailable === true;
                 root.error = "";
             } catch (parseError) {
-                root.error = "Desktop actions could not be read.";
+                root.error = "Actions could not be read.";
             }
         }
     }
@@ -71,8 +69,8 @@ QtObject {
         onExited: function(exitCode, exitStatus) {
             // qmllint enable signal-handler-parameters
             if (exitCode !== 0) {
-                root.error = actionErrors.text.trim() || "Desktop action failed.";
-                Osd.showGeneric(Icons.warning, "Desktop action failed", "", "2200");
+                root.error = actionErrors.text.trim() || "Action failed.";
+                Osd.showGeneric(Icons.warning, "Action failed", "", "2200");
             } else if (root.successMessage !== "") {
                 Osd.showGeneric(Icons.check, root.successMessage, "", "1400");
             }

@@ -139,6 +139,13 @@ ShellRoot {
     IpcHandler {
         target: "launcher"
 
+        function actions(menu: string): string {
+            const screen = root.focusedScreen();
+            if (screen === null) return "Actions menu unavailable";
+            Launcher.openWithMenu(menu, screen);
+            return "Actions menu opened";
+        }
+
         function toggle(): string {
             const screen = root.focusedScreen();
             if (screen === null) return "launcher unavailable";

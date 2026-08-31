@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -110,6 +111,9 @@ const helpText = `Usage: mitishell <command>
   emoji                             toggle the emoji picker
   clipboard                         open the clipboard history view
   launcher                          toggle the application launcher
+  actions                           open the Actions menu
+  capture <mode|text|qr>            capture a screenshot, text, or QR code
+  record <region|output|stop>       start or stop a screen recording
   keybinds                          toggle the keybind viewer
   volume up|down|mute|set <0-150>   control the volume
   mic up|down|mute|set <0-150>      control the microphone
@@ -191,6 +195,7 @@ type ClipboardWriter interface {
 
 type LauncherUI interface {
 	ToggleLauncher() error
+	OpenActions(string) error
 }
 
 type ClipboardUI interface {
@@ -212,6 +217,8 @@ type UpdateService interface {
 
 type DesktopActions interface {
 	Snapshot(context.Context) desktopactions.Snapshot
+	Run(context.Context, []string) error
+	ValidateRecording(string) error
 }
 
 type FontService interface {
@@ -483,7 +490,11 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 		return 0
 	}
 	if len(args) == 1 && args[0] == "_desktop-actions-snapshot" {
-		result := desktopactions.Snapshot{PowerProfiles: []desktopactions.Profile{}}
+		result := desktopactions.Snapshot{
+			ScreenshotModes: []string{},
+			RecordingModes:  []string{},
+			PowerProfiles:   []desktopactions.Profile{},
+		}
 		if dependencies.DesktopActions != nil {
 			result = dependencies.DesktopActions.Snapshot(context.Background())
 		}
@@ -492,6 +503,9 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 			return 1
 		}
 		return 0
+	}
+	if len(args) > 1 && args[0] == "_desktop-action" {
+		return runDesktopAction(args[1:], stderr, dependencies)
 	}
 	if len(args) == 2 && args[0] == "_reminder-fire" {
 		if dependencies.Reminders == nil {
@@ -858,6 +872,63 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	if len(args) > 0 && args[0] == "brightness" {
 		return runBrightnessAction(args, stdout, stderr, dependencies)
 	}
+	if len(args) > 0 && args[0] == "capture" {
+		if len(args) != 2 {
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell capture <region|window|output|desktop|text|qr>")
+			return 2
+		}
+		if slices.Contains([]string{"region", "window", "output", "desktop"}, args[1]) {
+			return runDesktopAction([]string{"screenshot", args[1]}, stderr, dependencies)
+		}
+		if args[1] == "text" || args[1] == "qr" {
+			return runDesktopAction(args[1:], stderr, dependencies)
+		}
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell capture <region|window|output|desktop|text|qr>")
+		return 2
+	}
+	if len(args) > 0 && args[0] == "record" {
+		if len(args) != 2 || !slices.Contains([]string{"region", "output", "stop"}, args[1]) {
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell record <region|output|stop>")
+			return 2
+		}
+		if args[1] == "stop" {
+			return runDesktopAction([]string{"record", "stop"}, stderr, dependencies)
+		}
+		if dependencies.DesktopActions == nil {
+			fmt.Fprintln(stderr, "mitishell: screen recording unavailable")
+			return 1
+		}
+		if err := dependencies.DesktopActions.ValidateRecording(args[1]); err != nil {
+			fmt.Fprintf(stderr, "mitishell: %v\n", err)
+			return 1
+		}
+		if dependencies.LauncherUI == nil {
+			fmt.Fprintln(stderr, "mitishell: Actions menu unavailable")
+			return 1
+		}
+		if err := dependencies.LauncherUI.OpenActions("record-" + args[1]); err != nil {
+			fmt.Fprintf(stderr, "mitishell: Actions menu unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "Recording menu opened")
+		return 0
+	}
+	if len(args) > 0 && args[0] == "actions" {
+		if dependencies.LauncherUI == nil {
+			fmt.Fprintln(stderr, "mitishell: Actions menu unavailable")
+			return 1
+		}
+		if len(args) != 1 {
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell actions")
+			return 2
+		}
+		if err := dependencies.LauncherUI.OpenActions("actions"); err != nil {
+			fmt.Fprintf(stderr, "mitishell: Actions menu unavailable: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "Actions menu opened")
+		return 0
+	}
 	if len(args) == 2 && args[0] == "notifications" && args[1] == "dnd" {
 		if err := dependencies.Shell.ToggleNotifications(); err != nil {
 			fmt.Fprintf(stderr, "mitishell: do not disturb unavailable: %v\n", err)
@@ -947,6 +1018,22 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 
 	fmt.Fprintf(stderr, "mitishell: unknown command %q, run \"mitishell help\"\n", args[0])
 	return 2
+}
+
+func runDesktopAction(args []string, stderr io.Writer, dependencies Dependencies) int {
+	if dependencies.DesktopActions == nil {
+		fmt.Fprintln(stderr, "mitishell: action unavailable")
+		return 1
+	}
+	if err := dependencies.DesktopActions.Run(context.Background(), args); err != nil {
+		if errors.Is(err, desktopactions.ErrInvalidAction) {
+			fmt.Fprintln(stderr, "mitishell: invalid capture action")
+			return 2
+		}
+		fmt.Fprintf(stderr, "mitishell: action failed: %v\n", err)
+		return 1
+	}
+	return 0
 }
 
 func runNightLight(
