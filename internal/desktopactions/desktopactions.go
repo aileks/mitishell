@@ -3,6 +3,7 @@ package desktopactions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"slices"
@@ -13,6 +14,9 @@ import (
 )
 
 const snapshotTimeout = 3 * time.Second
+
+// ErrInvalidAction reports a Run request that names no known action.
+var ErrInvalidAction = errors.New("invalid action")
 
 type Profile struct {
 	Name   string `json:"name"`
@@ -149,7 +153,7 @@ func (service Service) Run(ctx context.Context, args []string) error {
 		}
 		return service.runFirmware(ctx)
 	}
-	return fmt.Errorf("invalid action")
+	return ErrInvalidAction
 }
 
 func (service Service) ValidateRecording(mode string) error {

@@ -598,6 +598,16 @@ func TestRecordCommandOpensAudioMenu(t *testing.T) {
 	}
 }
 
+func TestCaptureCommandClassifiesInvalidAction(t *testing.T) {
+	service := &desktopActionsStub{runErr: desktopactions.ErrInvalidAction}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"capture", "region"}, &stdout, &stderr,
+		cli.Dependencies{DesktopActions: service})
+	if code != 2 || !strings.Contains(stderr.String(), "invalid capture action") {
+		t.Fatalf("code=%d stderr=%q", code, stderr.String())
+	}
+}
+
 func TestRecordCommandReportsMissingDependencyBeforeOpeningMenu(t *testing.T) {
 	ui := &launcherUIStub{}
 	service := &desktopActionsStub{validateErr: errors.New(

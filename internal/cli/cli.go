@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -1025,7 +1026,7 @@ func runDesktopAction(args []string, stderr io.Writer, dependencies Dependencies
 		return 1
 	}
 	if err := dependencies.DesktopActions.Run(context.Background(), args); err != nil {
-		if err.Error() == "invalid action" {
+		if errors.Is(err, desktopactions.ErrInvalidAction) {
 			fmt.Fprintln(stderr, "mitishell: invalid capture action")
 			return 2
 		}

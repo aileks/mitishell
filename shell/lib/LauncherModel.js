@@ -151,12 +151,142 @@ function runCommand(text, uwsm) {
     return launchCommand(["sh", "-c", command], uwsm);
 }
 
+function titleCase(value) {
+    return String(value || "").split("-").map(function(word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(" ");
+}
+
+function menu(id, label, detail, icon, parent) {
+    return {
+        id: "action:" + id,
+        parent: String(parent || "root"),
+        source: "menu",
+        label,
+        detail,
+        icon,
+        keywords: ["mitishell", detail],
+    };
+}
+
+function action(id, label, detail, icon, actionValue, parent) {
+    return {
+        id: "action:" + id,
+        parent: String(parent || "root"),
+        source: "action",
+        label,
+        detail,
+        icon,
+        keywords: ["mitishell", detail],
+        action: actionValue,
+    };
+}
+
+function desktopCommand(command, successMessage) {
+    return {
+        type: "desktop-command",
+        command: Array.isArray(command) ? command.slice() : [],
+        successMessage: String(successMessage || ""),
+    };
+}
+
+const recordingAudioChoices = [
+    ["No Audio", "none"],
+    ["Microphone", "mic"],
+    ["Desktop Audio", "desktop"],
+    ["Desktop + Microphone", "desktop+mic"],
+];
+
+// Builds the nested Desktop Actions entries from a DesktopActions snapshot.
+// Each group hides itself when its supporting tools are missing, and an
+// active recording replaces the record menus with a stop action. Native
+// DND, Night Light, and Reminders actions stay out; the launcher already
+// exposes them as direct results.
+function desktopActionEntries(snapshot, icons) {
+    const state = snapshot || {};
+    const iconSet = icons || {};
+    const entries = [];
+    const parent = "action:desktop-actions";
+    const screenshotModes = Array.isArray(state.screenshotModes) ? state.screenshotModes : [];
+    if (screenshotModes.length > 0) {
+        screenshotModes.forEach(function(value) {
+            const mode = titleCase(value);
+            entries.push(action(
+                "desktop-actions.screenshot-" + mode.toLowerCase(),
+                "Screenshot " + mode,
+                "Actions",
+                iconSet.camera,
+                desktopCommand(["screenshot", value]),
+                parent,
+            ));
+        });
+    }
+    if (state.ocrAvailable === true) {
+        entries.push(action("desktop-actions.extract-text", "Extract Text",
+            "Actions", iconSet.textScan, desktopCommand(["text"]), parent));
+    }
+    if (state.qrAvailable === true) {
+        entries.push(action("desktop-actions.scan-qr", "Scan QR Code",
+            "Actions", iconSet.qrCode, desktopCommand(["qr"]), parent));
+    }
+    const recordingModes = Array.isArray(state.recordingModes) ? state.recordingModes : [];
+    if (state.recordingActive === true || recordingModes.length > 0) {
+        if (state.recordingActive === true) {
+            entries.push(action("desktop-actions.stop-recording", "Stop Recording",
+                "Actions", iconSet.record, desktopCommand(["record", "stop"]), parent));
+        } else {
+            recordingModes.forEach(function(value) {
+                const mode = titleCase(value);
+                const menuId = "desktop-actions.record-" + value;
+                const menuEntry = menu(menuId, "Record " + mode,
+                    "Actions", iconSet.record, parent);
+                entries.push(menuEntry);
+                recordingAudioChoices.forEach(function(audio) {
+                    entries.push(action(
+                        menuId + "." + audio[1],
+                        audio[0],
+                        "Record " + mode,
+                        iconSet.record,
+                        desktopCommand(["record", value, audio[1]]),
+                        menuEntry.id,
+                    ));
+                });
+            });
+        }
+    }
+    const powerProfiles = Array.isArray(state.powerProfiles) ? state.powerProfiles : [];
+    if (powerProfiles.length > 0) {
+        const powerMenu = menu("desktop-actions.power-profile", "Power Profile",
+            "Actions", iconSet.powerProfile, parent);
+        entries.push(powerMenu);
+        powerProfiles.forEach(function(profile) {
+            entries.push(action(
+                "desktop-actions.power-profile." + profile.name,
+                titleCase(profile.name),
+                profile.active ? "Active" : "Power Profile",
+                profile.active ? iconSet.check : iconSet.powerProfile,
+                desktopCommand(["power-profile", profile.name],
+                    "Power profile set to " + titleCase(profile.name)),
+                powerMenu.id,
+            ));
+        });
+    }
+    if (state.firmwareAvailable === true) {
+        entries.push(action("desktop-actions.firmware", "Firmware Updates",
+            "Actions", iconSet.update, desktopCommand(["firmware"]), parent));
+    }
+    return entries;
+}
+
 if (typeof module !== "undefined") {
     module.exports = {
+        action,
         addRecent,
         applicationEntries,
         blankEntries,
+        desktopActionEntries,
         launchCommand,
+        menu,
         mergeRecents,
         childEntries,
         descendantEntries,

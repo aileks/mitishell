@@ -3,6 +3,8 @@ package desktopactions_test
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -110,5 +112,34 @@ func TestRunReportsMissingPackagesClearly(t *testing.T) {
 		if err == nil || err.Error() != testCase.want {
 			t.Fatalf("Run(%#v) error = %v, want %q", testCase.args, err, testCase.want)
 		}
+	}
+}
+
+func TestRunFirmwareUsesDiscoveredTerminal(t *testing.T) {
+	t.Setenv("TERMINAL", "")
+	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
+	directory := t.TempDir()
+	argsPath := filepath.Join(directory, "recorded-args")
+	// The stub poses as ghostty so the test also covers the -e wrapping.
+	terminalPath := filepath.Join(directory, "ghostty")
+	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > " + argsPath + "\n"
+	if err := os.WriteFile(terminalPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("write terminal stub: %v", err)
+	}
+	service := desktopactions.NewService(runnerStub{paths: map[string]string{
+		"fwupdmgr": "/usr/bin/fwupdmgr",
+		"bash":     "/bin/bash",
+		"ghostty":  terminalPath,
+	}})
+	if err := service.Run(context.Background(), []string{"firmware"}); err != nil {
+		t.Fatalf("Run(firmware) error = %v", err)
+	}
+	recorded, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatalf("read recorded args: %v", err)
+	}
+	want := "-e\n/bin/bash\n-lc\nfwupdmgr refresh && fwupdmgr update\n"
+	if string(recorded) != want {
+		t.Fatalf("terminal args = %q, want %q", recorded, want)
 	}
 }
