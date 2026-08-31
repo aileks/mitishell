@@ -3,6 +3,7 @@ package desktopactions
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -25,6 +26,7 @@ type Profile struct {
 
 type Snapshot struct {
 	ScreenshotModes   []string  `json:"screenshotModes"`
+	OutputNames       []string  `json:"outputNames"`
 	OCRAvailable      bool      `json:"ocrAvailable"`
 	QRAvailable       bool      `json:"qrAvailable"`
 	RecordingModes    []string  `json:"recordingModes"`
@@ -86,6 +88,14 @@ func (service Service) Snapshot(parent context.Context) Snapshot {
 		}
 	}
 
+	if service.hasAll("grim", "wl-copy", "notify-send", "hyprctl") {
+		if hyprctl, err := service.runner.LookPath("hyprctl"); err == nil {
+			if monitors, err := service.runner.Output(ctx, hyprctl, "-j", "monitors"); err == nil {
+				result.OutputNames = monitorNames(string(monitors))
+			}
+		}
+	}
+
 	if power, err := service.runner.LookPath("powerprofilesctl"); err == nil {
 		active, activeErr := service.runner.Output(ctx, power, "get")
 		profiles, profilesErr := service.runner.Output(ctx, power, "list")
@@ -102,19 +112,33 @@ func (service Service) Snapshot(parent context.Context) Snapshot {
 }
 
 func (service Service) Run(ctx context.Context, args []string) error {
-	if len(args) == 2 && args[0] == "screenshot" && slices.Contains(
-		[]string{"region", "window", "output", "desktop"}, args[1]) {
+	if len(args) >= 2 && args[0] == "screenshot" {
+		mode, outputName := args[1], ""
 		tools := []string{"grim", "wl-copy", "notify-send"}
-		if args[1] == "region" {
+		switch mode {
+		case "region":
 			tools = append(tools, "slurp", "hyprpicker")
-		}
-		if args[1] == "window" || args[1] == "output" {
+			if len(args) != 2 {
+				return ErrInvalidAction
+			}
+		case "window":
 			tools = append(tools, "hyprctl")
+			if len(args) != 2 {
+				return ErrInvalidAction
+			}
+		case "output":
+			tools = append(tools, "hyprctl")
+			if len(args) != 3 || args[2] == "" {
+				return ErrInvalidAction
+			}
+			outputName = args[2]
+		default:
+			return ErrInvalidAction
 		}
 		if err := service.require("screenshots", tools...); err != nil {
 			return err
 		}
-		return takeScreenshot(ctx, args[1])
+		return takeScreenshot(ctx, mode, outputName)
 	}
 	if len(args) == 1 && args[0] == "text" {
 		if err := service.require("text extraction",
@@ -167,6 +191,11 @@ func (service Service) ValidateRecording(mode string) error {
 		return fmt.Errorf("invalid recording mode %q", mode)
 	}
 	return service.require("screen recording", tools...)
+}
+
+// ValidateScreenshotOutput reports whether an output screenshot can run.
+func (service Service) ValidateScreenshotOutput() error {
+	return service.require("screenshots", "grim", "wl-copy", "notify-send", "hyprctl")
 }
 
 func (service Service) runFirmware(ctx context.Context) error {
@@ -235,4 +264,22 @@ func parseProfiles(output string, active string) []Profile {
 		profiles = append(profiles, Profile{Name: name, Active: name == active})
 	}
 	return profiles
+}
+
+// monitorNames extracts the active output names from `hyprctl -j monitors`.
+func monitorNames(output string) []string {
+	var monitors []struct {
+		Name     string
+		Disabled bool
+	}
+	if err := json.Unmarshal([]byte(output), &monitors); err != nil {
+		return []string{}
+	}
+	names := []string{}
+	for _, monitor := range monitors {
+		if !monitor.Disabled && monitor.Name != "" {
+			names = append(names, monitor.Name)
+		}
+	}
+	return names
 }

@@ -93,7 +93,7 @@ type DisplayService interface {
 }
 
 // Version tracks the release tag. Bump it when a release ships.
-const Version = "1.3.1"
+const Version = "1.3.2"
 
 const helpText = `Usage: mitishell <command>
 
@@ -112,7 +112,8 @@ const helpText = `Usage: mitishell <command>
   clipboard                         open the clipboard history view
   launcher                          toggle the application launcher
   actions                           open the Actions menu
-  capture <mode|text|qr>            capture a screenshot, text, or QR code
+  capture <region|window|output|text|qr>
+                                    capture a screenshot, text, or QR code
   record <region|output|stop>       start or stop a screen recording
   keybinds                          toggle the keybind viewer
   volume up|down|mute|set <0-150>   control the volume
@@ -219,6 +220,7 @@ type DesktopActions interface {
 	Snapshot(context.Context) desktopactions.Snapshot
 	Run(context.Context, []string) error
 	ValidateRecording(string) error
+	ValidateScreenshotOutput() error
 }
 
 type FontService interface {
@@ -874,16 +876,36 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, dependencies Depende
 	}
 	if len(args) > 0 && args[0] == "capture" {
 		if len(args) != 2 {
-			fmt.Fprintln(stderr, "mitishell: usage: mitishell capture <region|window|output|desktop|text|qr>")
+			fmt.Fprintln(stderr, "mitishell: usage: mitishell capture <region|window|output|text|qr>")
 			return 2
 		}
-		if slices.Contains([]string{"region", "window", "output", "desktop"}, args[1]) {
+		if slices.Contains([]string{"region", "window"}, args[1]) {
 			return runDesktopAction([]string{"screenshot", args[1]}, stderr, dependencies)
+		}
+		if args[1] == "output" {
+			if dependencies.DesktopActions == nil {
+				fmt.Fprintln(stderr, "mitishell: screenshots unavailable")
+				return 1
+			}
+			if err := dependencies.DesktopActions.ValidateScreenshotOutput(); err != nil {
+				fmt.Fprintf(stderr, "mitishell: %v\n", err)
+				return 1
+			}
+			if dependencies.LauncherUI == nil {
+				fmt.Fprintln(stderr, "mitishell: Actions menu unavailable")
+				return 1
+			}
+			if err := dependencies.LauncherUI.OpenActions("screenshot-output"); err != nil {
+				fmt.Fprintf(stderr, "mitishell: Actions menu unavailable: %v\n", err)
+				return 1
+			}
+			fmt.Fprintln(stdout, "Screenshot menu opened")
+			return 0
 		}
 		if args[1] == "text" || args[1] == "qr" {
 			return runDesktopAction(args[1:], stderr, dependencies)
 		}
-		fmt.Fprintln(stderr, "mitishell: usage: mitishell capture <region|window|output|desktop|text|qr>")
+		fmt.Fprintln(stderr, "mitishell: usage: mitishell capture <region|window|output|text|qr>")
 		return 2
 	}
 	if len(args) > 0 && args[0] == "record" {

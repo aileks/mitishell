@@ -26,6 +26,11 @@ SearchSurface {
     readonly property int resultLimit: 30
 
     function rebuild() {
+        const actions = Launcher.nativeActions();
+        if (activeMenuId !== "root") {
+            activeMenuId = LauncherModel.resolveMenuId(
+                actions, activeMenuId, "action:desktop-actions");
+        }
         const atRoot = activeMenuId === "root";
         const calculation = atRoot ? Calculator.fromQuery(query) : null;
         if (atRoot && calculation !== null) {
@@ -52,7 +57,6 @@ SearchSurface {
             return;
         }
 
-        const actions = Launcher.nativeActions();
         if (query.trim() === "") {
             const children = LauncherModel.childEntries(actions, activeMenuId);
             results = atRoot
@@ -164,6 +168,7 @@ SearchSurface {
         }
         rebuild();
     }
+    onFullyClosed: Launcher.surfaceFullyClosed()
     onQueryChanged: rebuild()
     onActivateRequested: function(entry) {
         if (entry.source === "menu") {
@@ -220,6 +225,7 @@ SearchSurface {
     Connections {
         target: DesktopActions
         function onScreenshotModesChanged() { root.rebuild(); }
+        function onOutputNamesChanged() { root.rebuild(); }
         function onOcrAvailableChanged() { root.rebuild(); }
         function onQrAvailableChanged() { root.rebuild(); }
         function onRecordingModesChanged() { root.rebuild(); }
@@ -344,7 +350,6 @@ SearchSurface {
                 enabled: row.actionable
                 onTapped: root.activateIndex(row.index)
             }
-            onSelectedChanged: if (selected) ListView.view.positionViewAtIndex(index, ListView.Contain)
         }
     }
 }

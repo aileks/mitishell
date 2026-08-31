@@ -116,6 +116,15 @@ function popupAllowed(doNotDisturb, snapshot) {
     return !doNotDisturb || snapshot.urgency === 2 || snapshot.reminder === true;
 }
 
+// Record ids whose popup deadline has passed. The shell expires these even
+// when no card is on screen - suppressed, do-not-disturb, or hidden traffic -
+// so clients waiting on a close signal are not stranded.
+function expiredPopups(deadlines, now) {
+    return Object.keys(deadlines || {}).filter(function(recordId) {
+        return deadlines[recordId] <= now;
+    });
+}
+
 function timeLabel(timestamp, now) {
     const age = Math.max(0, now - timestamp);
     const minutes = Math.floor(age / 60000);
@@ -162,6 +171,7 @@ if (typeof module !== "undefined") {
         historyLimit,
         durableEntry,
         durableEntries,
+        expiredPopups,
         popupDuration,
         popupAllowed,
         plainBody,

@@ -87,6 +87,18 @@ function childEntries(entries, parentId) {
     });
 }
 
+// Deep-opened menu ids can vanish between opens - an active recording swaps
+// the record menus for a stop action - so stale requests fall back to the
+// closest existing ancestor instead of an empty surface.
+function resolveMenuId(entries, requestedId, fallbackId) {
+    const values = Array.isArray(entries) ? entries : [];
+    const exists = function(id) {
+        return id === "root" || values.some(function(entry) { return entry.id === id; });
+    };
+    if (exists(requestedId)) return requestedId;
+    return exists(fallbackId) ? fallbackId : "root";
+}
+
 function descendantEntries(entries, parentId) {
     const values = Array.isArray(entries) ? entries : [];
     const byParent = {};
@@ -207,9 +219,15 @@ function desktopActionEntries(snapshot, icons) {
     const iconSet = icons || {};
     const entries = [];
     const parent = "action:desktop-actions";
-    const screenshotModes = Array.isArray(state.screenshotModes) ? state.screenshotModes : [];
-    if (screenshotModes.length > 0) {
-        screenshotModes.forEach(function(value) {
+    const rawModes = Array.isArray(state.screenshotModes) ? state.screenshotModes : [];
+    // Full-desktop capture stays available to scripts; the launcher offers
+    // region and window directly, and output as a per-output submenu.
+    const directModes = rawModes.filter(function(value) {
+        return value !== "desktop" && value !== "output";
+    });
+    const outputNames = Array.isArray(state.outputNames) ? state.outputNames : [];
+    if (directModes.length > 0) {
+        directModes.forEach(function(value) {
             const mode = titleCase(value);
             entries.push(action(
                 "desktop-actions.screenshot-" + mode.toLowerCase(),
@@ -218,6 +236,21 @@ function desktopActionEntries(snapshot, icons) {
                 iconSet.camera,
                 desktopCommand(["screenshot", value]),
                 parent,
+            ));
+        });
+    }
+    if (rawModes.length > 0 && outputNames.length > 0) {
+        const outputMenu = menu("desktop-actions.screenshot-output", "Screenshot Output",
+            "Actions", iconSet.camera, parent);
+        entries.push(outputMenu);
+        outputNames.forEach(function(name) {
+            entries.push(action(
+                "desktop-actions.screenshot-output." + name,
+                name,
+                "Screenshot Output",
+                iconSet.camera,
+                desktopCommand(["screenshot", "output", name]),
+                outputMenu.id,
             ));
         });
     }
@@ -292,6 +325,7 @@ if (typeof module !== "undefined") {
         descendantEntries,
         entryPath,
         recentLimit,
+        resolveMenuId,
         runCommand,
         searchableActions,
         valuesFrom,

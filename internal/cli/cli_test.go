@@ -219,13 +219,19 @@ type launcherRecentsStub struct {
 }
 
 type desktopActionsStub struct {
-	snapshot    desktopactions.Snapshot
-	runArgs     []string
-	runErr      error
-	validateErr error
+	snapshot          desktopactions.Snapshot
+	runArgs           []string
+	runErr            error
+	validateErr       error
+	validateOutputRun bool
 }
 
 func (stub *desktopActionsStub) ValidateRecording(string) error {
+	return stub.validateErr
+}
+
+func (stub *desktopActionsStub) ValidateScreenshotOutput() error {
+	stub.validateOutputRun = true
 	return stub.validateErr
 }
 
@@ -582,6 +588,43 @@ func TestCaptureCommandRunsMitishellOwnedAction(t *testing.T) {
 	code := cli.Run([]string{"capture", "region"}, &stdout, &stderr,
 		cli.Dependencies{DesktopActions: service})
 	if code != 0 || !slices.Equal(service.runArgs, []string{"screenshot", "region"}) {
+		t.Fatalf("code=%d args=%#v stderr=%q", code, service.runArgs, stderr.String())
+	}
+}
+
+func TestCaptureOutputCommandOpensOutputMenu(t *testing.T) {
+	ui := &launcherUIStub{}
+	service := &desktopActionsStub{}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"capture", "output"}, &stdout, &stderr,
+		cli.Dependencies{LauncherUI: ui, DesktopActions: service})
+	if code != 0 || !service.validateOutputRun || ui.actionsMenu != "screenshot-output" ||
+		stdout.String() != "Screenshot menu opened\n" {
+		t.Fatalf("code=%d validated=%v menu=%q stdout=%q stderr=%q",
+			code, service.validateOutputRun, ui.actionsMenu, stdout.String(), stderr.String())
+	}
+}
+
+func TestCaptureOutputCommandReportsMissingDependency(t *testing.T) {
+	ui := &launcherUIStub{}
+	service := &desktopActionsStub{validateErr: errors.New(
+		"Please install grim for screenshots")}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"capture", "output"}, &stdout, &stderr,
+		cli.Dependencies{LauncherUI: ui, DesktopActions: service})
+	if code != 1 || ui.actionsMenu != "" ||
+		!strings.Contains(stderr.String(), "Please install grim") {
+		t.Fatalf("code=%d menu=%q stderr=%q", code, ui.actionsMenu, stderr.String())
+	}
+}
+
+func TestCaptureDesktopCommandIsRemoved(t *testing.T) {
+	service := &desktopActionsStub{}
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"capture", "desktop"}, &stdout, &stderr,
+		cli.Dependencies{DesktopActions: service})
+	if code != 2 || service.runArgs != nil ||
+		!strings.Contains(stderr.String(), "capture <region|window|output|text|qr>") {
 		t.Fatalf("code=%d args=%#v stderr=%q", code, service.runArgs, stderr.String())
 	}
 }

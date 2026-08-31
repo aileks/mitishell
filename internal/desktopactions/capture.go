@@ -11,12 +11,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
 var errSelectionCancelled = errors.New("selection cancelled")
 
-func takeScreenshot(ctx context.Context, mode string) error {
+func takeScreenshot(ctx context.Context, mode string, output string) error {
 	directory, err := screenshotDirectory(ctx)
 	if err != nil {
 		return err
@@ -25,7 +26,7 @@ func takeScreenshot(ctx context.Context, mode string) error {
 		return fmt.Errorf("create screenshot directory: %w", err)
 	}
 	path := filepath.Join(directory, time.Now().Format("2006-01-02_15-04-05")+".png")
-	grimArgs, err := screenshotArguments(ctx, mode, path)
+	grimArgs, err := screenshotArguments(ctx, mode, path, output)
 	if errors.Is(err, errSelectionCancelled) {
 		return nil
 	}
@@ -42,44 +43,58 @@ func takeScreenshot(ctx context.Context, mode string) error {
 	if err := runCommand(ctx, bytes.NewReader(contents), "wl-copy", "--type", "image/png"); err != nil {
 		return fmt.Errorf("copy screenshot: %w", err)
 	}
-
-	action, err := commandOutput(ctx, nil, "notify-send",
-		"-a", "Screenshot",
-		"-i", path,
-		"-A", "annotate=Annotate",
-		"Screenshot saved and copied",
-		path,
-	)
-	if err != nil {
-		return fmt.Errorf("show screenshot notification: %w", err)
-	}
-	if strings.TrimSpace(string(action)) == "annotate" {
-		if _, err := exec.LookPath("tensaku"); err != nil {
-			return fmt.Errorf("Please install tensaku for screenshot annotation")
-		}
-		if err := runCommand(ctx, nil, "tensaku",
-			"--filename", path,
-			"--output-filename", path,
-			"--copy-command", "wl-copy",
-			"--app-id", "dev.tensaku.Tensaku",
-			"--actions-on-enter", "save-to-file",
-			"--actions-on-enter", "save-to-clipboard",
-			"--actions-on-enter", "exit",
-		); err != nil {
-			return fmt.Errorf("annotate screenshot: %w", err)
-		}
-	}
-	return nil
+	return showScreenshotNotification(path)
 }
 
-func screenshotArguments(ctx context.Context, mode string, path string) ([]string, error) {
+// showScreenshotNotification reports the saved screenshot and offers
+// annotation. The notifier waits for the popup to close, so it runs
+// detached: the action must not stay busy for the popup's lifetime or the
+// launcher cannot start another capture.
+func showScreenshotNotification(path string) error {
+	quoted := shellQuote(path)
+	title := "'Screenshot saved and copied' " + quoted
+	script := "notify-send -a Screenshot -i " + quoted + " " + title
+	if _, err := exec.LookPath("tensaku"); err == nil {
+		script = "out=$(notify-send -a Screenshot -i " + quoted +
+			" -A annotate=Annotate " + title + ")" +
+			" && [ \"$out\" = annotate ] && exec tensaku" +
+			" --filename " + quoted +
+			" --output-filename " + quoted +
+			" --copy-command wl-copy" +
+			" --app-id dev.tensaku.Tensaku" +
+			" --actions-on-enter save-to-file" +
+			" --actions-on-enter save-to-clipboard" +
+			" --actions-on-enter exit"
+	}
+	command := exec.Command("sh", "-c", script)
+	return detachCommand(command)
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+}
+
+func detachCommand(command *exec.Cmd) error {
+	command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	devNull, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
+	if err != nil {
+		return fmt.Errorf("open null device: %w", err)
+	}
+	defer devNull.Close()
+	command.Stdin = devNull
+	command.Stdout = devNull
+	command.Stderr = devNull
+	if err := command.Start(); err != nil {
+		return fmt.Errorf("start notification: %w", err)
+	}
+	return command.Process.Release()
+}
+
+func screenshotArguments(ctx context.Context, mode string, path string, output string) ([]string, error) {
 	switch mode {
-	case "desktop":
-		return []string{path}, nil
 	case "output":
-		output, err := focusedOutput(ctx)
-		if err != nil {
-			return nil, err
+		if output == "" {
+			return nil, fmt.Errorf("invalid screenshot output")
 		}
 		return []string{"-o", output, path}, nil
 	case "window":
@@ -194,6 +209,8 @@ func selectRegion(ctx context.Context, format string) (string, error) {
 	return value, nil
 }
 
+// focusedOutput names the output the pointer is on; recordings capture it
+// when no explicit output is chosen.
 func focusedOutput(ctx context.Context) (string, error) {
 	output, err := commandOutput(ctx, nil, "hyprctl", "-j", "monitors")
 	if err != nil {
@@ -263,9 +280,37 @@ func notify(ctx context.Context, urgency string, application string, message str
 	return nil
 }
 
+// runCommand runs a side-effect command and discards its output on files
+// rather than pipes: helper tools such as wl-copy fork a long-lived server
+// that would inherit pipe ends and block Wait long after the command exits.
 func runCommand(ctx context.Context, stdin io.Reader, name string, args ...string) error {
-	_, err := commandOutput(ctx, stdin, name, args...)
-	return err
+	devNull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
+	if err != nil {
+		return fmt.Errorf("open null device: %w", err)
+	}
+	defer devNull.Close()
+	stderr, err := os.CreateTemp("", "mitishell-stderr-*")
+	if err != nil {
+		return fmt.Errorf("create stderr capture: %w", err)
+	}
+	defer func() {
+		stderr.Close()
+		os.Remove(stderr.Name())
+	}()
+
+	command := exec.CommandContext(ctx, name, args...)
+	command.Stdin = stdin
+	command.Stdout = devNull
+	command.Stderr = stderr
+	if err := command.Run(); err != nil {
+		contents, _ := os.ReadFile(stderr.Name())
+		message := strings.TrimSpace(string(contents))
+		if message == "" {
+			message = err.Error()
+		}
+		return errors.New(message)
+	}
+	return nil
 }
 
 func commandOutput(ctx context.Context, stdin io.Reader, name string, args ...string) ([]byte, error) {

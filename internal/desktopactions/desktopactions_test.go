@@ -104,13 +104,36 @@ func TestRunReportsMissingPackagesClearly(t *testing.T) {
 		args []string
 		want string
 	}{
-		{args: []string{"screenshot", "desktop"}, want: "Please install grim for screenshots"},
+		{args: []string{"screenshot", "region"}, want: "Please install grim for screenshots"},
+		{args: []string{"screenshot", "output", "DP-1"}, want: "Please install grim for screenshots"},
 		{args: []string{"record", "output", "none"}, want: "Please install gpu-screen-recorder for screen recording"},
 		{args: []string{"qr"}, want: "Please install grim for QR scanning"},
 	} {
 		err := service.Run(context.Background(), testCase.args)
 		if err == nil || err.Error() != testCase.want {
 			t.Fatalf("Run(%#v) error = %v, want %q", testCase.args, err, testCase.want)
+		}
+	}
+}
+
+func TestRunRejectsRemovedAndMalformedScreenshotActions(t *testing.T) {
+	service := desktopactions.NewService(runnerStub{paths: map[string]string{
+		"grim":        "/usr/bin/grim",
+		"wl-copy":     "/usr/bin/wl-copy",
+		"notify-send": "/usr/bin/notify-send",
+		"hyprctl":     "/usr/bin/hyprctl",
+		"slurp":       "/usr/bin/slurp",
+		"hyprpicker":  "/usr/bin/hyprpicker",
+	}})
+	for _, args := range [][]string{
+		{"screenshot", "desktop"},
+		{"screenshot", "output"},
+		{"screenshot", "output", ""},
+		{"screenshot", "region", "extra"},
+	} {
+		err := service.Run(context.Background(), args)
+		if !errors.Is(err, desktopactions.ErrInvalidAction) {
+			t.Fatalf("Run(%#v) error = %v, want ErrInvalidAction", args, err)
 		}
 	}
 }

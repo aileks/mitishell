@@ -182,3 +182,18 @@ test("popup target follows the focused output when it has a bar", () => {
     assert.equal(NotificationModel.popupTarget("DP-1", [], ["*"]), "DP-1");
     assert.equal(NotificationModel.popupTarget("DP-1", [], ["HDMI-A-1"]), "");
 });
+
+test("expired popups report only past deadlines", () => {
+    const deadlines = {
+        "100-1": 8000,
+        "100-2": 12000,
+        "100-3": 5000,
+    };
+    assert.deepEqual(
+        NotificationModel.expiredPopups(deadlines, 10000),
+        ["100-1", "100-3"],
+    );
+    assert.deepEqual(NotificationModel.expiredPopups(deadlines, 4999), []);
+    assert.deepEqual(NotificationModel.expiredPopups(deadlines, 12000), ["100-1", "100-2", "100-3"]);
+    assert.deepEqual(NotificationModel.expiredPopups(undefined, 10000), []);
+});

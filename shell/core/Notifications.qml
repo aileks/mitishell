@@ -79,6 +79,36 @@ QtObject {
         }
     }
 
+    // Popup cards expire themselves, but cards do not exist for suppressed
+    // or do-not-disturb traffic, so deadlines live here as a backstop;
+    // clients waiting on a close signal are freed either way.
+    property var expiryDeadlines: ({})
+
+    property Timer expiryScan: Timer {
+        interval: 500
+        repeat: true
+        running: true
+        onTriggered: root.expireDuePopups(Date.now())
+    }
+
+    function scheduleExpiry(snapshot) {
+        if (snapshot.timeout <= 0) return;
+        const deadlines = Object.assign({}, expiryDeadlines);
+        deadlines[snapshot.recordId] = snapshot.timestamp + snapshot.timeout;
+        expiryDeadlines = deadlines;
+    }
+
+    function expireDuePopups(now) {
+        const due = NotificationModel.expiredPopups(expiryDeadlines, now);
+        if (due.length === 0) return;
+        const deadlines = Object.assign({}, expiryDeadlines);
+        due.forEach(function(recordId) {
+            delete deadlines[recordId];
+            dismissPopup(recordId, true);
+        });
+        expiryDeadlines = deadlines;
+    }
+
     function dismissFromHistory(recordId) {
         const record = findRecord(recordId);
         history = history.filter(function(entry) { return entry.recordId !== recordId; });
@@ -131,6 +161,7 @@ QtObject {
         watchForUpdates(notification, snapshot.liveId);
 
         upsertHistory(snapshot);
+        scheduleExpiry(snapshot);
         // Critical and explicit reminder traffic break through do-not-disturb;
         // suppressed records still land in history, except transient popups.
         if (!NotificationModel.popupAllowed(doNotDisturb, snapshot)) {
@@ -176,6 +207,7 @@ QtObject {
             recordByLiveId[id],
         );
         upsertHistory(snapshot);
+        scheduleExpiry(snapshot);
         replacePopup(snapshot);
     }
 
