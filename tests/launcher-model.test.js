@@ -152,6 +152,7 @@ test("descendant traversal ignores malformed cycles", () => {
 function desktopActionsSnapshot(overrides = {}) {
     return Object.assign({
         screenshotModes: ["region", "window", "output", "desktop"],
+        outputNames: ["DP-1", "HDMI-A-1"],
         ocrAvailable: true,
         qrAvailable: true,
         recordingModes: ["region", "output"],
@@ -175,6 +176,8 @@ test("desktop action entries mirror the snapshot in menu order", () => {
         "action:desktop-actions.screenshot-region",
         "action:desktop-actions.screenshot-window",
         "action:desktop-actions.screenshot-output",
+        "action:desktop-actions.screenshot-output.DP-1",
+        "action:desktop-actions.screenshot-output.HDMI-A-1",
         "action:desktop-actions.extract-text",
         "action:desktop-actions.scan-qr",
         "action:desktop-actions.record-region",
@@ -195,6 +198,10 @@ test("desktop action entries mirror the snapshot in menu order", () => {
     ]);
     const screenshot = entries.find((entry) => entry.id === "action:desktop-actions.screenshot-window");
     assert.deepEqual(screenshot.action.command, ["screenshot", "window"]);
+    const output = entries.find((entry) => entry.id === "action:desktop-actions.screenshot-output.DP-1");
+    assert.equal(output.label, "DP-1");
+    assert.equal(output.detail, "Screenshot Output");
+    assert.deepEqual(output.action.command, ["screenshot", "output", "DP-1"]);
     const microphone = entries.find((entry) => entry.id === "action:desktop-actions.record-region.mic");
     assert.equal(microphone.label, "Microphone");
     assert.deepEqual(microphone.action.command, ["record", "region", "mic"]);
@@ -235,6 +242,7 @@ test("record menus follow the available recording modes", () => {
 test("entries hide when their supporting tools are missing", () => {
     const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot({
         screenshotModes: ["region"],
+        outputNames: [],
         ocrAvailable: false,
         qrAvailable: false,
         recordingModes: [],
@@ -248,6 +256,31 @@ test("entries hide when their supporting tools are missing", () => {
 test("full desktop screenshots stay out of the launcher", () => {
     const entries = LauncherModel.desktopActionEntries(desktopActionsSnapshot(), {});
     assert.ok(!entryIds(entries).includes("action:desktop-actions.screenshot-desktop"));
+});
+
+test("the output submenu follows the connected outputs and base capability", () => {
+    const submenuIds = (overrides) => entryIds(
+        LauncherModel.desktopActionEntries(desktopActionsSnapshot(overrides), {}),
+    ).filter((id) => id.includes("screenshot-output"));
+
+    assert.deepEqual(
+        submenuIds({ outputNames: [] }),
+        [],
+        "no submenu without connected outputs",
+    );
+    assert.deepEqual(
+        submenuIds({ screenshotModes: [] }),
+        [],
+        "no submenu when screenshots lack their base tools",
+    );
+    assert.deepEqual(
+        submenuIds({ screenshotModes: ["region"], outputNames: ["DP-1"] }),
+        [
+            "action:desktop-actions.screenshot-output",
+            "action:desktop-actions.screenshot-output.DP-1",
+        ],
+        "submenu needs grim only, not the region picker",
+    );
 });
 
 test("power profiles list dynamically with the active profile marked", () => {

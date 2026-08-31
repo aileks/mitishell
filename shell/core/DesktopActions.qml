@@ -7,6 +7,7 @@ QtObject {
     id: root
 
     property var screenshotModes: []
+    property var outputNames: []
     property bool ocrAvailable: false
     property bool qrAvailable: false
     property var recordingModes: []
@@ -49,6 +50,7 @@ QtObject {
             try {
                 const snapshot = JSON.parse(snapshotOutput.text);
                 root.screenshotModes = snapshot.screenshotModes || [];
+                root.outputNames = snapshot.outputNames || [];
                 root.ocrAvailable = snapshot.ocrAvailable === true;
                 root.qrAvailable = snapshot.qrAvailable === true;
                 root.recordingModes = snapshot.recordingModes || [];

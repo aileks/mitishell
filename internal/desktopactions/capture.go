@@ -17,7 +17,7 @@ import (
 
 var errSelectionCancelled = errors.New("selection cancelled")
 
-func takeScreenshot(ctx context.Context, mode string) error {
+func takeScreenshot(ctx context.Context, mode string, output string) error {
 	directory, err := screenshotDirectory(ctx)
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func takeScreenshot(ctx context.Context, mode string) error {
 		return fmt.Errorf("create screenshot directory: %w", err)
 	}
 	path := filepath.Join(directory, time.Now().Format("2006-01-02_15-04-05")+".png")
-	grimArgs, err := screenshotArguments(ctx, mode, path)
+	grimArgs, err := screenshotArguments(ctx, mode, path, output)
 	if errors.Is(err, errSelectionCancelled) {
 		return nil
 	}
@@ -90,14 +90,11 @@ func detachCommand(command *exec.Cmd) error {
 	return command.Process.Release()
 }
 
-func screenshotArguments(ctx context.Context, mode string, path string) ([]string, error) {
+func screenshotArguments(ctx context.Context, mode string, path string, output string) ([]string, error) {
 	switch mode {
-	case "desktop":
-		return []string{path}, nil
 	case "output":
-		output, err := focusedOutput(ctx)
-		if err != nil {
-			return nil, err
+		if output == "" {
+			return nil, fmt.Errorf("invalid screenshot output")
 		}
 		return []string{"-o", output, path}, nil
 	case "window":
@@ -212,6 +209,8 @@ func selectRegion(ctx context.Context, format string) (string, error) {
 	return value, nil
 }
 
+// focusedOutput names the output the pointer is on; recordings capture it
+// when no explicit output is chosen.
 func focusedOutput(ctx context.Context) (string, error) {
 	output, err := commandOutput(ctx, nil, "hyprctl", "-j", "monitors")
 	if err != nil {

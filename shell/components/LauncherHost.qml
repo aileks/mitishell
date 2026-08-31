@@ -225,6 +225,7 @@ SearchSurface {
     Connections {
         target: DesktopActions
         function onScreenshotModesChanged() { root.rebuild(); }
+        function onOutputNamesChanged() { root.rebuild(); }
         function onOcrAvailableChanged() { root.rebuild(); }
         function onQrAvailableChanged() { root.rebuild(); }
         function onRecordingModesChanged() { root.rebuild(); }

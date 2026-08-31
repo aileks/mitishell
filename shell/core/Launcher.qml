@@ -86,6 +86,7 @@ QtObject {
     function desktopActionsSnapshot() {
         return {
             screenshotModes: DesktopActions.screenshotModes,
+            outputNames: DesktopActions.outputNames,
             ocrAvailable: DesktopActions.ocrAvailable,
             qrAvailable: DesktopActions.qrAvailable,
             recordingModes: DesktopActions.recordingModes,
@@ -114,6 +115,7 @@ QtObject {
     function openWithMenu(menu, screen) {
         const menus = {
             "actions": "action:desktop-actions",
+            "screenshot-output": "action:desktop-actions.screenshot-output",
             "record-region": "action:desktop-actions.record-region",
             "record-output": "action:desktop-actions.record-output",
         };

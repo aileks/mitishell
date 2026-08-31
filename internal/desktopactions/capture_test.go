@@ -3,6 +3,7 @@ package desktopactions
 import (
 	"context"
 	"os/exec"
+	"slices"
 	"testing"
 	"time"
 )
@@ -30,5 +31,15 @@ func TestShellQuoteSurvivesSpacesAndQuotes(t *testing.T) {
 	want := "'/home/test/Pictures/Screenshots/my '\\''shot'\\''.png'"
 	if quoted != want {
 		t.Fatalf("shellQuote() = %s, want %s", quoted, want)
+	}
+}
+
+func TestMonitorNamesSkipsDisabledOutputs(t *testing.T) {
+	names := monitorNames(`[{"name":"DP-1","disabled":false},{"name":"HDMI-A-1","disabled":true}]`)
+	if !slices.Equal(names, []string{"DP-1"}) {
+		t.Fatalf("monitorNames() = %#v", names)
+	}
+	if got := monitorNames("not json"); len(got) != 0 {
+		t.Fatalf("monitorNames(bad json) = %#v", got)
 	}
 }
