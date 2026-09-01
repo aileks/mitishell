@@ -37,6 +37,39 @@ make install
 quickshell -n -p ~/.local/share/mitishell/shell
 ```
 
+## Nix
+
+The flake provides an installable package and a development shell for
+`x86_64-linux` and `aarch64-linux`.
+
+```bash
+nix develop
+make check
+make run
+```
+
+Build or run the packaged shell directly:
+
+```bash
+nix build .#mitishell
+./result/bin/mitishell-shell
+
+# Or build and run in one step.
+nix run .
+```
+
+The package can also be used from a NixOS or Home Manager flake:
+
+```nix
+inputs.mitishell.url = "github:aileks/mitishell";
+
+# Use this in environment.systemPackages or home.packages.
+inputs.mitishell.packages.${pkgs.stdenv.hostPlatform.system}.default
+```
+
+The package supplies QuickShell, hyprshutdown, and the default Nerd Font.
+Hyprland and optional integrations remain part of the host system.
+
 ## Development
 
 Set `MITISHELL_QS_PATH` to the repository's `shell` directory when using CLI commands that talk to a development instance outside `make run`.

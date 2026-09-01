@@ -5,6 +5,7 @@ QMLLINT ?= /usr/lib/qt6/bin/qmllint
 QMLTESTRUNNER ?= /usr/lib/qt6/bin/qmltestrunner
 QUICKSHELL ?= quickshell
 QML_IMPORT_PATH ?= /usr/lib/qt6/qml
+export QML_IMPORT_PATH
 XDG_DATA_HOME ?= $(HOME)/.local/share
 BIN_INSTALL_DIR ?= $(HOME)/.local/bin
 SHELL_INSTALL_DIR ?= $(XDG_DATA_HOME)/mitishell/shell
@@ -26,7 +27,7 @@ test:
 check: test
 	test -z "$$(find . -name '*.go' -not -path './vendor/*' -print0 | xargs -0 $(GOFMT) -l)"
 	$(GO) vet ./...
-	$(QMLLINT) -I $(QML_IMPORT_PATH) -I shell $$(find shell -name '*.qml' -print)
+	$(QMLLINT) -E -I shell $$(find shell -name '*.qml' -print)
 	git diff --check
 
 run: build

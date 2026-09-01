@@ -79,16 +79,16 @@ func TestStopRecordingReportsMissingOutput(t *testing.T) {
 	if err != nil {
 		t.Skipf("sleep unavailable: %v", err)
 	}
-	t.Setenv("DESKTOP_RECORD_PROCESS_NAME", filepath.Base(sleep))
 	recorder := exec.Command(sleep, "30")
 	if err := recorder.Start(); err != nil {
 		t.Fatalf("start recorder stub: %v", err)
 	}
 	defer func() { _ = recorder.Wait() }()
-	startTime, _, alive := processDetails(recorder.Process.Pid)
+	startTime, executable, alive := processDetails(recorder.Process.Pid)
 	if !alive {
 		t.Fatal("recorder stub did not stay alive")
 	}
+	t.Setenv("DESKTOP_RECORD_PROCESS_NAME", filepath.Base(executable))
 	if err := writeRecordingState(recordingState{
 		PID:       recorder.Process.Pid,
 		StartTime: startTime,
