@@ -17,7 +17,7 @@ Item {
         id: metrics
 
         font.family: Theme.fontMono
-        font.pixelSize: Theme.fontSizeBodySmall
+        font.pixelSize: Theme.fontSizeMonoBodySmall
     }
 
     // qmltypes miss FontMetrics.capHeight, so quiet the false positive:
@@ -39,7 +39,7 @@ Item {
             text: Qt.formatTime(Clock.now, Clock.timeFormat)
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeBodySmall
+            font.pixelSize: Theme.fontSizeMonoBodySmall
             renderType: Text.NativeRendering
         }
 
@@ -50,7 +50,7 @@ Item {
             text: Qt.formatDate(Clock.now, "MMM d")
             color: Theme.textMuted
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeBodySmall
+            font.pixelSize: Theme.fontSizeMonoBodySmall
             renderType: Text.NativeRendering
         }
     }

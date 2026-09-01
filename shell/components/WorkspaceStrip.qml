@@ -71,7 +71,7 @@ Row {
                         ? Theme.background
                         : (workspaceItem.occupied ? Theme.textBright : Theme.textMuted)
                     font.family: Theme.fontMono
-                    font.pixelSize: Theme.fontSizeBody
+                    font.pixelSize: Theme.fontSizeMonoBody
                     font.weight: workspaceItem.active ? Font.DemiBold : Font.Normal
                 }
             }

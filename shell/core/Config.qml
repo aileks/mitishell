@@ -42,7 +42,9 @@ QtObject {
         },
         "font": {
             "family": "",
-            "monoFamily": ""
+            "monoFamily": "",
+            "size": 14,
+            "monoSize": 14
         },
         "clipboard": {
             "enabled": true,

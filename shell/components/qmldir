@@ -28,6 +28,7 @@ FontPicker 1.0 FontPicker.qml
 IconButton 1.0 IconButton.qml
 IconLabel 1.0 IconLabel.qml
 InlineStatus 1.0 InlineStatus.qml
+IntegerStepper 1.0 IntegerStepper.qml
 MediaIsland 1.0 MediaIsland.qml
 MediaMetadata 1.0 MediaMetadata.qml
 MediaPopover 1.0 MediaPopover.qml
@@ -58,6 +59,7 @@ SettingsFontRow 1.0 SettingsFontRow.qml
 SettingsBarLayout 1.0 SettingsBarLayout.qml
 SettingsPage 1.0 SettingsPage.qml
 SettingsNumberRow 1.0 SettingsNumberRow.qml
+SettingsStepperRow 1.0 SettingsStepperRow.qml
 SettingsOutputsRow 1.0 SettingsOutputsRow.qml
 SettingsPill 1.0 SettingsPill.qml
 SettingsTimezonesRow 1.0 SettingsTimezonesRow.qml

@@ -43,7 +43,7 @@ Rectangle {
         text: root.selected ? "active" : ""
         color: root.selected ? Theme.background : Theme.textMuted
         font.family: Theme.fontMono
-        font.pixelSize: Theme.fontSizeCaption
+        font.pixelSize: Theme.fontSizeMonoCaption
     }
 
     HoverHandler {

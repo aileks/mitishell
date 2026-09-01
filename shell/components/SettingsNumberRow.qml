@@ -41,7 +41,7 @@ Column {
             text: String(Math.round(slider.value))
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeBody
+            font.pixelSize: Theme.fontSizeMonoBody
         }
     }
 

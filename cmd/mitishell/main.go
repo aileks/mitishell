@@ -119,7 +119,7 @@ func main() {
 	}
 	reminderDirectory, reminderDirectoryErr := reminders.RuntimeDirectory()
 	reminderRunner, reminderRunnerErr := reminders.NewCommandRunner()
-	executable, executableErr := os.Executable()
+	executable, executableErr := executablePath()
 	reminderService := reminders.Unavailable(errors.Join(
 		reminderDirectoryErr,
 		reminderRunnerErr,
@@ -168,4 +168,11 @@ func main() {
 		Stdin: os.Stdin,
 	}
 	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr, dependencies))
+}
+
+func executablePath() (string, error) {
+	if override := os.Getenv("MITISHELL_BIN"); override != "" {
+		return override, nil
+	}
+	return os.Executable()
 }

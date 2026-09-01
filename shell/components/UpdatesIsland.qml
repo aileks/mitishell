@@ -20,7 +20,7 @@ Item {
             text: String(Updates.count)
             color: Theme.yellow
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 }

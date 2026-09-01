@@ -149,7 +149,7 @@ Flickable {
                             )
                             color: Weather.state === "stale" ? Theme.yellow : Theme.textBright
                             font.family: Theme.fontMono
-                            font.pixelSize: Theme.fontSizeBody
+                            font.pixelSize: Theme.fontSizeMonoBody
                         }
                     }
                 }

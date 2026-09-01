@@ -24,7 +24,7 @@ Item {
             text: Audio.ready ? AudioModel.percent(Audio.outputVolume) + "%" : "--"
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 

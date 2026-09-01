@@ -40,7 +40,7 @@ FocusScope {
             text: root.connectedCount > 9 ? "9+" : String(root.connectedCount)
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 }

@@ -100,7 +100,7 @@ SearchSurface {
                     text: row.modelData.shortcut
                     color: Theme.textBright
                     font.family: Theme.fontMono
-                    font.pixelSize: Theme.fontSizeBodySmall
+                    font.pixelSize: Theme.fontSizeMonoBodySmall
                     elide: Text.ElideRight
                 }
 

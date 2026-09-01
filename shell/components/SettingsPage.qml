@@ -48,12 +48,34 @@ Flickable {
                     value: Config.font.family !== "" ? Config.font.family : "System default"
                 }
 
+                SettingsStepperRow {
+                    width: parent.width
+                    label: "Standard size"
+                    fieldKey: "font.size"
+                    value: Config.font.size
+                    from: 10
+                    to: 20
+                    valueFontFamily: Theme.fontSans
+                    valueFontSize: Theme.fontSizeBody
+                }
+
                 SettingsFontRow {
                     width: parent.width
                     label: "Monospace font"
                     slot: "mono"
                     value: Config.font.monoFamily !== ""
                         ? Config.font.monoFamily : "Default (Adwaita Mono Propo)"
+                }
+
+                SettingsStepperRow {
+                    width: parent.width
+                    label: "Monospace size"
+                    fieldKey: "font.monoSize"
+                    value: Config.font.monoSize
+                    from: 10
+                    to: 20
+                    valueFontFamily: Theme.fontMono
+                    valueFontSize: Theme.fontSizeMonoBody
                 }
             }
         }

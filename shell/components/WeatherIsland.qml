@@ -28,7 +28,7 @@ Item {
                 : (Weather.state === "stale" || Weather.state === "locating"
                     ? Theme.yellow : Theme.text)
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 }

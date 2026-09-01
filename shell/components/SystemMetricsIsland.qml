@@ -28,7 +28,7 @@ Item {
                 : SystemMetrics.cpuPercent + "%"
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
 
         Rectangle {
@@ -51,7 +51,7 @@ Item {
             text: SystemMetrics.memoryPercent + "%"
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 }

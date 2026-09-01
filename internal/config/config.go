@@ -19,6 +19,12 @@ import (
 
 const CurrentVersion = 2
 
+const (
+	DefaultFontSize = 14
+	MinFontSize     = 10
+	MaxFontSize     = 20
+)
+
 type Config struct {
 	Version   int       `json:"version"`
 	Bar       Bar       `json:"bar"`
@@ -30,14 +36,16 @@ type Config struct {
 	Clipboard Clipboard `json:"clipboard"`
 }
 
-// Font selects the shell's font families. Family styles standard text and
-// follows the system UI font when empty. MonoFamily styles data and icon
-// text and keeps the shipped AdwaitaMono Nerd Font Propo when empty.
-// MonoFamily must name a Nerd Font family because the shell's icons are
+// Font selects the shell's font families and body sizes. Family styles
+// standard text and follows the system UI font when empty. MonoFamily styles
+// data and icon text and keeps the shipped AdwaitaMono Nerd Font Propo when
+// empty. MonoFamily must name a Nerd Font family because the shell's icons are
 // Nerd Font glyphs.
 type Font struct {
 	Family     string `json:"family"`
 	MonoFamily string `json:"monoFamily"`
+	Size       int    `json:"size"`
+	MonoSize   int    `json:"monoSize"`
 }
 
 type Bar struct {
@@ -190,7 +198,10 @@ func Defaults() Config {
 		Motion: Motion{
 			Enabled: true,
 		},
-		Font: Font{},
+		Font: Font{
+			Size:     DefaultFontSize,
+			MonoSize: DefaultFontSize,
+		},
 		Clipboard: Clipboard{
 			Enabled:    true,
 			MaxEntries: 25,
@@ -228,6 +239,8 @@ func Load(path string) (Config, error) {
 	}
 
 	var result Config
+	fontSizePresent := false
+	fontMonoSizePresent := false
 	switch header.Version {
 	case 1:
 		legacy, err := decodeLegacyConfig(contents)
@@ -241,6 +254,17 @@ func Load(path string) (Config, error) {
 		if err := decoder.Decode(&result); err != nil {
 			return Config{}, fmt.Errorf("decode config: %w", err)
 		}
+		var storedFields struct {
+			Font struct {
+				Size     json.RawMessage `json:"size"`
+				MonoSize json.RawMessage `json:"monoSize"`
+			} `json:"font"`
+		}
+		if err := json.Unmarshal(contents, &storedFields); err != nil {
+			return Config{}, fmt.Errorf("decode config: %w", err)
+		}
+		fontSizePresent = len(storedFields.Font.Size) > 0
+		fontMonoSizePresent = len(storedFields.Font.MonoSize) > 0
 	default:
 		return Config{}, fmt.Errorf("validate config: version must be 1 or %d", CurrentVersion)
 	}
@@ -254,6 +278,12 @@ func Load(path string) (Config, error) {
 	}
 	if result.Clipboard == (Clipboard{}) {
 		result.Clipboard = Defaults().Clipboard
+	}
+	if !fontSizePresent {
+		result.Font.Size = DefaultFontSize
+	}
+	if !fontMonoSizePresent {
+		result.Font.MonoSize = DefaultFontSize
 	}
 	result.Weather.Location = strings.TrimSpace(result.Weather.Location)
 	result.Font.Family = strings.TrimSpace(result.Font.Family)
@@ -458,6 +488,12 @@ func Validate(cfg Config) error {
 	if cfg.Font.MonoFamily != "" && !fonts.IsNerd(cfg.Font.MonoFamily) {
 		return errors.New("font.monoFamily must name a Nerd Font family")
 	}
+	if cfg.Font.Size < MinFontSize || cfg.Font.Size > MaxFontSize {
+		return fmt.Errorf("font.size must be between %d and %d", MinFontSize, MaxFontSize)
+	}
+	if cfg.Font.MonoSize < MinFontSize || cfg.Font.MonoSize > MaxFontSize {
+		return fmt.Errorf("font.monoSize must be between %d and %d", MinFontSize, MaxFontSize)
+	}
 	switch cfg.Clock.Format {
 	case "auto", "24h", "12h", "24h-seconds", "12h-seconds":
 	default:
@@ -655,6 +691,18 @@ func SetField(cfg Config, key string, value string) (Config, error) {
 		result.Font.Family = strings.TrimSpace(parseString(value))
 	case "font.monoFamily":
 		result.Font.MonoFamily = strings.TrimSpace(parseString(value))
+	case "font.size":
+		parsed, err := strconv.Atoi(value)
+		if err != nil {
+			return cfg, errors.New("font.size must be an integer")
+		}
+		result.Font.Size = parsed
+	case "font.monoSize":
+		parsed, err := strconv.Atoi(value)
+		if err != nil {
+			return cfg, errors.New("font.monoSize must be an integer")
+		}
+		result.Font.MonoSize = parsed
 	case "clock.format":
 		result.Clock.Format = parseString(value)
 	case "clock.showDate":
@@ -744,6 +792,10 @@ func GetField(cfg Config, key string) (string, error) {
 		value = cfg.Font.Family
 	case "font.monoFamily":
 		value = cfg.Font.MonoFamily
+	case "font.size":
+		value = cfg.Font.Size
+	case "font.monoSize":
+		value = cfg.Font.MonoSize
 	case "clock.format":
 		value = cfg.Clock.Format
 	case "clock.showDate":

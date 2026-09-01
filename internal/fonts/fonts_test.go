@@ -16,6 +16,8 @@ func TestFamiliesKeepsOnlyNerdFonts(t *testing.T) {
 		"DejaVu Sans",
 		"FiraCode Nerd Font",
 		"JetBrainsMono Nerd Font Mono,JetBrainsMono",
+		"Maple Mono",
+		"Maple Mono NF",
 	}, "\n")
 
 	got := fonts.Families(output)
@@ -24,6 +26,7 @@ func TestFamiliesKeepsOnlyNerdFonts(t *testing.T) {
 		"AdwaitaMono Nerd Font Mono",
 		"FiraCode Nerd Font",
 		"JetBrainsMono Nerd Font Mono",
+		"Maple Mono NF",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Families() = %#v, want %#v", got, want)
@@ -57,6 +60,10 @@ func TestIsNerd(t *testing.T) {
 		"AdwaitaMono Nerd Font Propo": true,
 		"JetBrainsMono Nerd Font":     true,
 		"SymbolsNerdFont":             true,
+		"Maple Mono NF":               true,
+		"Maple Mono NF CN":            true,
+		"Maple Mono NL NF CN":         true,
+		"Maple Mono":                  false,
 		"Adwaita Mono":                false,
 		"Adwaita Sans":                false,
 		"Comic Sans":                  false,

@@ -118,7 +118,7 @@ SurfaceFrame {
                         )
                         color: Theme.textMuted
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
+                        font.pixelSize: Theme.fontSizeMonoCaption
                     }
                 }
 
