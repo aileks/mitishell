@@ -24,7 +24,7 @@ Item {
 
         Repeater {
             model: Updates.result === null ? [] : Updates.result.system.packages.slice(0, 8)
-            delegate: Text { required property string modelData; text: modelData; color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
+            delegate: Text { required property string modelData; text: modelData; color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeMonoCaption }
         }
         Text {
             visible: Updates.result !== null && Updates.result.system.count > 8
@@ -45,7 +45,7 @@ Item {
         }
         Repeater {
             model: Updates.result === null ? [] : Updates.result.aur.packages.slice(0, 8)
-            delegate: Text { required property string modelData; text: modelData; color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
+            delegate: Text { required property string modelData; text: modelData; color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeMonoCaption }
         }
         Text {
             visible: Updates.result !== null && Updates.result.aur.count > 8

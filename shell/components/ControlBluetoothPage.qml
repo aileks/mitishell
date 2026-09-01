@@ -90,7 +90,7 @@ Flickable {
                     placeholderText: "Passkey"
                     color: Theme.text
                     font.family: Theme.fontMono
-                    font.pixelSize: Theme.fontSizeBody
+                    font.pixelSize: Theme.fontSizeMonoBody
                     activeFocusOnTab: true
                     background: Rectangle {
                         radius: Theme.radiusSmall
@@ -168,7 +168,7 @@ Flickable {
                             ? "scanning" : ""
                         color: Theme.blue
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
+                        font.pixelSize: Theme.fontSizeMonoCaption
                     }
                 }
 
@@ -257,7 +257,7 @@ Flickable {
                                 ? Theme.orange : deviceEntry.modelData.connected
                                 ? Theme.green : Theme.textMuted
                             font.family: Theme.fontMono
-                            font.pixelSize: Theme.fontSizeCaption
+                            font.pixelSize: Theme.fontSizeMonoCaption
                         }
                     }
 

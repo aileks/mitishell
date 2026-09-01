@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import "../lib/FontModel.js" as FontModel
 
 QtObject {
     // Cinder Grove's palette is fixed. Surfaces derive depth through these
@@ -57,7 +58,7 @@ QtObject {
     readonly property int iconMd: 20
     readonly property int iconLg: 28
     readonly property int barIconSize: Math.max(
-        fontSizeCaption,
+        12,
         Math.min(iconLg, Math.round(Config.bar.height * 4 / 9)),
     )
     readonly property int floatingOffset: 5
@@ -75,12 +76,19 @@ QtObject {
         ? Config.font.family : systemFont
     readonly property string fontMono: Config.font.monoFamily !== ""
         ? Config.font.monoFamily : monoDefault
-    readonly property int fontSizeCaption: 12
-    readonly property int fontSizeBodySmall: 13
-    readonly property int fontSizeBody: 14
-    readonly property int fontSizeTitle: 16
-    readonly property int fontSizeHeading: 18
-    readonly property int fontSizeDisplay: 22
+    readonly property int fontSizeCaption: FontModel.scaledSize(12, Config.font.size)
+    readonly property int fontSizeBodySmall: FontModel.scaledSize(13, Config.font.size)
+    readonly property int fontSizeBody: FontModel.scaledSize(14, Config.font.size)
+    readonly property int fontSizeTitle: FontModel.scaledSize(16, Config.font.size)
+    readonly property int fontSizeHeading: FontModel.scaledSize(18, Config.font.size)
+    readonly property int fontSizeDisplay: FontModel.scaledSize(22, Config.font.size)
+
+    readonly property int fontSizeMonoCaption: FontModel.scaledSize(12, Config.font.monoSize)
+    readonly property int fontSizeMonoBodySmall: FontModel.scaledSize(13, Config.font.monoSize)
+    readonly property int fontSizeMonoBody: FontModel.scaledSize(14, Config.font.monoSize)
+    readonly property int fontSizeMonoTitle: FontModel.scaledSize(16, Config.font.monoSize)
+    readonly property int fontSizeMonoHeading: FontModel.scaledSize(18, Config.font.monoSize)
+    readonly property int fontSizeMonoDisplay: FontModel.scaledSize(22, Config.font.monoSize)
 
     function alpha(colorValue, opacity) {
         return Qt.rgba(colorValue.r, colorValue.g, colorValue.b, opacity);

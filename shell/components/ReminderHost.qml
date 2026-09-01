@@ -181,7 +181,7 @@ PanelWindow {
                         text: Reminders.count + " active"
                         color: Theme.pink
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
+                        font.pixelSize: Theme.fontSizeMonoCaption
                     }
                 }
             }
@@ -245,7 +245,7 @@ PanelWindow {
                             selectionColor: Theme.blue
                             selectedTextColor: Theme.background
                             font.family: Theme.fontMono
-                            font.pixelSize: Theme.fontSizeBody
+                            font.pixelSize: Theme.fontSizeMonoBody
                             inputMethodHints: Qt.ImhDigitsOnly
                             maximumLength: 9
                             verticalAlignment: TextInput.AlignVCenter
@@ -436,7 +436,7 @@ PanelWindow {
                                                 "h:mm AP")
                                         color: Theme.pink
                                         font.family: Theme.fontMono
-                                        font.pixelSize: Theme.fontSizeCaption
+                                        font.pixelSize: Theme.fontSizeMonoCaption
                                         elide: Text.ElideRight
                                     }
                                 }

@@ -28,7 +28,7 @@ FocusScope {
             text: ReminderModel.barCountLabel(Reminders.count)
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 }

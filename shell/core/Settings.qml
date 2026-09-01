@@ -4,18 +4,21 @@ import QtQuick
 import Quickshell.Io
 
 // Writes config fields through the CLI's `config set` so validation stays
-// in Go and the existing file watcher reloads the shell live. Slider
-// changes queue behind a debounce; every write reports its per-field
-// error back for inline display.
+// in Go and the existing file watcher reloads the shell live. Queued
+// changes wait behind a debounce; every write reports its per-field error
+// back for inline display.
 QtObject {
     id: root
 
     property var fieldErrors: ({})
+    signal fieldSaved(string key, string value)
+    signal fieldSaveFailed(string key, string value)
 
     // Serializes writes: the CLI re-reads the config file per write, so
     // concurrent writes would race each other's updates.
     property var writeQueue: []
     property string writeKey: ""
+    property string writeValue: ""
     property var writer: Process {
         id: writer
 
@@ -33,8 +36,10 @@ QtObject {
             // qmllint enable signal-handler-parameters
             if (exitCode === 0) {
                 root.clearError(root.writeKey);
+                root.fieldSaved(root.writeKey, root.writeValue);
             } else {
                 root.setError(root.writeKey, writeErrors.text.trim());
+                root.fieldSaveFailed(root.writeKey, root.writeValue);
             }
             // Defer so the process has fully reported stopped before the
             // next write starts.
@@ -80,6 +85,7 @@ QtObject {
         }
         const next = writeQueue.shift();
         writeKey = next.key;
+        writeValue = next.value;
         writer.command = [Config.binary, "config", "set", next.key, next.value];
         writer.running = true;
     }

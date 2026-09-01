@@ -119,7 +119,7 @@ PanelWindow {
                     color: Theme.text
                     font.family: Theme.fontMono
                     font.pixelSize: text.length > 2
-                        ? Theme.fontSizeBody
+                        ? Theme.fontSizeMonoBody
                         : Theme.iconLg
                 }
             }
@@ -185,7 +185,7 @@ PanelWindow {
                         text: Osd.label
                         color: Theme.text
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeBody
+                        font.pixelSize: Theme.fontSizeMonoBody
                     }
                 }
             }

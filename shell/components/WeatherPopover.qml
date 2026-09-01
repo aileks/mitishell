@@ -104,9 +104,9 @@ Flickable {
                         Column {
                             anchors.centerIn: parent
                             spacing: 3
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: WeatherModel.hour(hourlyCard.modelData.time); color: Theme.textMuted; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: WeatherModel.hour(hourlyCard.modelData.time); color: Theme.textMuted; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeMonoCaption }
                             WeatherIcon { anchors.horizontalCenter: parent.horizontalCenter; width: 20; height: 20; weatherCode: hourlyCard.modelData.weatherCode }
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: WeatherModel.temperature(hourlyCard.modelData.temperature); color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: WeatherModel.temperature(hourlyCard.modelData.temperature); color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeMonoCaption }
                         }
                     }
                 }
@@ -128,7 +128,7 @@ Flickable {
                     spacing: Theme.spaceSm
                     Text { anchors.verticalCenter: parent.verticalCenter; width: 70; text: Qt.formatDate(new Date(dailyRow.modelData.date + "T12:00"), "ddd"); color: Theme.text; font.family: Theme.fontSans; font.pixelSize: Theme.fontSizeBody }
                     WeatherIcon { anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; weatherCode: dailyRow.modelData.weatherCode }
-                    Text { anchors.verticalCenter: parent.verticalCenter; width: parent.width - 98; horizontalAlignment: Text.AlignRight; text: WeatherModel.temperature(dailyRow.modelData.maximum) + "  " + WeatherModel.temperature(dailyRow.modelData.minimum); color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeCaption }
+                    Text { anchors.verticalCenter: parent.verticalCenter; width: parent.width - 98; horizontalAlignment: Text.AlignRight; text: WeatherModel.temperature(dailyRow.modelData.maximum) + "  " + WeatherModel.temperature(dailyRow.modelData.minimum); color: Theme.text; font.family: Theme.fontMono; font.pixelSize: Theme.fontSizeMonoCaption }
                 }
             }
         }

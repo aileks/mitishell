@@ -111,7 +111,7 @@ Item {
                 text: MediaModel.duration(Media.displayPosition)
                 color: Theme.textMuted
                 font.family: Theme.fontMono
-                font.pixelSize: Theme.fontSizeCaption
+                font.pixelSize: Theme.fontSizeMonoCaption
             }
 
             Text {
@@ -120,7 +120,7 @@ Item {
                 text: MediaModel.duration(root.trackLength)
                 color: Theme.textMuted
                 font.family: Theme.fontMono
-                font.pixelSize: Theme.fontSizeCaption
+                font.pixelSize: Theme.fontSizeMonoCaption
             }
         }
 

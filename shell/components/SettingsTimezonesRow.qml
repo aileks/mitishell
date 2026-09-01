@@ -72,7 +72,7 @@ Column {
                         text: zonePill.modelData
                         color: Theme.text
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
+                        font.pixelSize: Theme.fontSizeMonoCaption
                     }
 
                     IconLabel {
@@ -119,7 +119,7 @@ Column {
             verticalAlignment: TextInput.AlignVCenter
             color: Theme.textBright
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
             activeFocusOnTab: true
             Accessible.name: "Add timezone"
 
@@ -129,7 +129,7 @@ Column {
                 text: "Europe/Berlin"
                 color: Theme.textMuted
                 font.family: Theme.fontMono
-                font.pixelSize: Theme.fontSizeCaption
+                font.pixelSize: Theme.fontSizeMonoCaption
                 verticalAlignment: TextInput.AlignVCenter
             }
 

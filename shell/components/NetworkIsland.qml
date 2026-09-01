@@ -22,7 +22,7 @@ Item {
             text: Network.activeStation !== null ? Network.activeStation.signal + "%" : ""
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 }

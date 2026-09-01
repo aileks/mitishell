@@ -29,7 +29,7 @@ FocusScope {
             text: Notifications.unread > 9 ? "9+" : String(Notifications.unread)
             color: Theme.text
             font.family: Theme.fontMono
-            font.pixelSize: Theme.fontSizeCaption
+            font.pixelSize: Theme.fontSizeMonoCaption
         }
     }
 }

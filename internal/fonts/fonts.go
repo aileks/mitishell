@@ -36,9 +36,18 @@ func Families(fcListOutput string) []string {
 
 // IsNerd reports whether a family name identifies a Nerd Font. The shell's
 // icons are Nerd Font glyphs, so monospace slot values must pass this
-// check.
+// check. Some publishers, such as Maple Mono, tag their patched families
+// with a standalone "NF" word instead of the full name.
 func IsNerd(family string) bool {
-	return strings.Contains(family, "Nerd Font") || strings.Contains(family, "NerdFont")
+	if strings.Contains(family, "Nerd Font") || strings.Contains(family, "NerdFont") {
+		return true
+	}
+	for _, word := range strings.Fields(family) {
+		if word == "NF" {
+			return true
+		}
+	}
+	return false
 }
 
 // AllFamilies returns the deduplicated, sorted list of every installed

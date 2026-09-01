@@ -67,3 +67,19 @@ test("query can surface the default entry", () => {
         [{ value: "", label: "Default (Adwaita Mono Propo)" }],
     );
 });
+
+test("font roles scale proportionally from the body size", () => {
+    const shippedSizes = [12, 13, 14, 16, 18, 22];
+    assert.deepEqual(
+        shippedSizes.map((size) => FontModel.scaledSize(size, 10)),
+        [9, 9, 10, 11, 13, 16],
+    );
+    assert.deepEqual(
+        shippedSizes.map((size) => FontModel.scaledSize(size, 14)),
+        shippedSizes,
+    );
+    assert.deepEqual(
+        shippedSizes.map((size) => FontModel.scaledSize(size, 20)),
+        [17, 19, 20, 23, 26, 31],
+    );
+});

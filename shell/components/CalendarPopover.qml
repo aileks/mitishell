@@ -217,7 +217,7 @@ FocusScope {
                         text: modelData
                         color: Theme.textMuted
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
+                        font.pixelSize: Theme.fontSizeMonoCaption
                     }
                 }
             }
@@ -310,7 +310,7 @@ FocusScope {
                                 color: dayCell.cursor ? Theme.background
                                     : (dayCell.modelData.inMonth ? Theme.text : Theme.textMuted)
                                 font.family: Theme.fontMono
-                                font.pixelSize: Theme.fontSizeBody
+                                font.pixelSize: Theme.fontSizeMonoBody
                                 font.weight: dayCell.today ? Font.DemiBold : Font.Normal
                             }
 
@@ -447,7 +447,7 @@ FocusScope {
                         text: zoneRow.dayDelta > 0 ? "+1" : "-1"
                         color: Theme.textMuted
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
+                        font.pixelSize: Theme.fontSizeMonoCaption
                     }
 
                     Text {
@@ -457,7 +457,7 @@ FocusScope {
                         text: ClockModel.zoneClock(Clock.now, zoneRow.modelData)
                         color: Theme.textBright
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeBody
+                        font.pixelSize: Theme.fontSizeMonoBody
                     }
                 }
             }

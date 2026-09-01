@@ -15,7 +15,7 @@ FocusScope {
         text: KeyboardLayout.label
         color: Theme.text
         font.family: Theme.fontMono
-        font.pixelSize: Theme.fontSizeCaption
+        font.pixelSize: Theme.fontSizeMonoCaption
     }
     Rectangle {
         anchors.fill: parent

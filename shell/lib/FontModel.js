@@ -1,6 +1,6 @@
-// FontModel describes the font picker's slots and builds each slot's
-// choice list: a default entry plus one entry per installed family,
-// searchable by name. Pure functions so node --test can run without QML.
+// FontModel describes the font slots, builds searchable family choices,
+// and scales text roles from each slot's body size. Pure functions so
+// node --test can run without QML.
 
 const slotDescriptors = {
     standard: {
@@ -45,6 +45,10 @@ function withDefault(families, defaultLabel) {
     return choices;
 }
 
+function scaledSize(shippedRoleSize, bodySize) {
+    return Math.round(shippedRoleSize * bodySize / 14);
+}
+
 if (typeof module !== "undefined") {
-    module.exports = { choicesFor, filterChoices, slotDescriptor };
+    module.exports = { choicesFor, filterChoices, scaledSize, slotDescriptor };
 }

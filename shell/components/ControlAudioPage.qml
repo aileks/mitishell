@@ -66,7 +66,7 @@ Flickable {
                             ? "" : String(Audio.streams.length)
                         color: Theme.textMuted
                         font.family: Theme.fontMono
-                        font.pixelSize: Theme.fontSizeCaption
+                        font.pixelSize: Theme.fontSizeMonoCaption
                     }
                 }
 

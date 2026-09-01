@@ -130,6 +130,87 @@ func TestFontMonoFamilyNormalizesAndValidates(t *testing.T) {
 	}
 }
 
+func TestFontSizesSetGetAndValidate(t *testing.T) {
+	defaults := config.Defaults().Font
+	if defaults.Size != config.DefaultFontSize || defaults.MonoSize != config.DefaultFontSize {
+		t.Fatalf("default font sizes = %d, %d", defaults.Size, defaults.MonoSize)
+	}
+
+	for _, field := range []string{"font.size", "font.monoSize"} {
+		t.Run(field, func(t *testing.T) {
+			cfg := config.Defaults()
+			for _, value := range []string{"10", "14", "20"} {
+				updated, err := config.SetField(cfg, field, value)
+				if err != nil {
+					t.Fatalf("SetField(%q) error = %v", value, err)
+				}
+				if got, err := config.GetField(updated, field); err != nil || got != value {
+					t.Fatalf("GetField() = %q, %v, want %q", got, err, value)
+				}
+			}
+			for _, value := range []string{"9", "21", "large"} {
+				if _, err := config.SetField(cfg, field, value); err == nil {
+					t.Fatalf("SetField(%q) accepted invalid value", value)
+				}
+			}
+		})
+	}
+}
+
+func TestLoadDefaultsMissingV2FontSizesWithoutRewriting(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	cfg := config.Defaults()
+	contents, err := json.Marshal(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored map[string]any
+	if err := json.Unmarshal(contents, &stored); err != nil {
+		t.Fatal(err)
+	}
+	font := stored["font"].(map[string]any)
+	delete(font, "size")
+	delete(font, "monoSize")
+	contents, err = json.Marshal(stored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, contents, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	loaded, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Font.Size != config.DefaultFontSize || loaded.Font.MonoSize != config.DefaultFontSize {
+		t.Fatalf("font sizes = %d, %d", loaded.Font.Size, loaded.Font.MonoSize)
+	}
+	unchanged, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(unchanged) != string(contents) {
+		t.Fatal("Load rewrote the version 2 config")
+	}
+}
+
+func TestLoadRejectsExplicitInvalidV2FontSize(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	cfg := config.Defaults()
+	cfg.Font.Size = 0
+	contents, err := json.Marshal(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, contents, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := config.Load(path); err == nil {
+		t.Fatal("Load accepted an explicit invalid font size")
+	}
+}
+
 func TestLoadReturnsValidatedConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	contents := `{
@@ -203,6 +284,10 @@ func TestLoadReturnsValidatedConfig(t *testing.T) {
 		Motion: config.Motion{
 			Enabled: true,
 			Reduced: true,
+		},
+		Font: config.Font{
+			Size:     config.DefaultFontSize,
+			MonoSize: config.DefaultFontSize,
 		},
 		Clipboard: config.Clipboard{
 			Enabled:    true,
@@ -353,8 +438,14 @@ func TestValidateRejectsInvalidValues(t *testing.T) {
 		"large side margin": func(cfg *config.Config) { cfg.Bar.MarginHorizontal = 65 },
 		"metrics mode":      func(cfg *config.Config) { cfg.Bar.SystemMetrics = "stacked" },
 		"weather units":     func(cfg *config.Config) { cfg.Weather.Units = "kelvin" },
-		"clock format":      func(cfg *config.Config) { cfg.Clock.Format = "swatch" },
-		"blank timezone":    func(cfg *config.Config) { cfg.Clock.Timezones = []string{""} },
+		"small standard font": func(cfg *config.Config) {
+			cfg.Font.Size = config.MinFontSize - 1
+		},
+		"large mono font": func(cfg *config.Config) {
+			cfg.Font.MonoSize = config.MaxFontSize + 1
+		},
+		"clock format":   func(cfg *config.Config) { cfg.Clock.Format = "swatch" },
+		"blank timezone": func(cfg *config.Config) { cfg.Clock.Timezones = []string{""} },
 		"duplicate timezone": func(cfg *config.Config) {
 			cfg.Clock.Timezones = []string{"Europe/Berlin", "Europe/Berlin"}
 		},

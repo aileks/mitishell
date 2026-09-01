@@ -32,7 +32,7 @@ Item {
         text: AudioModel.percent(root.currentValue) + "%"
         color: Theme.text
         font.family: Theme.fontMono
-        font.pixelSize: Theme.fontSizeCaption
+        font.pixelSize: Theme.fontSizeMonoCaption
     }
 
     Row {

@@ -139,10 +139,25 @@ PanelWindow {
             anchors.fill: parent
             spacing: Theme.spaceLg
 
+            TextMetrics {
+                id: railLabelMetrics
+
+                // "Bluetooth" is the widest rail label; DemiBold covers the
+                // selected state's width.
+                font.family: Theme.fontSans
+                font.pixelSize: Theme.fontSizeBody
+                font.weight: Font.DemiBold
+                text: "Bluetooth"
+            }
+
             Column {
                 id: rail
 
-                width: 136
+                width: Math.max(
+                    136,
+                    Theme.spaceMd * 2 + Theme.barIconSize + Theme.spaceSm
+                        + railLabelMetrics.width,
+                )
                 spacing: Theme.spaceSm
 
                 Repeater {
@@ -164,7 +179,10 @@ PanelWindow {
                         required property int index
 
                         width: rail.width
-                        height: Theme.controlHeightLg
+                        height: Math.max(
+                            Theme.controlHeightLg,
+                            railRow.implicitHeight + Theme.spaceSm * 2,
+                        )
                         radius: Theme.radiusPill
                         color: Control.page === modelData.key
                             ? Theme.alpha(modelData.accent, 0.14)
@@ -182,6 +200,8 @@ PanelWindow {
                     }
 
                         Row {
+                            id: railRow
+
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter

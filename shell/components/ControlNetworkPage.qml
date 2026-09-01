@@ -250,7 +250,7 @@ Flickable {
                                     text: "saved"
                                     color: Theme.textMuted
                                     font.family: Theme.fontMono
-                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.pixelSize: Theme.fontSizeMonoCaption
                                 }
 
                                 Text {
@@ -260,7 +260,7 @@ Flickable {
                                     color: stationEntry.modelData.security === "open"
                                         ? Theme.textMuted : Theme.blue
                                     font.family: Theme.fontMono
-                                    font.pixelSize: Theme.fontSizeCaption
+                                    font.pixelSize: Theme.fontSizeMonoCaption
                                 }
 
                                 Rectangle {
