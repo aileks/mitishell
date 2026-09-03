@@ -40,12 +40,7 @@
         in
         pkgs.buildGoModule {
           pname = "mitishell";
-<<<<<<< HEAD
-          version = "1.3.2";
-||||||| ee3d70b
-=======
           version = "1.3.3";
->>>>>>> dev
           src = self;
 
           vendorHash = "sha256-Ac63bZlBvCrhS7b8mk7aJdApI8UGtJxnZG35L37roGY=";
