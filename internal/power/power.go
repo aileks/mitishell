@@ -91,8 +91,13 @@ func available(reply string) bool {
 	return reply == "yes"
 }
 
+// logout asks hyprshutdown to close the session's apps and exit Hyprland.
+// The daemon runs from a transient scope instead of this process's cgroup:
+// the shell closes itself along with the other apps, and when mitishell.service
+// stops, systemd would sweep the forked hyprshutdown away before it sends
+// the final "dispatch exit" to Hyprland.
 func logout() error {
-	command := exec.Command("hyprshutdown")
+	command := exec.Command("systemd-run", "--user", "--scope", "--collect", "hyprshutdown")
 	output, err := command.CombinedOutput()
 	if err != nil {
 		message := string(output)
