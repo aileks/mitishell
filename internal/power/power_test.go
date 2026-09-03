@@ -103,17 +103,55 @@ func TestRunDispatchesEachAction(t *testing.T) {
 	}
 }
 
-func TestRunLogsOutWithHyprshutdown(t *testing.T) {
-	binDirectory := t.TempDir()
-	hyprshutdown := filepath.Join(binDirectory, "hyprshutdown")
-	if err := os.WriteFile(hyprshutdown, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+func writeScript(t *testing.T, path, body string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0o755); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// Logout must spawn hyprshutdown through a transient scope so the daemon
+// outlives mitishell.service: the shell closes itself alongside the other
+// apps, and the direct cgroup would take the daemon down before it can
+// tell Hyprland to exit.
+func TestRunLogsOutThroughScopedHyprshutdown(t *testing.T) {
+	binDirectory := t.TempDir()
+	argumentsFile := filepath.Join(t.TempDir(), "logout-arguments")
+	writeScript(t, filepath.Join(binDirectory, "systemd-run"),
+		"printf '%s\\n' \"$@\" > "+argumentsFile+"\n")
+	writeScript(t, filepath.Join(binDirectory, "hyprshutdown"), "exit 0\n")
 	t.Setenv("PATH", binDirectory)
 
 	service := power.NewService(&callerStub{})
 	if err := service.Run(context.Background(), power.Logout); err != nil {
 		t.Fatalf("Run(logout) error = %v", err)
+	}
+
+	arguments, err := os.ReadFile(argumentsFile)
+	if err != nil {
+		t.Fatalf("systemd-run never ran: %v", err)
+	}
+	want := "--user\n--scope\n--collect\nhyprshutdown\n"
+	if string(arguments) != want {
+		t.Fatalf("logout arguments = %q, want %q", arguments, want)
+	}
+}
+
+func TestLogoutSurfacesCommandFailure(t *testing.T) {
+	binDirectory := t.TempDir()
+	writeScript(t, filepath.Join(binDirectory, "systemd-run"),
+		"exec hyprshutdown \"$@\"\n")
+	writeScript(t, filepath.Join(binDirectory, "hyprshutdown"),
+		"echo cannot close apps >&2\nexit 3\n")
+	t.Setenv("PATH", binDirectory)
+
+	service := power.NewService(&callerStub{})
+	err := service.Run(context.Background(), power.Logout)
+	if err == nil {
+		t.Fatal("Run(logout) hid a hyprshutdown failure")
+	}
+	if err.Error() != "hyprshutdown: cannot close apps\n" {
+		t.Fatalf("Run(logout) error = %q", err.Error())
 	}
 }
 
