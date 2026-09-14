@@ -1,5 +1,8 @@
 # Mitishell
 
+> [!IMPORTANT]  
+> Development of Mitishell has been paused. Creating Wayland compositor integrations is difficult to maintain because each compositor tends to expose its own IPC and APIs. Since I also no longer use Hyprland myself, I don't have much motivation to continue developing and maintaining a project that is so closely tied to it.
+
 Mitishell (MY-ti-shell) is a personal Hyprland desktop shell built with QuickShell. It uses the Cinder Grove visual language and targets Arch Linux.
 
 ![Mitishell Settings overview](assets/settings_overview.png)
